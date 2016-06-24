@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cleanup &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
+    <link rel="next" title="convexHull" href="pk_src.convexHull.html" />
+    <link rel="prev" title="centroidPoint" href="pk_src.centroidPoint.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cleanup">
+<span id="id1"></span><h1>cleanup<a class="headerlink" href="#cleanup" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
+<span class="target" id="module-pk_src.cleanup"></span><p>Main purpose of this command is the extraction of the outer shell of an arbitrary object. Natural bones may have
+natural inclusions due to air bubbles, blood vessels or imaging errors. During animation these inclusions can obstruct a clear view when the bone model is set half-transparent and inflate computation time. To extract only the outer bone shell one needs to delete all separate inclusions and possibly cut through &#8216;connecting tubes&#8217;, i.e. small blood vessels connecting an outer shell with an inner shell. A threshold can be set to determine and delete all triangles of the bone model whose normal&#8217;s distance (orthogonal distance from center point of triangle) to the next triangle is smaller than this threshold.</p>
+<p>The command implements a button <em>clean</em> under the shelf tab &#8216;ProKlaue&#8217;, where one can find and list all shells of a currently selected transform node. The shells can then be selected to show which part of the bone model is part of this shell. A number behind each shell indicates the amount of triangles inside each set and finally one shell can be extracted, so that all other shells and their triangles will be deleted from the mesh.</p>
+<p>The command primarily handles all the user interaction inside maya and processes output of commands <a class="reference internal" href="pk_src.getShells.html#getshells"><span class="std std-ref">getShells</span></a> and <a class="reference internal" href="pk_src.findTubeFaces.html#findtubefaces"><span class="std std-ref">findTubeFaces</span></a>.</p>
+<p><strong>Command should only be used over the button interface</strong></p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="pk_src.centroidPoint.html" title="previous chapter">centroidPoint</a></li>
+      <li>Next: <a href="pk_src.convexHull.html" title="next chapter">convexHull</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.cleanup.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/pk_src.cleanup.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

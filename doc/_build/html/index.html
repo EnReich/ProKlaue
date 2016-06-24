@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to ProKlaue’s documentation! &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="#" />
+    <link rel="next" title="&lt;no title&gt;" href="pk_src.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-proKlaue">
+<span id="welcome-to-proklaue-s-documentation"></span><span id="main"></span><h1>Welcome to ProKlaue&#8217;s documentation!<a class="headerlink" href="#module-proKlaue" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-proKlaue"></span><p><a class="reference external" href="http://www.zv.uni-leipzig.de/service/kommunikation/medienredaktion/nachrichten.html?ifab_modus=detail&amp;ifab_id=6004">ProKlaue</a> is a biomechanic research project at the Faculty of Veterinary Medicine of the University of Leipzig (Saxony, Germany). The primary goal is to be able to align bone models in a repeatable and deterministic way, as well as to export comparable measures of each bone model over a whole animation for further analysis.</p>
+<p>To support the necessary work and to provide some useful routines inside the 3D-modelling and animation program <em>Maya Autodesk</em> the plugin <em>proKlaue</em> was written, which uses the <a class="reference external" href="http://download.autodesk.com/us/maya/2011help/CommandsPython/">Python-API</a> of Maya and Python-Libraries for numerical computation (<a class="reference external" href="http://www.numpy.org/">numpy</a>, <a class="reference external" href="https://www.scipy.org/">scipy</a>, <a class="reference external" href="https://github.com/kmammou/v-hacd">V-HACD</a>). The Plugin introduces not only different scripts which are registered as commands inside Maya (for easier usage) but also a number of useful functions for general mesh-based tasks. There are a few additional functions like calculation of the convex hull, delaunay triangulation, intersection volume of multiple mesh objects and a cleanup process where one can extract a specific shell of a mesh (to eliminate possible entrapments inside a bone model caused by e.g. air, vessels or imaging errors).</p>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Maya Autodesk 2013 (or newer)</li>
+<li>Numpy Package for Python2.7 (at least 0.12.0)</li>
+<li>Scipy Package for Python2.7 (at least 0.16.0)</li>
+<li>V-HACD Library</li>
+</ul>
+<div class="section" id="installation-of-numpy-scipy-for-maya">
+<h3>Installation of Numpy &amp; Scipy for Maya<a class="headerlink" href="#installation-of-numpy-scipy-for-maya" title="Permalink to this headline">¶</a></h3>
+<p>Maya Autodesk is shipped with its own Python2.7-Installation which does not make any use of already existing Python-Installations on the system. This includes all Python-Libraries as well. So in order to make Python-Libraries work directly inside Maya, the following steps are necessary:</p>
+<ul class="simple">
+<li>Installation of Python 2.7 for the current system</li>
+<li>Install <em>Numpy</em> and <em>Scipy</em> (either using the Linux install repository or the <em>pip</em>-command of python, e.g. &#8216;pip install -i <a class="reference external" href="https://pypi.anaconda.org/carlkl/simple">https://pypi.anaconda.org/carlkl/simple</a> numpy&#8217;)</li>
+<li>Search subdirectory &#8216;site-packages&#8217; in Python2.7 install path</li>
+<li>Select and copy directories <em>numpy</em> &amp; <em>scipy</em></li>
+<li>Go to the Maya Directory (e.g. &#8216;C://Program Files/Autodesk/Maya2014/Python/lib/site-packages&#8217;) and insert copied files</li>
+</ul>
+<p>After a restart of Maya the command &#8216;import numpy&#8217; should be usable; if not the wrong version was installed.</p>
+<div class="section" id="troubleshooting">
+<h4>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><strong>command pip was not found</strong>: navigate to the python-subdirectory <em>Scripts</em> (&#8216;cd &#8220;C://Program Files/Python27/Scripts/&#8221;&#8217;) and try again. Or insert Path &#8216;Python27/Scripts&#8217; to PATH-Variable</li>
+<li><strong>Maya Error: module &#8216;numpy&#8217; not found</strong>: the &#8216;numpy&#8217; directory is in the wrong Maya subdirectory. It needs to be inside Maya&#8217;s Python-Directory &#8216;lib/site-packages/&#8217;</li>
+<li><strong>Maya throws dll-Error with reference to Win32</strong>: wrong Python-Version and consequently wrong library versions are installed. Since Maya Autodesk 2014 there is only a 64bit version. This means that Python also needs to be installed as 64bit version. It is also advisable to update &#8216;pip&#8217; (&#8216;python -m pip install -U pip&#8217;) <strong>before</strong> installation of the libraries. Further the packages should be installed without any optimizations to avoid conflicts.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="installation-and-configuration-of-the-plugin">
+<h2>Installation and configuration of the Plugin<a class="headerlink" href="#installation-and-configuration-of-the-plugin" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Copy everything to &#8216;Autodesk/maya&lt;version&gt;/bin/plug-ins&#8217; so that the file &#8216;proKlaue.py&#8217; lies directly inside this directory</li>
+<li>Inside Maya: Windows &#8211;&gt; Settings/Preferences &#8211;&gt; Plugi-in Manager &#8211;&gt; Refresh</li>
+<li>Search for the entry &#8216;proKlaue.py&#8217; and check &#8216;Loaded&#8217; and &#8216;Auto load&#8217;</li>
+</ul>
+<p>After the plugin has been successfully loaded a new shelf tab named &#8216;ProKlaue&#8217; will appear.</p>
+<p>At last, activate the following setting: Windows &#8211;&gt; Settings/Preferences &#8211;&gt; Preferences &#8211;&gt; Setting &#8211;&gt; Selection &#8211;&gt; &#8216;Track selection order&#8217;</p>
+<p>To use the console commands directly inside Maya, one need to execute the Python command &#8216;import maya.cmds as cmds&#8217; after each program restart (this can be done automatically by creating a file &#8216;userSetup.py&#8217; inside the directory &#8216;/home/user/maya/version/scripts/&#8217; and write the line &#8216;import maya.cmds as cmds&#8217; inside). All commands can then be executed by typing &#8216;cmds.&lt;cmd&gt;&#8217; where <em>cmd</em> is a placeholder for the command&#8217;s name.</p>
+</div>
+<div class="section" id="commands">
+<span id="id1"></span><h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.adjustAxisDirection.html">adjustAxisDirection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.alignObj.html">alignObj</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.centerPoint.html">centerPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.centroidPoint.html">centroidPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.cleanup.html">cleanup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.convexHull.html">convexHull</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.delaunay.html">delaunay</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.eigenvector.html">eigenvector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.exportData.html">exportData</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.findTubeFaces.html">findTubeFaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.getShells.html">getShells</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.getVolume.html">getVolume</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.intersection.html">intersection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.normalize.html">normalize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.rangeObj.html">rangeObj</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.vhacd.html">vhacd</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="misc">
+<span id="sec-misc"></span><h2>Misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.collision_tet_tet.html">collision_tet_tet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.intersection_tet_tet.html">intersection_tet_tet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.misc.html">misc</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="howto-add-new-commands-to-plugin-proklaue">
+<h2>HowTo: Add new commands to plugin <em>ProKlaue</em><a class="headerlink" href="#howto-add-new-commands-to-plugin-proklaue" title="Permalink to this headline">¶</a></h2>
+<p>The file <em>proKlaue.py</em> is the master-file of the plugin where all submodules will be individually imported and registered as commands. To keep the general structure and clarity one should always use separate files/modules for each new command. Additionally the file name, module name and command name should be equal to simplify the registration steps.</p>
+<p>To add a new command <em>cmds.foo</em> implemented in the source file <em>foo.py</em> to the plugin, one only needs to add the name <em>foo</em> to the list of commands <em>kPluginCmdName</em> in <em>proKlaue.py</em> (l. 57) and it will be automatically imported, registered with syntax and button definition:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">kPluginCmdName</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;centerPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;centroidPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;normalize&quot;</span><span class="p">,</span> <span class="s2">&quot;eigenvector&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;alignObj&quot;</span><span class="p">,</span> <span class="s2">&quot;exportData&quot;</span><span class="p">,</span> <span class="s2">&quot;rangeObj&quot;</span><span class="p">,</span> <span class="s2">&quot;convexHull&quot;</span><span class="p">,</span> <span class="s2">&quot;getShells&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;findTubeFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;cleanup&quot;</span><span class="p">,</span> <span class="s2">&quot;getVolume&quot;</span><span class="p">,</span> <span class="s2">&quot;delaunay&quot;</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">,</span> <span class="s2">&quot;foo&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The necessary parts of a new command need to be defined in a source file <em>foo.py</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">maya.OpenMayaMPx</span> <span class="kn">as</span> <span class="nn">OpenMayaMPx</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="hll"><span class="k">class</span> <span class="nc">foo</span><span class="p">(</span><span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="p">):</span>
+</span>   <span class="n">windowID</span> <span class="o">=</span> <span class="s2">&quot;wFoo&quot;</span>
+
+<span class="hll">   <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span>      <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+   <span class="k">def</span> <span class="nf">__cancelCallback</span><span class="p">(</span><span class="o">*</span><span class="n">pArgs</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">cmds</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="n">exportData</span><span class="o">.</span><span class="n">windowID</span><span class="p">,</span> <span class="n">exists</span> <span class="o">=</span> <span class="bp">True</span><span class="p">):</span>
+      <span class="n">cmds</span><span class="o">.</span><span class="n">deleteUI</span><span class="p">(</span><span class="n">exportData</span><span class="o">.</span><span class="n">windowID</span><span class="p">)</span>
+
+   <span class="k">def</span> <span class="nf">__applyCallback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">textF</span><span class="p">,</span> <span class="o">*</span><span class="n">pArgs</span><span class="p">):</span>
+      <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;text&quot;</span><span class="p">:</span><span class="n">cmds</span><span class="o">.</span><span class="n">textField</span><span class="p">(</span><span class="n">textF</span><span class="p">,</span> <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)}</span>
+      <span class="n">cmds</span><span class="o">.</span><span class="n">foo</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
+
+   <span class="k">def</span> <span class="nf">createUI</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">pArgs</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">cmds</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">windowID</span><span class="p">,</span> <span class="n">exists</span> <span class="o">=</span> <span class="bp">True</span><span class="p">):</span>
+         <span class="n">cmds</span><span class="o">.</span><span class="n">deleteUI</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">windowID</span><span class="p">)</span>
+         <span class="n">cmds</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">windowID</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;fooUI&quot;</span><span class="p">,</span> <span class="n">sizeable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">resizeToFitChildren</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+         <span class="n">cmds</span><span class="o">.</span><span class="n">rowColumnLayout</span><span class="p">(</span><span class="n">numberOfColumns</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+         <span class="n">text</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">textField</span><span class="p">(</span><span class="n">visible</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">140</span><span class="p">)</span>
+         <span class="n">cmds</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;apply&quot;</span><span class="p">,</span> <span class="n">command</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__applyCallback</span><span class="p">,</span> <span class="n">text</span><span class="p">),</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">100</span> <span class="p">)</span>
+         <span class="n">cmds</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;cancel&quot;</span><span class="p">,</span> <span class="n">command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cancelCallback</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
+         <span class="n">cmds</span><span class="o">.</span><span class="n">showWindow</span><span class="p">()</span>
+
+<span class="hll">   <span class="k">def</span> <span class="nf">doIt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argList</span><span class="p">):</span>
+</span>      <span class="n">argData</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MArgParser</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)</span>
+      <span class="n">text</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentString</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="k">print</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="hll"><span class="k">def</span> <span class="nf">fooCreator</span><span class="p">():</span>
+</span>   <span class="k">return</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">asMPxPtr</span><span class="p">(</span> <span class="n">foo</span><span class="p">()</span> <span class="p">)</span>
+<span class="hll"><span class="k">def</span> <span class="nf">fooSyntaxCreator</span><span class="p">():</span>
+</span>   <span class="n">syntax</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="p">()</span>
+   <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kString</span><span class="p">)</span>
+   <span class="k">return</span> <span class="n">syntax</span>
+<span class="hll"><span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="n">parentShelf</span><span class="p">):</span>
+</span>   <span class="n">cmds</span><span class="o">.</span><span class="n">shelfButton</span><span class="p">(</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parentShelf</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="s2">&quot;pythonFamily.png&quot;</span><span class="p">,</span>
+      <span class="n">c</span><span class="o">=</span><span class="n">foo</span><span class="p">()</span><span class="o">.</span><span class="n">createUI</span><span class="p">,</span> <span class="n">imageOverlayLabel</span> <span class="o">=</span> <span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="n">ann</span><span class="o">=</span><span class="s2">&quot;do something&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>All emphasized lines are required definitions: class <strong>foo</strong> inherited from <em>OpenMayaMPx.MPxCommand</em>, its constructor <strong>foo.__init__</strong>, the function <strong>foo.doIt</strong> which will be triggered at command invocation, function <strong>fooCreator</strong> which just returns a class instance, function <strong>fooSyntaxCreator</strong> which returns the syntax definition and function <strong>addButton</strong> where a shelf button under the shelf tab <em>ProKlaue</em> can be defined.</p>
+<p>In this echo-server example a command button is defined with an input text field and two buttons (<em>apply</em> and <em>cancel</em>) inside the user interface. By pressing button <em>apply</em> the text field content will be echoed to the console whereas <em>cancel</em> closes the user interface. The same effect (without the user interface) can be achieved by typing <em>cmds.foo(t = &#8216;echo&#8217;)</em>.</p>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to ProKlaue&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a><ul>
+<li><a class="reference internal" href="#installation-of-numpy-scipy-for-maya">Installation of Numpy &amp; Scipy for Maya</a><ul>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#installation-and-configuration-of-the-plugin">Installation and configuration of the Plugin</a></li>
+<li><a class="reference internal" href="#commands">Commands</a></li>
+<li><a class="reference internal" href="#misc">Misc</a></li>
+<li><a class="reference internal" href="#howto-add-new-commands-to-plugin-proklaue">HowTo: Add new commands to plugin <em>ProKlaue</em></a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="pk_src.html" title="next chapter">&lt;no title&gt;</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

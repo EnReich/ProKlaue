@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>centroidPoint &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
+    <link rel="next" title="cleanup" href="pk_src.cleanup.html" />
+    <link rel="prev" title="centerPoint" href="pk_src.centerPoint.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="centroidpoint">
+<span id="id1"></span><h1>centroidPoint<a class="headerlink" href="#centroidpoint" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
+<span class="target" id="module-pk_src.centroidPoint"></span><p>Calculates the weighted average of all triangle centroids of current selection. This command is useful to define the origin of an arbitrary object&#8217;s local coordinate frame in case of irregular triangulation of the object&#8217;s mesh.
+Command only accepts &#8216;transform&#8217; nodes and will only be applied to the first object of the current selection.</p>
+<p><strong>see also:</strong> <a class="reference internal" href="pk_src.centerPoint.html#centerpoint"><span class="std std-ref">centerPoint</span></a></p>
+<p><strong>command:</strong> cmds.centroidPoint([obj])</p>
+<dl class="docutils">
+<dt><strong>Args:</strong></dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object&#8217;s name inside maya</td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">cmds</span><span class="o">.</span><span class="n">polyTorus</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pTorus1&#39;, u&#39;polyTorus1&#39;] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">centroidPoint</span><span class="p">()</span>
+<span class="c1"># Result: [8.981527616005896e-10, -9.250593323493368e-08, -3.1820641749655423e-07] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyPyramid</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pPyramid1&#39;, u&#39;polyPyramid1&#39;] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">centroidPoint</span><span class="p">()</span>
+<span class="c1"># Result: [8.125617691761175e-09, -0.20412414173849558, -8.125620434757627e-09] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">centerPoint</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="pk_src.centerPoint.html" title="previous chapter">centerPoint</a></li>
+      <li>Next: <a href="pk_src.cleanup.html" title="next chapter">cleanup</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.centroidPoint.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/pk_src.centroidPoint.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

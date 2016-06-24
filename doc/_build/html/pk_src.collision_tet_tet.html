@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>collision_tet_tet &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="next" title="intersection_tet_tet" href="pk_src.intersection_tet_tet.html" />
+    <link rel="prev" title="vhacd" href="pk_src.vhacd.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="collision-tet-tet">
+<span id="id1"></span><h1>collision_tet_tet<a class="headerlink" href="#collision-tet-tet" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#sec-misc"><span class="std std-ref">Misc</span></a></p>
+<span class="target" id="module-pk_src.collision_tet_tet"></span><p>Module to test for collision of two tetrahedra using the axis separating theorem.
+Based on the paper <a class="reference external" href="http://vcg.isti.cnr.it/Publications/2003/GPR03/fast_tetrahedron_tetrahedron_overlap_algorithm.pdf">&#8220;Fast tetrahedron-tetrahedron overlap algorithm&#8221;</a> by F. Ganovelli, F. Ponchio and C. Rocchini.</p>
+<p>Uses two lists of vertices for each tetrahedra. The class function Collision_tet_tet.check() returns True iff the two given tetrahedra actually intersect (or at least have common vertices).
+Before calling &#8216;Collision_tet_tet.check()&#8217; the two tetrahedra need to be set with the methods <strong>setV1</strong>, <strong>setV2</strong> or <strong>setV1V2</strong>.</p>
+<dl class="class">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet">
+<em class="property">class </em><code class="descclassname">pk_src.collision_tet_tet.</code><code class="descname">Collision_tet_tet</code><span class="sig-paren">(</span><em>tetra1=None</em>, <em>tetra2=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize tetrahedra definitions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>tetra1</strong> &#8211; list of the 4 3D-vertices describing the first tetrahedron</li>
+<li><strong>tetra2</strong> &#8211; list of the 4 3D-vertices describing the second tetrahedron</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.check">
+<code class="descname">check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to check if current two tetrahedra can intersect; optimized for speed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True, iff the two tetrahedra intersect (or have common vertices).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_edge_A">
+<code class="descname">separating_plane_edge_A</code><span class="sig-paren">(</span><em>f0</em>, <em>f1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.separating_plane_edge_A"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_edge_A" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for tetrahedron-tetrahedron collision: checks if edge is in the plane separating faces f0 and f1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>coord</strong> &#8211; 4x4 list of lists</li>
+<li><strong>self.masks</strong> &#8211; 4x1 list of lists with single element</li>
+<li><strong>f0</strong> &#8211; integer</li>
+<li><strong>f1</strong> &#8211; integer</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceA_1">
+<code class="descname">separating_plane_faceA_1</code><span class="sig-paren">(</span><em>pv1</em>, <em>n</em>, <em>coord</em>, <em>mask_edges</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.separating_plane_faceA_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceA_1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for tetrahedron-tetrahedron collision test:
+checks if plane pv1 is a separating plane. Stores local coordinates and the mask bit mask_edges.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>pv1</strong> &#8211; vectors between vertices of second tetrahedron and vertex V[0] of first tetrahedron (list of lists [[...],[...],...])</li>
+<li><strong>n</strong> &#8211; normal (list [x,y,z])</li>
+<li><strong>coord</strong> &#8211; reference to list</li>
+<li><strong>mask_edges</strong> &#8211; reference to list with single element [m]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if pv1 is a separating plane</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceA_2">
+<code class="descname">separating_plane_faceA_2</code><span class="sig-paren">(</span><em>n</em>, <em>coord</em>, <em>mask_edges</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.separating_plane_faceA_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceA_2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for tetrahedron-tetrahedron collision test:
+checks if plane v1,v2 is a separating plane. Stores local coordinates and the mask bit mask_edges.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>V1</strong> &#8211; list with vertices of tetrahedron 1</li>
+<li><strong>V2</strong> &#8211; list with vertices of tetrahedron 2</li>
+<li><strong>n</strong> &#8211; normal</li>
+<li><strong>coord</strong> &#8211; reference to list</li>
+<li><strong>mask_edges</strong> &#8211; reference to list with single element [m]</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceB_1">
+<code class="descname">separating_plane_faceB_1</code><span class="sig-paren">(</span><em>pv2</em>, <em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.separating_plane_faceB_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceB_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceB_2">
+<code class="descname">separating_plane_faceB_2</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.separating_plane_faceB_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceB_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.setV1">
+<code class="descname">setV1</code><span class="sig-paren">(</span><em>V1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.setV1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.setV1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set list of vertices for first tetrahedron.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>V1</strong> &#8211; list of the 4 3D-vertices describing the first tetrahedron</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.setV1V2">
+<code class="descname">setV1V2</code><span class="sig-paren">(</span><em>V1</em>, <em>V2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.setV1V2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.setV1V2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set list of vertices for first and second tetrahedron.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>V1</strong> &#8211; list of the 4 3D-vertices describing the first tetrahedron</li>
+<li><strong>V2</strong> &#8211; list of the 4 3D-vertices describing the second tetrahedron</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.setV2">
+<code class="descname">setV2</code><span class="sig-paren">(</span><em>V2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet.setV2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.setV2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set list of vertices for second tetrahedron.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>V2</strong> &#8211; list of the 4 3D-vertices describing the second tetrahedron</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pk_src.collision_tet_tet.Collision_tet_tet.shifts">
+<code class="descname">shifts</code><em class="property"> = [1, 2, 4, 8]</em><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet.shifts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.collision_tet_tet.cross">
+<code class="descclassname">pk_src.collision_tet_tet.</code><code class="descname">cross</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="headerlink" href="#pk_src.collision_tet_tet.cross" title="Permalink to this definition">¶</a></dt>
+<dd><p>cross product as lambda function to speed up calculations</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.collision_tet_tet.dot">
+<code class="descclassname">pk_src.collision_tet_tet.</code><code class="descname">dot</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="headerlink" href="#pk_src.collision_tet_tet.dot" title="Permalink to this definition">¶</a></dt>
+<dd><p>dot product as lambda function to speed up calculations</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="pk_src.vhacd.html" title="previous chapter">vhacd</a></li>
+      <li>Next: <a href="pk_src.intersection_tet_tet.html" title="next chapter">intersection_tet_tet</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.collision_tet_tet.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/pk_src.collision_tet_tet.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

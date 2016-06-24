@@ -1,0 +1,331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pk_src.misc &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pk_src.misc</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module with a few helper functions for plugin *ProKlaue*.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">maya.api.OpenMaya</span> <span class="kn">as</span> <span class="nn">om2</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<div class="viewcode-block" id="getArgObj"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getArgObj">[docs]</a><span class="k">def</span> <span class="nf">getArgObj</span><span class="p">(</span><span class="n">syntax</span><span class="p">,</span> <span class="n">argList</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Method to return list of objects from argument list (throws exception if no object is given or selected).</span>
+
+<span class="sd">    :param syntax: Function to syntax definition of current command</span>
+<span class="sd">    :type syntax: OpenMaya.MSyntax (api 1.0)</span>
+<span class="sd">    :param argList: Argument list for command</span>
+<span class="sd">    :raises AttributeError: Raised when no object is selected</span>
+
+<span class="sd">    :returns: list of object names in argument list (or from current selection)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">argData</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MArgParser</span> <span class="p">(</span><span class="n">syntax</span><span class="p">,</span> <span class="n">argList</span><span class="p">)</span>
+    <span class="n">objStrings</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">argData</span><span class="o">.</span><span class="n">getObjects</span><span class="p">(</span><span class="n">objStrings</span><span class="p">)</span>
+    <span class="c1"># check if objects are selected or object is given as argument (only use first selection/argument)</span>
+    <span class="n">selList</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">orderedSelection</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">objStrings</span> <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">objStrings</span><span class="p">))</span> <span class="k">else</span> <span class="n">selList</span>
+        <span class="c1">#obj = selList[0] if (len(selList)) else objStrings[0]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s1">&#39;No object selected&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">obj</span></div>
+
+<div class="viewcode-block" id="getMesh"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getMesh">[docs]</a><span class="k">def</span> <span class="nf">getMesh</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Method to return mesh object from dag path.</span>
+
+<span class="sd">    :param obj: name of object</span>
+<span class="sd">    :type obj: string</span>
+<span class="sd">    :returns: MFnMesh object (api 2.0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># put name of object into selection list</span>
+    <span class="n">selectionLs</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MSelectionList</span><span class="p">()</span>
+    <span class="n">selectionLs</span><span class="o">.</span><span class="n">add</span> <span class="p">(</span> <span class="n">obj</span> <span class="p">)</span>
+    <span class="c1"># Get the dag path of the first item in the selection list</span>
+    <span class="n">dag</span> <span class="o">=</span> <span class="n">selectionLs</span><span class="o">.</span><span class="n">getDagPath</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># create a Mesh functionset from our dag object</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">om2</span><span class="o">.</span><span class="n">MFnMesh</span><span class="p">(</span><span class="n">dag</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="getPoints"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getPoints">[docs]</a><span class="k">def</span> <span class="nf">getPoints</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">mfnObject</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Method to return MPointArray with points of object&#39;s mesh.</span>
+
+<span class="sd">    :param obj: name of object</span>
+<span class="sd">    :type obj: string</span>
+<span class="sd">    :param mfnObject: mesh object</span>
+<span class="sd">    :type mfnObject: MFnMesh</span>
+<span class="sd">    :returns: MPointArray (api 2.0)</span>
+
+<span class="sd">    **Example:**</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pk_src import misc</span>
+<span class="sd">            cmds.polyCube()</span>
+<span class="sd">            # Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="sd">            misc.getPoints(&quot;pCube1&quot;)</span>
+<span class="sd">            # Result: maya.api.OpenMaya.MPointArray([maya.api.OpenMaya.MPoint(-0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(-0.5, -0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, -0.5, 1)]) #</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">mfnObject</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># put name of object into selection list</span>
+        <span class="n">selectionLs</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MSelectionList</span><span class="p">()</span>
+        <span class="n">selectionLs</span><span class="o">.</span><span class="n">add</span> <span class="p">(</span> <span class="n">obj</span> <span class="p">)</span>
+        <span class="c1"># Get the dag path of the first item in the selection list</span>
+        <span class="n">dag</span> <span class="o">=</span> <span class="n">selectionLs</span><span class="o">.</span><span class="n">getDagPath</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># create a Mesh functionset from our dag object</span>
+        <span class="n">mfnObject</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MFnMesh</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span>
+    <span class="c1"># get Array of MPoint-Objects --&gt; for better accessing reorganize MPoint-Array to array</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">mfnObject</span><span class="o">.</span><span class="n">getPoints</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="getFaceNormals"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getFaceNormals">[docs]</a><span class="k">def</span> <span class="nf">getFaceNormals</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Method to return all face normals. Uses the command `polyInfo &lt;http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html&gt;`_ to access the normal information as string and parse them to a numpy array</span>
+
+<span class="sd">    :param obj: name of object</span>
+<span class="sd">    :type obj: string</span>
+
+<span class="sd">    :returns: list of numpy arrays with the 3 float values for each normal</span>
+
+<span class="sd">    **Example:**</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pk_src import misc</span>
+<span class="sd">            cmds.polyCube()</span>
+<span class="sd">            # Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="sd">            misc.getFaceNormals(&quot;pCube1&quot;)</span>
+<span class="sd">            # Result: [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]] #</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">normalStrings</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">polyInfo</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fn</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">([</span> <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">20</span><span class="p">:(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)]),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">normalStrings</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="getTriangles"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getTriangles">[docs]</a><span class="k">def</span> <span class="nf">getTriangles</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">mfnObject</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Method to return all triangles in object mesh as nested list. Length of list is equal to number of triangles for the object. Each list element is another list of 3 vertex indices which refer to the point set of the current object mesh.</span>
+
+<span class="sd">    :param obj: name of object</span>
+<span class="sd">    :type obj: string</span>
+<span class="sd">    :param mfnObject: mesh object</span>
+<span class="sd">    :type mfnObject: MFnMesh</span>
+<span class="sd">    :returns: numpy.ndarray (e.g. array([[2,1,3],[2,3,4],[4,3,5],[4,5,6],...]) for a polygon cube)</span>
+
+<span class="sd">    **Example:**</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pk_src import misc</span>
+<span class="sd">            cmds.polyCube()</span>
+<span class="sd">            # Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="sd">            misc.getTriangles(&quot;pCube1&quot;)</span>
+<span class="sd">            # Result: array([[0, 1, 2],</span>
+<span class="sd">                   [2, 1, 3],</span>
+<span class="sd">                   [2, 3, 4],</span>
+<span class="sd">                   [4, 3, 5],</span>
+<span class="sd">                   [4, 5, 6],</span>
+<span class="sd">                   [6, 5, 7],</span>
+<span class="sd">                   [6, 7, 0],</span>
+<span class="sd">                   [0, 7, 1],</span>
+<span class="sd">                   [1, 7, 3],</span>
+<span class="sd">                   [3, 7, 5],</span>
+<span class="sd">                   [6, 0, 4],</span>
+<span class="sd">                   [4, 0, 2]]) #</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">mfnObject</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># put name of object into selection list</span>
+        <span class="n">selectionLs</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MSelectionList</span><span class="p">()</span>
+        <span class="n">selectionLs</span><span class="o">.</span><span class="n">add</span> <span class="p">(</span> <span class="n">obj</span> <span class="p">)</span>
+        <span class="c1"># Get the dag path of the first item in the selection list</span>
+        <span class="n">dag</span> <span class="o">=</span> <span class="n">selectionLs</span><span class="o">.</span><span class="n">getDagPath</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># create a Mesh functionset from our dag object</span>
+        <span class="n">mfnObject</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MFnMesh</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span>
+    <span class="c1"># list of triangles indices</span>
+    <span class="n">tri</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mfnObject</span><span class="o">.</span><span class="n">getTriangles</span><span class="p">()[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span> <span class="p">[</span><span class="n">tri</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">tri</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">tri</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tri</span><span class="p">))[</span><span class="mi">0</span><span class="p">::</span><span class="mi">3</span><span class="p">]]</span> <span class="p">))</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="areaTriangle"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.areaTriangle">[docs]</a><span class="k">def</span> <span class="nf">areaTriangle</span> <span class="p">(</span><span class="n">vertices</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the area of a triangle given its three vertices.</span>
+
+<span class="sd">    :param vertices: list of 3 vertices defining the triangle</span>
+<span class="sd">    :returns: float value with area of triangle</span>
+
+<span class="sd">    **Example:**</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pk_src import misc</span>
+<span class="sd">            cmds.polyCube()</span>
+<span class="sd">            # Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="sd">            points = [[p.x, p.y, p.z] for p in misc.getPoints(&quot;pCube1&quot;)]</span>
+<span class="sd">            misc.areaTriangle([points[0], points[1], points[2]])</span>
+<span class="sd">            # Result: 0.5 #</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">AB</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">AC</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># calculate area of triangle with half of the cross-product vector</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>   <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">AB</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">AC</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">AB</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">AB</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">AC</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">AB</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">AC</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">AB</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">AC</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">AB</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">AC</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="n">area</span></div>
+
+<div class="viewcode-block" id="centroidTriangle"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.centroidTriangle">[docs]</a><span class="k">def</span> <span class="nf">centroidTriangle</span> <span class="p">(</span><span class="n">vertices</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the centroid of a triangle given its three vertices.</span>
+
+<span class="sd">    :param vertices: list of 3 vertices defining the triangle</span>
+<span class="sd">    :returns: list of 3 float values representing the 3D-coordinates of the triangle&#39;s centroid</span>
+
+<span class="sd">    **Example:**</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pk_src import misc</span>
+<span class="sd">            cmds.polyCube()</span>
+<span class="sd">            # Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="sd">            points = [[p.x, p.y, p.z] for p in misc.getPoints(&quot;pCube1&quot;)]</span>
+<span class="sd">            misc.centroidTriangle([points[0], points[1], points[2]])</span>
+<span class="sd">            # Result: [-0.16666666666666666, -0.16666666666666666, 0.5] #</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="project"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.project">[docs]</a><span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Orthogonal projection of one vector onto another.</span>
+
+<span class="sd">    :param p: vector to be projected</span>
+<span class="sd">    :type p: [x,y,z]</span>
+<span class="sd">    :param v: vector where p shall be projected to</span>
+<span class="sd">    :type v: [x,y,z]</span>
+<span class="sd">    :returns: orthogonal projection vector [x,y,z]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="p">[</span><span class="n">t1</span><span class="o">*</span><span class="n">t2</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="signedVolumeOfTriangle"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.signedVolumeOfTriangle">[docs]</a><span class="k">def</span> <span class="nf">signedVolumeOfTriangle</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p3</span><span class="p">,</span> <span class="n">center</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates signed volume of given triangle (volume of tetrahedron with triangle topped off at origin (0,0,0))</span>
+
+<span class="sd">    :param p1: first point of triangle</span>
+<span class="sd">    :type p1: [x,y,z]</span>
+<span class="sd">    :param p2: second point of triangle</span>
+<span class="sd">    :type p2: [x,y,z]</span>
+<span class="sd">    :param p3: third point of triangle</span>
+<span class="sd">    :type p3: [x,y,z]</span>
+<span class="sd">    :param center: top of tetrahedron (default (0,0,0))</span>
+<span class="sd">    :type center: [x,y,z]</span>
+<span class="sd">    :returns: signed volume of tetrahedron</span>
+
+<span class="sd">    **Example:**</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pk_src import misc</span>
+<span class="sd">            cmds.polyCube()</span>
+<span class="sd">            # Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="sd">            points = [[p.x, p.y, p.z] for p in misc.getPoints(&quot;pCube1&quot;)]</span>
+<span class="sd">            misc.signedVolumeOfTriangle(points[0], points[1], points[2])</span>
+<span class="sd">            # Result: 0.08333333333333333 #</span>
+
+<span class="sd">            # Volume of whole object</span>
+<span class="sd">            triangles = misc.getTriangles(&quot;pCube1&quot;)</span>
+<span class="sd">            reduce(lambda x,y: x+y, [misc.signedVolumeOfTriangle(points[tri[0]], points[tri[1]], points[tri[2]]) for tri in triangles])</span>
+<span class="sd">            # Result: 1.0 #</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">center</span> <span class="o">!=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+        <span class="n">p3</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">center</span><span class="p">)</span>
+
+    <span class="n">v123</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">p3</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">v132</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">p2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">v213</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">p3</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">v231</span> <span class="o">=</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">p1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">v312</span> <span class="o">=</span> <span class="n">p3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">p2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">v321</span> <span class="o">=</span> <span class="n">p3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">p1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mf">6.0</span> <span class="o">*</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="n">v123</span><span class="p">,</span> <span class="o">-</span><span class="n">v132</span><span class="p">,</span> <span class="n">v312</span><span class="p">,</span> <span class="o">-</span><span class="n">v213</span><span class="p">,</span> <span class="n">v231</span><span class="p">,</span> <span class="o">-</span><span class="n">v321</span><span class="p">]))</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

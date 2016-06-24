@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>exportData &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
+    <link rel="next" title="findTubeFaces" href="pk_src.findTubeFaces.html" />
+    <link rel="prev" title="eigenvector" href="pk_src.eigenvector.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="exportdata">
+<span id="id1"></span><h1>exportData<a class="headerlink" href="#exportdata" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
+<span class="target" id="module-pk_src.exportData"></span><p>Exports the specified information for a list of objects for a whole animation. Information will be written to separate files. The file names will be the object names with a possible prefix. The files itself will contain a tab-separated table with one entry/row for each animation time step. Because the whole export runs in Maya&#8217;s main thread, there is currently no possibility to cancel already started export commands and one needs to wait until the export is finished which, depending on the length of the animation and number of selected objects, can take a few minutes. The current progress of the export always shows the active time frame and for each selected object the whole animation will run through once.
+All the information will be tracked via maya&#8217;s space locators which sometimes may show unexpected behaviour. The space locators is not directly set inside the bone model but at the normalized position, where the bone model would be after the execution of the command <a class="reference internal" href="pk_src.normalize.html#normalize"><span class="std std-ref">normalize</span></a>.</p>
+<p><strong>see also:</strong> <a class="reference internal" href="pk_src.normalize.html#normalize"><span class="std std-ref">normalize</span></a></p>
+<p><strong>command:</strong> cmds.exportData([obj], p = &#8220;&#8221;, fp = &#8220;&#8221;, cm = &#8220;centerPoint&#8221;, f = False, tm = True, wt = True, wa = True, wr = True, ao = &#8216;yzx&#8217;)</p>
+<dl class="docutils">
+<dt><strong>Args:</strong></dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">path(p):</th><td class="field-body">path to target directory</td>
+</tr>
+<tr class="field-even field"><th class="field-name">filePrefix(fp):</th><td class="field-body">prefix of all files</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">centerMethod(cm):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">string &#8216;centerPoint&#8217; (default) to use average of all points as position, &#8216;centroidPoint&#8217; to use weighted mean of triangle centroid and area as position or &#8216;centerOBB&#8217; to use center of oriented bounding box as position (only when &#8216;align&#8217; is True)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">fast(f):</th><td class="field-body">flag to indicate if covariance matrix  should use the convex hull (True) or all points (False) (default FALSE)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">writeTransformM(tm):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">flag to indicate if transform matrix shall be written to file</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">writeTranslation(wt):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">flag to indicate if translation shall be written to file</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">writeAngles(wa):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">flag to indicate if projected angles shall be written to file</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">writeRotations(wr):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">flag to indicate if rotation values shall be written to file</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">axisOrder(ao):</th><td class="field-body">string with axis ordering of eigenvectors (default &#8216;yzx&#8217;)</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">animationStart(as):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">first time step where information shall be exported (default <em>animationStartTime</em> of <strong>playbackOptions</strong>)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">animationEnd(ae):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">last time step where information shall be exported (default <em>animationEndTime</em> of <strong>playbackOptions</strong>)</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">animationStep(by):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">time difference between two animation frames (default <em>by</em> of <strong>playbackOptions</strong>)</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="pk_src.eigenvector.html" title="previous chapter">eigenvector</a></li>
+      <li>Next: <a href="pk_src.findTubeFaces.html" title="next chapter">findTubeFaces</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.exportData.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/pk_src.exportData.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

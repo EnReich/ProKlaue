@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>proKlaue &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for proKlaue</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: proKlaue</span>
+<span class="sd">    :platform: Unix, Windows</span>
+<span class="sd">    :synopsis: Master Plugin-File for Maya Autodesk</span>
+
+<span class="sd">.. moduleauthor:: Enrico Reich</span>
+
+<span class="sd">`ProKlaue &lt;http://www.zv.uni-leipzig.de/service/kommunikation/medienredaktion/nachrichten.html?ifab_modus=detail&amp;ifab_id=6004&gt;`_ is a biomechanic research project at the Faculty of Veterinary Medicine of the University of Leipzig (Saxony, Germany). The primary goal is to be able to align bone models in a repeatable and deterministic way, as well as to export comparable measures of each bone model over a whole animation for further analysis.\n</span>
+<span class="sd">To support the necessary work and to provide some useful routines inside the 3D-modelling and animation program *Maya Autodesk* the plugin *proKlaue* was written, which uses the `Python-API &lt;http://download.autodesk.com/us/maya/2011help/CommandsPython/&gt;`_ of Maya and Python-Libraries for numerical computation (`numpy &lt;http://www.numpy.org/&gt;`_, `scipy &lt;https://www.scipy.org/&gt;`_, `V-HACD &lt;https://github.com/kmammou/v-hacd&gt;`_). The Plugin introduces not only different scripts which are registered as commands inside Maya (for easier usage) but also a number of useful functions for general mesh-based tasks. There are a few additional functions like calculation of the convex hull, delaunay triangulation, intersection volume of multiple mesh objects and a cleanup process where one can extract a specific shell of a mesh (to eliminate possible entrapments inside a bone model caused by e.g. air, vessels or imaging errors).</span>
+
+<span class="sd">Requirements</span>
+<span class="sd">============</span>
+<span class="sd">- Maya Autodesk 2013 (or newer)</span>
+<span class="sd">- Numpy Package for Python2.7 (at least 0.12.0)</span>
+<span class="sd">- Scipy Package for Python2.7 (at least 0.16.0)</span>
+<span class="sd">- V-HACD Library</span>
+
+<span class="sd">Installation of Numpy &amp; Scipy for Maya</span>
+<span class="sd">--------------------------------------</span>
+<span class="sd">Maya Autodesk is shipped with its own Python2.7-Installation which does not make any use of already existing Python-Installations on the system. This includes all Python-Libraries as well. So in order to make Python-Libraries work directly inside Maya, the following steps are necessary:</span>
+
+<span class="sd">- Installation of Python 2.7 for the current system</span>
+<span class="sd">- Install *Numpy* and *Scipy* (either using the Linux install repository or the *pip*-command of python, e.g. &#39;pip install -i https://pypi.anaconda.org/carlkl/simple numpy&#39;)</span>
+<span class="sd">- Search subdirectory &#39;site-packages&#39; in Python2.7 install path</span>
+<span class="sd">- Select and copy directories *numpy* &amp; *scipy*</span>
+<span class="sd">- Go to the Maya Directory (e.g. &#39;C://Program Files/Autodesk/Maya2014/Python/lib/site-packages&#39;) and insert copied files</span>
+
+<span class="sd">After a restart of Maya the command &#39;import numpy&#39; should be usable; if not the wrong version was installed.</span>
+
+<span class="sd">Troubleshooting</span>
+<span class="sd">^^^^^^^^^^^^^^^</span>
+<span class="sd">- **command pip was not found**: navigate to the python-subdirectory *Scripts* (&#39;cd &quot;C://Program Files/Python27/Scripts/&quot;&#39;) and try again. Or insert Path &#39;Python27/Scripts&#39; to PATH-Variable</span>
+<span class="sd">- **Maya Error: module &#39;numpy&#39; not found**: the &#39;numpy&#39; directory is in the wrong Maya subdirectory. It needs to be inside Maya&#39;s Python-Directory &#39;lib/site-packages/&#39;</span>
+<span class="sd">- **Maya throws dll-Error with reference to Win32**: wrong Python-Version and consequently wrong library versions are installed. Since Maya Autodesk 2014 there is only a 64bit version. This means that Python also needs to be installed as 64bit version. It is also advisable to update &#39;pip&#39; (&#39;python -m pip install -U pip&#39;) **before** installation of the libraries. Further the packages should be installed without any optimizations to avoid conflicts.</span>
+
+<span class="sd">Installation and configuration of the Plugin</span>
+<span class="sd">============================================</span>
+<span class="sd">- Copy everything to &#39;Autodesk/maya&lt;version&gt;/bin/plug-ins&#39; so that the file &#39;proKlaue.py&#39; lies directly inside this directory</span>
+<span class="sd">- Inside Maya: Windows --&gt; Settings/Preferences --&gt; Plugi-in Manager --&gt; Refresh</span>
+<span class="sd">- Search for the entry &#39;proKlaue.py&#39; and check &#39;Loaded&#39; and &#39;Auto load&#39;</span>
+
+<span class="sd">After the plugin has been successfully loaded a new shelf tab named &#39;ProKlaue&#39; will appear.</span>
+
+<span class="sd">At last, activate the following setting: Windows --&gt; Settings/Preferences --&gt; Preferences --&gt; Setting --&gt; Selection --&gt; &#39;Track selection order&#39;</span>
+
+<span class="sd">To use the console commands directly inside Maya, one need to execute the Python command &#39;import maya.cmds as cmds&#39; after each program restart (this can be done automatically by creating a file &#39;userSetup.py&#39; inside the directory &#39;/home/user/maya/version/scripts/&#39; and write the line &#39;import maya.cmds as cmds&#39; inside). All commands can then be executed by typing &#39;cmds.&lt;cmd&gt;&#39; where *cmd* is a placeholder for the command&#39;s name.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMayaMPx</span> <span class="kn">as</span> <span class="nn">OpenMayaMPx</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">import</span> <span class="nn">maya.mel</span> <span class="kn">as</span> <span class="nn">mel</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="c1"># list with all commands (command names must have the same name as their class AND module to be loaded without errors)</span>
+<span class="n">kPluginCmdName</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;centerPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;centroidPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;normalize&quot;</span><span class="p">,</span> <span class="s2">&quot;eigenvector&quot;</span><span class="p">,</span> <span class="s2">&quot;alignObj&quot;</span><span class="p">,</span> <span class="s2">&quot;exportData&quot;</span><span class="p">,</span> <span class="s2">&quot;rangeObj&quot;</span><span class="p">,</span> <span class="s2">&quot;convexHull&quot;</span><span class="p">,</span> <span class="s2">&quot;getShells&quot;</span><span class="p">,</span> <span class="s2">&quot;findTubeFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;cleanup&quot;</span><span class="p">,</span> <span class="s2">&quot;getVolume&quot;</span><span class="p">,</span> <span class="s2">&quot;delaunay&quot;</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span> <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">]</span>
+
+<span class="c1"># current plugin version</span>
+<span class="n">pk_version</span> <span class="o">=</span> <span class="s2">&quot;0.2.8&quot;</span>
+
+<span class="c1"># Initialize the script plug-in</span>
+<div class="viewcode-block" id="initializePlugin"><a class="viewcode-back" href="../proKlaue.html#proKlaue.initializePlugin">[docs]</a><span class="k">def</span> <span class="nf">initializePlugin</span><span class="p">(</span><span class="n">mobject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialization method for Maya Autodesk plugin system; creates new shelf and registers each command.&quot;&quot;&quot;</span>
+
+    <span class="c1"># make sure the plug-in path is actually found by the python interpreter</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;plug-ins&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">)])):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s2">&quot;linux&quot;</span> <span class="ow">or</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s2">&quot;linux2&quot;</span><span class="p">):</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;bin$&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;/plug-ins&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;bin$&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">plug-ins&#39;</span><span class="p">)</span>
+
+    <span class="c1"># import all sub-modules from directory &#39;pk_src&#39; (print to console in case of error)</span>
+    <span class="k">for</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">kPluginCmdName</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">exec</span><span class="p">(</span><span class="s1">&#39;from pk_src import &#39;</span> <span class="o">+</span> <span class="n">cmd</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Could not find module &#39;pk_src.</span><span class="si">%s</span><span class="s2">&#39;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">cmd</span><span class="p">)</span>
+    <span class="c1"># force reload of modules to avoid having maya to restart every time a class definition changes</span>
+    <span class="k">for</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">kPluginCmdName</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s2">&quot;pk_src.&quot;</span> <span class="o">+</span> <span class="n">cmd</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Error reloading &quot;</span> <span class="o">+</span> <span class="n">cmd</span><span class="p">)</span>
+    <span class="c1"># get maya plugin module</span>
+    <span class="n">mplugin</span> <span class="o">=</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MFnPlugin</span><span class="p">(</span><span class="n">mobject</span><span class="p">)</span>
+    <span class="n">mplugin</span><span class="o">.</span><span class="n">setVersion</span><span class="p">(</span><span class="n">pk_version</span><span class="p">)</span>
+    <span class="c1"># get top level shelf to create new shelf layout where each command gets its own button to execute command</span>
+    <span class="n">topShelf</span> <span class="o">=</span> <span class="n">mel</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;$nul = $gShelfTopLevel&#39;</span><span class="p">)</span>
+    <span class="c1"># check if old reference still exists and delete it</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cmds</span><span class="o">.</span><span class="n">shelfLayout</span><span class="p">(</span><span class="s2">&quot;ProKlaue&quot;</span><span class="p">,</span> <span class="n">exists</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)):</span>
+        <span class="n">cmds</span><span class="o">.</span><span class="n">deleteUI</span><span class="p">(</span><span class="s2">&quot;ProKlaue&quot;</span><span class="p">,</span> <span class="n">lay</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># create new shelf layout proKlaue</span>
+    <span class="n">proKlaue</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">shelfLayout</span><span class="p">(</span><span class="s2">&quot;ProKlaue&quot;</span><span class="p">,</span> <span class="n">parent</span> <span class="o">=</span> <span class="n">topShelf</span><span class="p">)</span>
+    <span class="c1"># maya messes up the shelf optionVars shelfName1 --&gt; recreate shelf names</span>
+    <span class="n">shelves</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">shelfTabLayout</span><span class="p">(</span><span class="n">topShelf</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">tabLabelIndex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">shelf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shelves</span><span class="p">):</span>
+        <span class="n">cmds</span><span class="o">.</span><span class="n">optionVar</span><span class="p">(</span><span class="n">stringValue</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;shelfName</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">shelf</span><span class="p">)))</span>
+
+    <span class="c1"># register commands and add buttons to shelf</span>
+    <span class="k">for</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">kPluginCmdName</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">mplugin</span><span class="o">.</span><span class="n">registerCommand</span><span class="p">(</span> <span class="n">cmd</span><span class="p">,</span> <span class="nb">eval</span><span class="p">(</span><span class="n">cmd</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">cmd</span> <span class="o">+</span> <span class="s2">&quot;Creator&quot;</span><span class="p">),</span> <span class="nb">eval</span><span class="p">(</span><span class="n">cmd</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">cmd</span> <span class="o">+</span> <span class="s2">&quot;SyntaxCreator&quot;</span><span class="p">)</span> <span class="p">)</span>
+            <span class="k">exec</span><span class="p">(</span><span class="n">cmd</span> <span class="o">+</span> <span class="s2">&quot;.addButton(&#39;</span><span class="si">%s</span><span class="s2">&#39;)&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">proKlaue</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Failed to register command or to add shelf button: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">cmd</span><span class="p">)</span></div>
+
+<span class="c1"># Uninitialize the script plug-in</span>
+<div class="viewcode-block" id="uninitializePlugin"><a class="viewcode-back" href="../proKlaue.html#proKlaue.uninitializePlugin">[docs]</a><span class="k">def</span> <span class="nf">uninitializePlugin</span><span class="p">(</span><span class="n">mobject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Uninitialization method for Maya Autodesk plugin system; deregisters commands and removes shelf tab.&quot;&quot;&quot;</span>
+
+    <span class="n">mplugin</span> <span class="o">=</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MFnPlugin</span><span class="p">(</span><span class="n">mobject</span><span class="p">)</span>
+    <span class="c1"># deregister command and delete shelfTab from UI</span>
+    <span class="k">for</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">kPluginCmdName</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">mplugin</span><span class="o">.</span><span class="n">deregisterCommand</span><span class="p">(</span> <span class="n">cmd</span> <span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+            <span class="c1">#sys.stderr.write( &quot;Failed to unregister command: %s\n&quot; % cmd )</span>
+    <span class="n">cmds</span><span class="o">.</span><span class="n">deleteUI</span><span class="p">(</span><span class="s2">&quot;ProKlaue&quot;</span><span class="p">,</span> <span class="n">lay</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

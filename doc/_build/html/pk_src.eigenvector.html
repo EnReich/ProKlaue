@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>eigenvector &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
+    <link rel="next" title="exportData" href="pk_src.exportData.html" />
+    <link rel="prev" title="delaunay" href="pk_src.delaunay.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="eigenvector">
+<span id="id1"></span><h1>eigenvector<a class="headerlink" href="#eigenvector" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
+<span class="target" id="module-pk_src.eigenvector"></span><p>Calculates the eigenvectors and eigenvalues of the covariance matrix of all points in current object&#8217;s mesh. The eigenvector with the largest eigenvalue corresponds to the first axis defined in axis order, second largest to second axis and third largest to third axis. Command is used by <a class="reference internal" href="pk_src.alignObj.html#alignobj"><span class="std std-ref">alignObj</span></a> and <a class="reference internal" href="pk_src.exportData.html#exportdata"><span class="std std-ref">exportData</span></a>.
+Command only accepts &#8216;transform&#8217; nodes and will only be applied to the first object of the current selection.</p>
+<p>The calculation of the covariance matrix is defined as:</p>
+<div class="math">
+<p><img src="_images/math/cbb4f101896eec9bbcb51aed0cc1abda71ad8d6e.png" alt="C = [c_{i,j}] = \biggl[ \biggl (  \frac{1}{a^H}\sum\limits_{k=0}^{n-1}\frac{a^k}{12}(9m_i^km_j^k + p_i^kp_j^k + q_i^kq_j^k + r_i^kr_j^k) \biggr ) - m_i^Hm_j^H \biggr]"/></p>
+</div><p>where <img class="math" src="_images/math/918ff3f5deff411a650ede4ba6f7b43395993bad.png" alt="m^H = \frac {1}{a^H}\sum\limits_{k=0}^{n-1}a^km^k"/> is the centroid of the convex hull with <img class="math" src="_images/math/4429f7801eb3baabe610f21b0eb69373cac661b8.png" alt="m^i = \frac{p^i+q^i+r^i}3"/> as centroid of triangle <img class="math" src="_images/math/df0deb143e5ac127f00bd248ee8001ecae572adc.png" alt="i"/> and the surface of the convex hull <img class="math" src="_images/math/ae24ef28db28036bc7495142ebd7986d14da1906.png" alt="a^H = \sum\limits_{k=0}^{n-1}a^k"/>. The area of triangle <img class="math" src="_images/math/0b7c1e16a3a8a849bb8ffdcdbf86f65fd1f30438.png" alt="k"/> with its is vertices <img class="math" src="_images/math/42da80fdd7bc1d84ba921641262d0006b31f2cc6.png" alt="\Delta p^kq^kr^k"/> is defined as <img class="math" src="_images/math/f959d39ddf10c8ba4b2ee329f0b97ca5ca8a1dfc.png" alt="a^k"/>.</p>
+<p>The eigenvectors and eigenvalue of <img class="math" src="_images/math/afce44aa7c55836ca9345404c22fc7b599d2ed84.png" alt="C"/> are calculated using <em>numpy.linalg.eigh</em>.</p>
+<p><strong>see also:</strong> <a class="reference internal" href="pk_src.alignObj.html#alignobj"><span class="std std-ref">alignObj</span></a>, <a class="reference internal" href="pk_src.exportData.html#exportdata"><span class="std std-ref">exportData</span></a></p>
+<p><strong>command:</strong> cmds.eigenvector([obj], ao = &#8216;yzx&#8217;, f = False)</p>
+<dl class="docutils">
+<dt><strong>Args:</strong></dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object&#8217;s name inside maya</td>
+</tr>
+<tr class="field-even field"><th class="field-name">axisOrder(ao):</th><td class="field-body">string to define axis order of eigenvectors (default &#8216;yzx&#8217;)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">fast (f):</th><td class="field-body">boolean flag to indicate if calculation should use convex hull; faster but inaccurate (default False)</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">list of 9 float values corresponding to first eigenvector ([0:3]), second eigenvector ([3:6]) and third eigenvector ([6:9])</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">cmds</span><span class="o">.</span><span class="n">polyTorus</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pTorus1&#39;, u&#39;polyTorus1&#39;] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">eigenvector</span><span class="p">()</span>
+<span class="c1"># Result: [5.465342261024642e-10, -0.609576559498125, 0.7927272028323672, 1.0, 1.3544498855821985e-09, 3.520841396209562e-10, -1.288331507658196e-09, 0.7927272028323671, 0.6095765594981248] #</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="pk_src.delaunay.html" title="previous chapter">delaunay</a></li>
+      <li>Next: <a href="pk_src.exportData.html" title="next chapter">exportData</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.eigenvector.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/pk_src.eigenvector.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

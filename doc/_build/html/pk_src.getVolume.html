@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>getVolume &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
+    <link rel="next" title="intersection" href="pk_src.intersection.html" />
+    <link rel="prev" title="getShells" href="pk_src.getShells.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="getvolume">
+<span id="id1"></span><h1>getVolume<a class="headerlink" href="#getvolume" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
+<span class="target" id="module-pk_src.getVolume"></span><p>Calculates the volume of a polygonal object by using signed volumes.
+All triangle faces of the mesh will be expanded to tetrahedra which are topped off at the origin (0,0,0). Sign of the volume is determined by the direction of the origin from the current face
+(<a class="reference external" href="http://stackoverflow.com/questions/1406029/how-to-calculate-the-volume-of-a-3d-mesh-object-the-surface-of-which-is-made-up">source</a>).
+Command only accepts &#8216;transform&#8217; nodes and will only be applied to the first object of the current selection.</p>
+<p>There is a mel-command in Maya named <a class="reference external" href="http://help.autodesk.com/cloudhelp/2016/ENU/Maya-Tech-Docs/Commands/computePolysetVolume.html">computePolysetVolume</a> which calculates the volume of the selected object. The Maya command returns the exact same result (except numerical error <img class="math" src="_images/math/26cc3cf76baf4e94d6956571b24fb46ad433d0e2.png" alt="&lt; 10^{-5}"/>) as this implementation but runs roughly 100 times slower.</p>
+<dl class="docutils">
+<dt><strong>Args:</strong></dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object&#8217;s name inside maya</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">float value with volume (based on maya&#8217;s unit of length)</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">cmds</span><span class="o">.</span><span class="n">polyTorus</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pTorus1&#39;, u&#39;polyTorus1&#39;] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">getVolume</span><span class="p">()</span>
+<span class="c1"># Result: 4.774580351278257 #</span>
+<span class="c1"># MEL command</span>
+<span class="n">computePolysetVolume</span><span class="p">();</span>
+<span class="n">makeIdentity</span> <span class="o">-</span><span class="nb">apply</span> <span class="n">true</span> <span class="o">-</span><span class="n">t</span> <span class="mi">1</span> <span class="o">-</span><span class="n">r</span> <span class="mi">1</span> <span class="o">-</span><span class="n">s</span> <span class="mi">1</span> <span class="o">-</span><span class="n">n</span> <span class="mi">0</span> <span class="o">-</span><span class="n">pn</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">//</span> <span class="n">pTorus2</span> <span class="n">faces</span> <span class="o">=</span> <span class="mi">400</span> <span class="o">//</span>
+<span class="o">//</span> <span class="n">TOTAL</span> <span class="n">VOLUME</span> <span class="o">=</span> <span class="mf">4.774580265</span> <span class="o">//</span>
+<span class="o">//</span> <span class="n">Result</span><span class="p">:</span> <span class="mf">4.77458</span> <span class="o">//</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="pk_src.getShells.html" title="previous chapter">getShells</a></li>
+      <li>Next: <a href="pk_src.intersection.html" title="next chapter">intersection</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.getVolume.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/pk_src.getVolume.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

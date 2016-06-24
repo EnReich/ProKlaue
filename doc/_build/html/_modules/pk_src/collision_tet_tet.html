@@ -1,0 +1,356 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pk_src.collision_tet_tet &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pk_src.collision_tet_tet</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module to test for collision of two tetrahedra using the axis separating theorem.</span>
+<span class="sd">Based on the paper `&quot;Fast tetrahedron-tetrahedron overlap algorithm&quot; &lt;http://vcg.isti.cnr.it/Publications/2003/GPR03/fast_tetrahedron_tetrahedron_overlap_algorithm.pdf&gt;`_ by F. Ganovelli, F. Ponchio and C. Rocchini.</span>
+
+<span class="sd">Uses two lists of vertices for each tetrahedra. The class function Collision_tet_tet.check() returns True iff the two given tetrahedra actually intersect (or at least have common vertices).</span>
+<span class="sd">Before calling &#39;Collision_tet_tet.check()&#39; the two tetrahedra need to be set with the methods **setV1**, **setV2** or **setV1V2**.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<span class="n">dot</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+<span class="sd">&quot;&quot;&quot;dot product as lambda function to speed up calculations&quot;&quot;&quot;</span>
+<span class="n">cross</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+<span class="sd">&quot;&quot;&quot;cross product as lambda function to speed up calculations&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Collision_tet_tet"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet">[docs]</a><span class="k">class</span> <span class="nc">Collision_tet_tet</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize tetrahedra definitions.</span>
+
+<span class="sd">    :param tetra1: list of the 4 3D-vertices describing the first tetrahedron</span>
+<span class="sd">    :param tetra2: list of the 4 3D-vertices describing the second tetrahedron</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tetra1</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">tetra2</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># list of 3D-vertices of both tetrahedra (e.g. [[x,y,z], [x,y,z], [x,y,z], [x,y,z]])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V1</span> <span class="o">=</span> <span class="p">[[]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V2</span> <span class="o">=</span> <span class="p">[[]]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">tetra1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">V1</span> <span class="o">=</span> <span class="n">tetra1</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tetra1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">V2</span> <span class="o">=</span> <span class="n">tetra2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">masks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Collision_tet_tet.setV1"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.setV1">[docs]</a>    <span class="k">def</span> <span class="nf">setV1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">V1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set list of vertices for first tetrahedron.</span>
+
+<span class="sd">        :param V1: list of the 4 3D-vertices describing the first tetrahedron</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V1</span> <span class="o">=</span> <span class="n">V1</span></div>
+<div class="viewcode-block" id="Collision_tet_tet.setV2"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.setV2">[docs]</a>    <span class="k">def</span> <span class="nf">setV2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">V2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set list of vertices for second tetrahedron.</span>
+
+<span class="sd">        :param V2: list of the 4 3D-vertices describing the second tetrahedron</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V2</span> <span class="o">=</span> <span class="n">V2</span></div>
+<div class="viewcode-block" id="Collision_tet_tet.setV1V2"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.setV1V2">[docs]</a>    <span class="k">def</span> <span class="nf">setV1V2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">V1</span><span class="p">,</span> <span class="n">V2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set list of vertices for first and second tetrahedron.</span>
+
+<span class="sd">        :param V1: list of the 4 3D-vertices describing the first tetrahedron</span>
+<span class="sd">        :param V2: list of the 4 3D-vertices describing the second tetrahedron</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V1</span> <span class="o">=</span> <span class="n">V1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V2</span> <span class="o">=</span> <span class="n">V2</span></div>
+
+<div class="viewcode-block" id="Collision_tet_tet.separating_plane_faceA_1"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceA_1">[docs]</a>    <span class="k">def</span> <span class="nf">separating_plane_faceA_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pv1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">coord</span><span class="p">,</span> <span class="n">mask_edges</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function for tetrahedron-tetrahedron collision test:</span>
+<span class="sd">        checks if plane pv1 is a separating plane. Stores local coordinates and the mask bit mask_edges.</span>
+
+<span class="sd">        :param pv1: vectors between vertices of second tetrahedron and vertex V[0] of first tetrahedron (list of lists [[...],[...],...])</span>
+<span class="sd">        :param n: normal (list [x,y,z])</span>
+<span class="sd">        :param coord: reference to list</span>
+<span class="sd">        :param mask_edges: reference to list with single element [m]</span>
+<span class="sd">        :returns: True if pv1 is a separating plane</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mask_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">coord</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">pv1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">mask_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">|=</span> <span class="n">Collision_tet_tet</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">mask_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">15</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Collision_tet_tet.separating_plane_faceA_2"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceA_2">[docs]</a>    <span class="k">def</span> <span class="nf">separating_plane_faceA_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">coord</span><span class="p">,</span> <span class="n">mask_edges</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function for tetrahedron-tetrahedron collision test:</span>
+<span class="sd">        checks if plane v1,v2 is a separating plane. Stores local coordinates and the mask bit mask_edges.</span>
+
+<span class="sd">        :param V1: list with vertices of tetrahedron 1</span>
+<span class="sd">        :param V2: list with vertices of tetrahedron 2</span>
+<span class="sd">        :param n: normal</span>
+<span class="sd">        :param coord: reference to list</span>
+<span class="sd">        :param mask_edges: reference to list with single element [m]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mask_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">coord</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">n</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">mask_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">|=</span> <span class="n">Collision_tet_tet</span><span class="o">.</span><span class="n">shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">mask_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">15</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Collision_tet_tet.separating_plane_faceB_1"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceB_1">[docs]</a>    <span class="k">def</span> <span class="nf">separating_plane_faceB_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pv2</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">dot</span><span class="p">(</span><span class="n">pv2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">pv2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">pv2</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">pv2</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Collision_tet_tet.separating_plane_faceB_2"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_faceB_2">[docs]</a>    <span class="k">def</span> <span class="nf">separating_plane_faceB_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">dot</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Collision_tet_tet.separating_plane_edge_A"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.separating_plane_edge_A">[docs]</a>    <span class="k">def</span> <span class="nf">separating_plane_edge_A</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function for tetrahedron-tetrahedron collision: checks if edge is in the plane separating faces f0 and f1.</span>
+
+<span class="sd">        :param coord: 4x4 list of lists</span>
+<span class="sd">        :param self.masks: 4x1 list of lists with single element</span>
+<span class="sd">        :param f0: integer</span>
+<span class="sd">        :param f1: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">coord_f0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span><span class="p">[</span><span class="n">f0</span><span class="p">]</span>
+        <span class="n">coord_f1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span><span class="p">[</span><span class="n">f1</span><span class="p">]</span>
+        <span class="n">mask_f0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="n">f0</span><span class="p">]</span>
+        <span class="n">mask_f1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="n">f1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">|</span> <span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span> <span class="o">!=</span> <span class="mi">15</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">^</span> <span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">^</span> <span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># edge 0: 0--1</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="c1"># the edge of b (0,1) intersect (-,-) (see the paper)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="c1"># edge 1: 0--2</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="c1"># edge 2: 0--3</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="c1"># edge 3: 1--2</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="c1"># edge 4: 1--3</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="c1"># edge 5: 2--3</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="n">mask_f0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">8</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mask_f1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">coord_f0</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">coord_f0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">coord_f1</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="c1"># Now there exists a separating plane supported by the edge shared by f0 and f1.</span>
+        <span class="k">return</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Collision_tet_tet.check"><a class="viewcode-back" href="../../pk_src.collision_tet_tet.html#pk_src.collision_tet_tet.Collision_tet_tet.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to check if current two tetrahedra can intersect; optimized for speed.</span>
+
+<span class="sd">        :returns:  True, iff the two tetrahedra intersect (or have common vertices).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># vectors between V2 and V1[0]</span>
+        <span class="n">p_V1</span> <span class="o">=</span> <span class="p">[</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">]</span>
+        <span class="c1"># edges of V1 (at this point only edges from V1[0])</span>
+        <span class="n">e_V1</span> <span class="o">=</span> <span class="p">[</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span>
+        <span class="c1"># face normal</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># flip normal if not pointing outwards</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceA_1</span><span class="p">(</span><span class="n">p_V1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceA_1</span><span class="p">(</span><span class="n">p_V1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">1</span><span class="p">])):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_edge_A</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceA_1</span><span class="p">(</span><span class="n">p_V1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">2</span><span class="p">])):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_edge_A</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_edge_A</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">e_V1</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">e_V1</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V1</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceA_2</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">3</span><span class="p">])):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_edge_A</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_edge_A</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_edge_A</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">masks</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span> <span class="o">!=</span> <span class="mi">15</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+        <span class="c1"># From now on, if there is a separating plane, it is parallel to a face of b.</span>
+        <span class="n">p_V2</span> <span class="o">=</span> <span class="p">[</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">V1</span><span class="p">]</span>
+        <span class="n">e_V2</span> <span class="o">=</span> <span class="p">[</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Maybe flip normal</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceB_1</span><span class="p">(</span><span class="n">p_V2</span><span class="p">,</span> <span class="n">n</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="c1"># Maybe flip normal</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceB_1</span><span class="p">(</span><span class="n">p_V2</span><span class="p">,</span> <span class="n">n</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V2</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Maybe flip normal</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceB_1</span><span class="p">(</span><span class="n">p_V2</span><span class="p">,</span> <span class="n">n</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="n">e_V2</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">e_V2</span><span class="o">.</span><span class="n">append</span> <span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">V2</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">e_V2</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+
+        <span class="c1"># Maybe flip normal. Note the &lt; since e_v2[0] = V2[1] - V2[0].</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e_V2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separating_plane_faceB_2</span><span class="p">(</span><span class="n">n</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">return</span> <span class="bp">True</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

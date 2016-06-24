@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pk_src.convexHull &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pk_src.convexHull</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Command cmds.convexHull</span>
+
+<span class="sd">Calculates the convex hull of current object and creates a new transform node. The name of the new transform node will be the objects name with the suffix &#39;_ch&#39;</span>
+<span class="sd">Command only accepts &#39;transform&#39; nodes and will only be applied to the first object of the current selection.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    obj : string with object&#39;s name inside maya</span>
+
+<span class="sd">@return: name of transform node with convex hull</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">maya.OpenMayaMPx</span> <span class="kn">as</span> <span class="nn">OpenMayaMPx</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.api.OpenMaya</span> <span class="kn">as</span> <span class="nn">om2</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">ConvexHull</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">misc</span>
+
+<span class="k">class</span> <span class="nc">convexHull</span><span class="p">(</span><span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">doIt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argList</span><span class="p">):</span>
+        <span class="c1"># get only the first object from argument list</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getArgObj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No object selected!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cmds</span><span class="o">.</span><span class="n">objectType</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Object is not of type transform!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># get and cast array of MPoint-Objects to list structure (needed for ConvexHull)</span>
+        <span class="n">pSet</span> <span class="o">=</span> <span class="nb">list</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+        <span class="c1"># execute convex hull algorithm on point set of current object</span>
+        <span class="n">hull</span> <span class="o">=</span> <span class="n">ConvexHull</span><span class="p">(</span><span class="n">pSet</span><span class="p">)</span>
+        <span class="c1"># get empty mesh object</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MFnMesh</span><span class="p">()</span>
+        <span class="c1"># add each polygon (triangle) in incremental process to mesh</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">centerPoint</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">tri</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hull</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">hull</span><span class="o">.</span><span class="n">simplices</span><span class="p">]):</span>
+            <span class="c1"># triangle vertices are not ordered --&gt; make sure all normals point away from object&#39;s center</span>
+            <span class="n">v1</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tri</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">v2</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tri</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="c1"># cross product of v1 and v2 is the current face normal; if dot product with vector from origin is &gt; 0 use vertex order 0,1,2 and if dot product &lt; 0 reverse order (all triangles are defined clockwise when looking in normal direction -- counter-clockwise when looking onto front of face)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">),</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">center</span><span class="p">)</span> <span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">):</span>
+                <span class="n">mesh</span><span class="o">.</span><span class="n">addPolygon</span><span class="p">(</span> <span class="p">(</span> <span class="n">om2</span><span class="o">.</span><span class="n">MPoint</span><span class="p">(</span><span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">om2</span><span class="o">.</span><span class="n">MPoint</span><span class="p">(</span><span class="n">tri</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">om2</span><span class="o">.</span><span class="n">MPoint</span><span class="p">(</span><span class="n">tri</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="p">)</span> <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mesh</span><span class="o">.</span><span class="n">addPolygon</span><span class="p">(</span> <span class="p">(</span> <span class="n">om2</span><span class="o">.</span><span class="n">MPoint</span><span class="p">(</span><span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">om2</span><span class="o">.</span><span class="n">MPoint</span><span class="p">(</span><span class="n">tri</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">om2</span><span class="o">.</span><span class="n">MPoint</span><span class="p">(</span><span class="n">tri</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="c1"># get transform node of shapeNode and rename it to match object&#39;s name</span>
+        <span class="n">transformNode</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">listRelatives</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span> <span class="n">p</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">transformNode</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">transformNode</span><span class="p">,</span> <span class="n">obj</span> <span class="o">+</span> <span class="s2">&quot;_ch&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="n">transformNode</span><span class="p">)</span>
+
+<span class="c1"># creator function</span>
+<div class="viewcode-block" id="convexHullCreator"><a class="viewcode-back" href="../../pk_src.convexHull.html#pk_src.convexHull.convexHullCreator">[docs]</a><span class="k">def</span> <span class="nf">convexHullCreator</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">asMPxPtr</span><span class="p">(</span> <span class="n">convexHull</span><span class="p">()</span> <span class="p">)</span></div>
+
+<span class="c1"># syntax creator function</span>
+<div class="viewcode-block" id="convexHullSyntaxCreator"><a class="viewcode-back" href="../../pk_src.convexHull.html#pk_src.convexHull.convexHullSyntaxCreator">[docs]</a><span class="k">def</span> <span class="nf">convexHullSyntaxCreator</span><span class="p">():</span>
+    <span class="n">syntax</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="p">()</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">setObjectType</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kStringObjects</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">syntax</span></div>
+
+<span class="c1"># create button for shelf</span>
+<div class="viewcode-block" id="addButton"><a class="viewcode-back" href="../../pk_src.convexHull.html#pk_src.convexHull.addButton">[docs]</a><span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="n">parentShelf</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

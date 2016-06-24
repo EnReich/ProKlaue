@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pk_src.eigenvector &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pk_src.eigenvector</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Calculates the eigenvectors and eigenvalues of the covariance matrix of all points in current object&#39;s mesh. The eigenvector with the largest eigenvalue corresponds to the first axis defined in axis order, second largest to second axis and third largest to third axis. Command is used by :ref:`alignObj` and :ref:`exportData`.</span>
+<span class="sd">Command only accepts &#39;transform&#39; nodes and will only be applied to the first object of the current selection.</span>
+
+<span class="sd">**see also:** :ref:`alignObj`, :ref:`exportData`</span>
+
+<span class="sd">**command:** cmds.eigenvector([obj], ao = &#39;yzx&#39;, f = False)</span>
+
+<span class="sd">**Args:**</span>
+<span class="sd">    :obj: string with object&#39;s name inside maya</span>
+<span class="sd">    :axisOrder(ao): string to define axis order of eigenvectors (default &#39;yzx&#39;)</span>
+<span class="sd">    :fast (f): boolean flag to indicate if calculation should use convex hull; faster but inaccurate (default False)</span>
+
+<span class="sd">:returns: list of 9 float values corresponding to first eigenvector ([0:3]), second eigenvector ([3:6]) and third eigenvector ([6:9])</span>
+
+<span class="sd">**Example:**</span>
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        cmds.polyTorus()</span>
+<span class="sd">        # Result: [u&#39;pTorus1&#39;, u&#39;polyTorus1&#39;] #</span>
+<span class="sd">        cmds.eigenvector()</span>
+<span class="sd">        # Result: [5.465342261024642e-10, -0.609576559498125, 0.7927272028323672, 1.0, 1.3544498855821985e-09, 3.520841396209562e-10, -1.288331507658196e-09, 0.7927272028323671, 0.6095765594981248] #</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">maya.OpenMayaMPx</span> <span class="kn">as</span> <span class="nn">OpenMayaMPx</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.api.OpenMaya</span> <span class="kn">as</span> <span class="nn">om2</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">ConvexHull</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">misc</span>
+
+<span class="k">class</span> <span class="nc">eigenvector</span><span class="p">(</span><span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__covariance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">fast</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the 3D-covariance matrix (3x3) of the given object over all points or only of the points in convex hull (if flag &#39;fast&#39; is true)</span>
+
+<span class="sd">        :param obj: name of object as string</span>
+<span class="sd">        :param fast: if true all calculations will be done using the convex hull which is much faster but less accurate</span>
+<span class="sd">        :returns: numpy.matrix object with shape (3,3)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get and cast array of MPoint-Objects to ndarray structure (needed for ConvexHull)</span>
+        <span class="n">pSet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([[</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="n">obj</span><span class="p">)]))</span>
+        <span class="n">simplices</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">fast</span><span class="p">):</span>
+            <span class="n">simplices</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getTriangles</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># execute convex hull algorithm on point set of current object</span>
+            <span class="n">hull</span> <span class="o">=</span> <span class="n">ConvexHull</span><span class="p">(</span><span class="n">pSet</span><span class="p">)</span>
+            <span class="n">simplices</span> <span class="o">=</span> <span class="n">hull</span><span class="o">.</span><span class="n">simplices</span>
+
+        <span class="c1"># initialize array with area and centroid of each triangle (to avoid reallocation of array)</span>
+        <span class="n">area_t</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">)</span>
+        <span class="n">centroid_t</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">)</span>
+        <span class="c1"># centroid hull will calculate the centroid of the convex hull</span>
+        <span class="n">centroid_hull</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">hull_area</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="c1"># iterate over each triangle</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tri</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pSet</span><span class="p">[</span><span class="n">simplices</span><span class="p">]):</span>
+            <span class="c1"># get area and centroid of current triangle</span>
+            <span class="n">area_t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">areaTriangle</span><span class="p">(</span><span class="n">tri</span><span class="p">)</span>
+            <span class="n">hull_area</span> <span class="o">+=</span> <span class="n">area_t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">centroid_t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">centroidTriangle</span><span class="p">(</span><span class="n">tri</span><span class="p">)</span>
+            <span class="c1"># centroid of hull is weighted mean of triangle centroids</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">centroid_t</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">[</span><span class="n">area_t</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+            <span class="n">centroid_hull</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">centroid_hull</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+        <span class="n">centroid_hull</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">div</span><span class="p">,</span> <span class="n">centroid_hull</span><span class="p">,</span> <span class="p">[</span><span class="n">hull_area</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+        <span class="c1"># initialize 3x3 covariance matrix as numpy matrix object</span>
+        <span class="n">mCov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span> <span class="p">(</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">))</span> <span class="p">)</span>
+
+        <span class="c1"># calculate covariance matrix</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+                <span class="nb">sum</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">tri</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pSet</span><span class="p">[</span><span class="n">simplices</span><span class="p">]):</span>
+                    <span class="nb">sum</span> <span class="o">+=</span> <span class="n">area_t</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">/</span><span class="mi">12</span> <span class="o">*</span> <span class="p">(</span><span class="mi">9</span> <span class="o">*</span> <span class="n">centroid_t</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">centroid_t</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span>
+                            <span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">tri</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">tri</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">tri</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">tri</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+                <span class="n">mCov</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">hull_area</span> <span class="o">*</span> <span class="nb">sum</span> <span class="o">-</span> <span class="n">centroid_hull</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">centroid_hull</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">mCov</span>
+
+    <span class="k">def</span> <span class="nf">__orderBasisVectors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">eVals</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reorganizes list of basis vectors to match the given order.</span>
+
+<span class="sd">        :param m: matrix of basis vectors (column-wise)</span>
+<span class="sd">        :param eVals: the eigenvalues of the eigenvectors given in m</span>
+<span class="sd">        :param order: axis order as string with length 3 and characters x,y,z (e.g. &#39;yzx&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span>
+        <span class="c1"># find largest eigenvalue</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="n">eVals</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">eVals</span><span class="p">))</span>
+
+        <span class="c1"># swap column 0 with axis (if neccessary)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">axis</span> <span class="o">!=</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]):</span>
+            <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]],</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">axis</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+            <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">axis</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+            <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]],</span><span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">axis</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+            <span class="c1"># swap eigenvalues</span>
+            <span class="n">eVals</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]],</span><span class="n">eVals</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">eVals</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span><span class="n">eVals</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+        <span class="c1"># find second largest eigenvalue (in list without value at index 1)</span>
+        <span class="n">xAxis</span> <span class="o">=</span> <span class="n">eVals</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">eVals</span><span class="p">[:</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span> <span class="o">+</span> <span class="n">eVals</span><span class="p">[(</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">+</span><span class="mi">1</span><span class="p">):]))</span>
+
+        <span class="c1"># swap column 1 with axis (if not already in correct place)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">xAxis</span> <span class="o">!=</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]):</span>
+            <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]],</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">xAxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">xAxis</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+            <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">xAxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">xAxis</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+            <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]],</span><span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">xAxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">xAxis</span><span class="p">],</span><span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+            <span class="n">eVals</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]],</span><span class="n">eVals</span><span class="p">[</span><span class="n">xAxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">eVals</span><span class="p">[</span><span class="n">xAxis</span><span class="p">],</span><span class="n">eVals</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+
+        <span class="c1"># make sure, that the eigenvectors with the two largest eigenvalues are always pointing in positive world direction</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">i</span><span class="p">]]]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">m</span><span class="p">[:,</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">i</span><span class="p">]]]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">m</span><span class="p">[:,</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">i</span><span class="p">]]]</span>
+        <span class="c1"># third eigenvector will be cross product of first and second vector (right-handed coordinate system)</span>
+        <span class="c1"># to ensure right-handed coordinate system, the first vector needs to be lexicografic in front of second vector (xy, xz, yz)</span>
+        <span class="n">m</span><span class="p">[:,</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">2</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">m</span><span class="p">[:,</span> <span class="nb">min</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]])]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span> <span class="n">m</span><span class="p">[:,</span> <span class="nb">max</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">options</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]])]</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">doIt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argList</span><span class="p">):</span>
+        <span class="c1"># get only the first object from argument list</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getArgObj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No object selected!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cmds</span><span class="o">.</span><span class="n">objectType</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Object is not of type transform!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="c1"># parse arguments and get flags</span>
+        <span class="n">argData</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MArgParser</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)</span>
+        <span class="n">axisOrder</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentString</span><span class="p">(</span><span class="s1">&#39;axisOrder&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;axisOrder&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="s2">&quot;yzx&quot;</span>
+        <span class="n">fast</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentBool</span><span class="p">(</span><span class="s1">&#39;fast&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;fast&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
+        <span class="c1"># get eigenvectors of covariance matrix</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__covariance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fast</span><span class="p">))</span>
+        <span class="c1"># order basis vectors (biggest eigenvalue corresponds to first axis, 2nd biggest to second axis, etc)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__orderBasisVectors</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">axisOrder</span><span class="p">)</span>
+        <span class="c1"># set results via MScriptUtil (to avoid having the results converted to strings)</span>
+        <span class="n">util</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MScriptUtil</span><span class="p">()</span>
+        <span class="n">util</span><span class="o">.</span><span class="n">createFromList</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">getA1</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">MDoubleArray</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">asDoublePtr</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+
+<span class="c1"># creator function</span>
+<div class="viewcode-block" id="eigenvectorCreator"><a class="viewcode-back" href="../../pk_src.eigenvector.html#pk_src.eigenvector.eigenvectorCreator">[docs]</a><span class="k">def</span> <span class="nf">eigenvectorCreator</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">asMPxPtr</span><span class="p">(</span> <span class="n">eigenvector</span><span class="p">()</span> <span class="p">)</span></div>
+
+<span class="c1"># syntax creator function</span>
+<div class="viewcode-block" id="eigenvectorSyntaxCreator"><a class="viewcode-back" href="../../pk_src.eigenvector.html#pk_src.eigenvector.eigenvectorSyntaxCreator">[docs]</a><span class="k">def</span> <span class="nf">eigenvectorSyntaxCreator</span><span class="p">():</span>
+    <span class="n">syntax</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="p">()</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">setObjectType</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kStringObjects</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;ao&quot;</span><span class="p">,</span> <span class="s2">&quot;axisOrder&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kString</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="s2">&quot;fast&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kBoolean</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">syntax</span></div>
+
+<span class="c1"># create button for shelf</span>
+<div class="viewcode-block" id="addButton"><a class="viewcode-back" href="../../pk_src.eigenvector.html#pk_src.eigenvector.addButton">[docs]</a><span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="n">parentShelf</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

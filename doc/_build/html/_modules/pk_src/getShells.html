@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pk_src.getShells &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pk_src.getShells</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Command cmds.getShells</span>
+
+<span class="sd">Calculates all shells of current selection and returns them as list of strings. One shell are all triangles which are connected, i.e. there exists a path from each triangle to all other triangles using common edges.</span>
+<span class="sd">Command only accepts &#39;transform&#39; nodes and will only be applied to the first object of the current selection.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    obj : string with object&#39;s name inside maya</span>
+
+<span class="sd">@return: list of strings. Each string stands for one shell with a list of indices separated by comma and enclosed by &#39;[...]&#39;, e.g. [&#39;[0, 1, 2, 3, 4, ...]&#39;, &#39;[...]&#39;, &#39;[...]&#39;, ...]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">maya.OpenMayaMPx</span> <span class="kn">as</span> <span class="nn">OpenMayaMPx</span>
+<span class="kn">import</span> <span class="nn">maya.api.OpenMaya</span> <span class="kn">as</span> <span class="nn">om2</span>     <span class="c1"># needed for easier access to dag graph and vertices of object</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">import</span> <span class="nn">misc</span>
+
+<span class="k">class</span> <span class="nc">getShells</span><span class="p">(</span><span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">doIt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argList</span><span class="p">):</span>
+        <span class="c1"># get only the first object from argument list</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getArgObj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No object selected!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cmds</span><span class="o">.</span><span class="n">objectType</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Object is not of type transform!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="c1"># get parser object and use (optional) progress string as reference to UI-text to show current progress of calculation</span>
+        <span class="n">argData</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MArgParser</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)</span>
+        <span class="n">progress</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentString</span><span class="p">(</span><span class="s1">&#39;progress&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;progress&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="n">simplices</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getTriangles</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="c1"># save each shell in nested loop with indices to objects faces</span>
+        <span class="n">shells</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">shell_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># save a list of booleans to indicate if tri already belongs to a found shell</span>
+        <span class="n">triInShell</span> <span class="o">=</span> <span class="p">[</span><span class="bp">False</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">)</span>
+        <span class="c1"># remember number of triangles already in one shell (to show progress)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># loop over shells until each facet is mapped to one shell</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">shell_indices</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># get indices of all faces connected to given face (smallest index not used yet)</span>
+                <span class="c1"># method &quot;.index&quot; will raise an exception if element is not found --&gt; all triangles are in one shell --&gt; break</span>
+                <span class="n">shell_indices</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">polySelect</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ets</span> <span class="o">=</span> <span class="n">triInShell</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">False</span><span class="p">),</span> <span class="n">noSelection</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="c1"># append shell indices to nested list structure (to remember which indices belong to which shell)</span>
+            <span class="n">shells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shell_indices</span><span class="p">)</span>
+            <span class="c1"># set indices in boolean list to True</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shell_indices</span><span class="p">:</span>
+                <span class="n">triInShell</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shell_indices</span><span class="p">)</span>
+            <span class="c1"># update progress in text field (percentage of triangles already in found shells)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cmds</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">progress</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Processing... (&#39;</span> <span class="o">+</span> <span class="s2">&quot;{0:.1f}%)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">count</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">)</span>  <span class="o">*</span> <span class="mi">100</span><span class="p">)</span> <span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">%%</span><span class="s1">)&#39;</span>
+                <span class="n">cmds</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="c1"># set result (string representation of each shell&#39;s indices list)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shells</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">appendToResult</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+
+<span class="c1"># creator function</span>
+<div class="viewcode-block" id="getShellsCreator"><a class="viewcode-back" href="../../pk_src.getShells.html#pk_src.getShells.getShellsCreator">[docs]</a><span class="k">def</span> <span class="nf">getShellsCreator</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">asMPxPtr</span><span class="p">(</span> <span class="n">getShells</span><span class="p">()</span> <span class="p">)</span></div>
+
+<span class="c1"># syntax creator function</span>
+<div class="viewcode-block" id="getShellsSyntaxCreator"><a class="viewcode-back" href="../../pk_src.getShells.html#pk_src.getShells.getShellsSyntaxCreator">[docs]</a><span class="k">def</span> <span class="nf">getShellsSyntaxCreator</span><span class="p">():</span>
+    <span class="n">syntax</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="p">()</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">setObjectType</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kStringObjects</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;progress&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kString</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">syntax</span></div>
+
+<span class="c1"># create button for shelf</span>
+<div class="viewcode-block" id="addButton"><a class="viewcode-back" href="../../pk_src.getShells.html#pk_src.getShells.addButton">[docs]</a><span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="n">parentShelf</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

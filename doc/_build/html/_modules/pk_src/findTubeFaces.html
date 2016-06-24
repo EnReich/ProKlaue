@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pk_src.findTubeFaces &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pk_src.findTubeFaces</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Command cmds.findTubeFaces</span>
+
+<span class="sd">Calculates the triangles of current object with an orthogonal distance to the next surface below a given threshold, which indicates a tube/tunnel to connect two shells of the object with each other. All those triangles will be selected and can be deleted by the standard user action.</span>
+<span class="sd">Command only accepts &#39;transform&#39; nodes and will only be applied to the first object of the current selection.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    obj : string with object&#39;s name inside maya</span>
+<span class="sd">    threshold (t): threshold of orthogonal distance between triangles. All triangles closer to each other than this threshold will be selected</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">maya.OpenMayaMPx</span> <span class="kn">as</span> <span class="nn">OpenMayaMPx</span>
+<span class="kn">import</span> <span class="nn">maya.api.OpenMaya</span> <span class="kn">as</span> <span class="nn">om2</span>     <span class="c1"># needed for easier access to dag graph and vertices of object</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">misc</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">class</span> <span class="nc">findTubeFaces</span><span class="p">(</span><span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">doIt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argList</span><span class="p">):</span>
+        <span class="c1"># get only the first object from argument list</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getArgObj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No object selected!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cmds</span><span class="o">.</span><span class="n">objectType</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Object is not of type transform!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">argData</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MArgParser</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)</span>
+        <span class="n">progress</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentString</span><span class="p">(</span><span class="s1">&#39;progress&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;progress&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentDouble</span><span class="p">(</span><span class="s1">&#39;threshold&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;threshold&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mf">1e-1</span>
+
+        <span class="c1"># get mesh object, its points, simplices and normals</span>
+        <span class="n">mfnObject</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getMesh</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="c1"># use numpy array instead of normal array to use index lists --&gt; points[[1,2,3]] can be used</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([[</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="n">obj</span><span class="p">)])</span>
+        <span class="n">simplices</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getTriangles</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="n">normals</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getFaceNormals</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="c1"># build acceleration structure</span>
+        <span class="n">accel</span> <span class="o">=</span> <span class="n">mfnObject</span><span class="o">.</span><span class="n">autoUniformGridParams</span><span class="p">()</span>
+        <span class="n">tubeCandidates</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># normal and origin are needed for intersection test</span>
+        <span class="n">normal</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MFloatVector</span><span class="p">()</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">om2</span><span class="o">.</span><span class="n">MFloatPoint</span><span class="p">()</span>
+        <span class="n">tempProgress</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">)</span><span class="o">/</span><span class="mi">1000</span>
+
+        <span class="c1"># for each triangle check if nearest intersection distance is less than given threshold</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">)):</span>
+            <span class="c1"># get center of current triangle</span>
+            <span class="n">center</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">centroidTriangle</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">simplices</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+            <span class="c1"># set normal and origin</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                    <span class="n">normal</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">normals</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+                    <span class="c1"># to avoid self intersection use a centroid point a little bit away from face (in normal direction)</span>
+                    <span class="n">origin</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">center</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-5</span><span class="o">*</span><span class="n">normal</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+            <span class="c1"># method returns list ([hitPoint], hitParam, hitFace, hitTriangle, hitBary2, hitBary2)</span>
+            <span class="c1"># value hitFace equals -1 iff no intersection was found</span>
+            <span class="n">hitResult</span> <span class="o">=</span> <span class="n">mfnObject</span><span class="o">.</span><span class="n">closestIntersection</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">normal</span><span class="p">,</span> <span class="n">om2</span><span class="o">.</span><span class="n">MSpace</span><span class="o">.</span><span class="n">kObject</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="n">accelParams</span> <span class="o">=</span> <span class="n">accel</span><span class="p">)</span>
+            <span class="c1"># check for hit and save current triangle&#39;s ID</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">hitResult</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">tubeCandidates</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">obj</span> <span class="o">+</span> <span class="s2">&quot;.f[&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">])</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># set progress bar</span>
+                <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">i</span> <span class="o">%</span> <span class="n">tempProgress</span><span class="p">):</span>
+                    <span class="n">cmds</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">progress</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Processing... (&#39;</span> <span class="o">+</span> <span class="s2">&quot;{0:.1f}%)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">simplices</span><span class="p">)</span>  <span class="o">*</span> <span class="mi">100</span><span class="p">)</span> <span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">%%</span><span class="s1">)&#39;</span>
+                    <span class="n">cmds</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="n">cmds</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">tubeCandidates</span><span class="p">)</span>
+
+<span class="c1"># creator function</span>
+<div class="viewcode-block" id="findTubeFacesCreator"><a class="viewcode-back" href="../../pk_src.findTubeFaces.html#pk_src.findTubeFaces.findTubeFacesCreator">[docs]</a><span class="k">def</span> <span class="nf">findTubeFacesCreator</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">asMPxPtr</span><span class="p">(</span> <span class="n">findTubeFaces</span><span class="p">()</span> <span class="p">)</span></div>
+
+<span class="c1"># syntax creator function</span>
+<div class="viewcode-block" id="findTubeFacesSyntaxCreator"><a class="viewcode-back" href="../../pk_src.findTubeFaces.html#pk_src.findTubeFaces.findTubeFacesSyntaxCreator">[docs]</a><span class="k">def</span> <span class="nf">findTubeFacesSyntaxCreator</span><span class="p">():</span>
+    <span class="n">syntax</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="p">()</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">setObjectType</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kStringObjects</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kDouble</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;progress&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kString</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">syntax</span></div>
+
+<span class="c1"># create button for shelf</span>
+<div class="viewcode-block" id="addButton"><a class="viewcode-back" href="../../pk_src.findTubeFaces.html#pk_src.findTubeFaces.addButton">[docs]</a><span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="n">parentShelf</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

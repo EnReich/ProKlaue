@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pk_src.vhacd &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pk_src.vhacd</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Uses the V-HACD library (https://github.com/kmammou/v-hacd) to calculate an approximate convex decomposition for a number of selected or given objects. Because Maya&#39;s object representation is usually a surface mesh, it is sometimes necessary to convert the object to a solid geometry (especially when using complex objects or boolean operations). Using convex decomposition avoids problems concerning holes or non-manifold geometry. The original object will be approximated by a finite number of convex polyhedra organized in one group per original object.</span>
+
+<span class="sd">The available properties and settings of V-HACD are taken directly from the `description page &lt;http://kmamou.blogspot.de/2014/12/v-hacd-20-parameters-description.html&gt;`_.</span>
+
+<span class="sd">**command:** cmds.vhacd([obj], tmp = &#39;~/&#39;, exe = &#39;../maya/bin/plug-ins/bin/testVHACD&#39;, res = 100000, d = 20, con = 0.001, pd = 4, chd = 4, a = 0.05, b = 0.05, g = 0.0005, pca = False, m = 0, vtx = 64, vol = 0.0001)</span>
+
+<span class="sd">**Args:**</span>
+<span class="sd">    :tmp(temporaryDir): directory to save temporary created files (needs read and write access). If no path is given the temporary files will be written into the user home directory</span>
+<span class="sd">    :executable(exe): absolute path to the executable V-HACD file. If no path is given maya/bin/plug-ins/bin/testVHACD is used.</span>
+<span class="sd">    :resolution(res): maximum number of voxels generated during the voxelization stage (10.000 - 64.000.000, default: 100.000)</span>
+<span class="sd">    :depth(d): maximum number of clipping stages. During each split stage, all the model parts (with a concavity higher than the user defined threshold) are clipped according the &quot;best&quot; clipping plane (1 - 32, default: 20)</span>
+<span class="sd">    :concavity(con): maximum concavity (0.0 - 1.0, default: 0.001)</span>
+<span class="sd">    :planeDownsampling(pd): controls the granularity of the search for the &quot;best&quot; clipping plane (1 - 16, default: 4)</span>
+<span class="sd">    :convexHullDownsampling(chd): controls the precision of the convex-hull generation process during the clipping plane selection stage (1 - 16, default: 4)</span>
+<span class="sd">    :alpha(a): controls the bias toward clipping along symmetry planes (0.0 - 1.0, default: 0.05)</span>
+<span class="sd">    :beta(b): controls the bias toward clipping along revolution axes (0.0 - 1.0, default: 0.05)</span>
+<span class="sd">    :gamma(g): maximum allowed concavity during the merge stage (0.0 - 1.0, default: 0.0005)</span>
+<span class="sd">    :normalizeMesh(pca): enable/disable normalizing the mesh before applying the convex decomposition (True/False, default: False)</span>
+<span class="sd">    :mode(m): voxel-based approximate convex decomposition (0, default) or tetrahedron-based approximate convex decomposition (1)</span>
+<span class="sd">    :maxNumVerticesPerCH(vtx): controls the maximum number of triangles per convex-hull (4 - 1024, default: 64)</span>
+<span class="sd">    :minVolumePerCH(vol): controls the adaptive sampling of the generated convex-hulls (0.0 - 0.01, default: 0.0001)</span>
+
+<span class="sd">:returns: list of Maya group names where each group corresponds with the approximate convex decomposition of one object (structure is: group name | sub group | convex mesh)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">maya.OpenMayaMPx</span> <span class="kn">as</span> <span class="nn">OpenMayaMPx</span>
+<span class="kn">import</span> <span class="nn">maya.OpenMaya</span> <span class="kn">as</span> <span class="nn">om</span>
+<span class="kn">import</span> <span class="nn">maya.cmds</span> <span class="kn">as</span> <span class="nn">cmds</span>
+<span class="kn">import</span> <span class="nn">maya.mel</span> <span class="kn">as</span> <span class="nn">mel</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>   <span class="c1"># needed for system call to V-HACD</span>
+<span class="kn">import</span> <span class="nn">os</span>           <span class="c1"># needed for environment path</span>
+<span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="kn">import</span> <span class="n">find_executable</span>     <span class="c1"># needed to check for executable v-hacd</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">misc</span>
+
+<span class="k">class</span> <span class="nc">vhacd</span><span class="p">(</span><span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    test docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mayaBin</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">MPxCommand</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">readArgs</span><span class="p">(</span><span class="n">argData</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read arguments passed to command, set default values and check for plausibility (range constrictions). Returns a dictionary structure with the short names of each argument or &#39;None&#39; in case of error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get maya binary directory (needed for format parser bin/wrl2ma)</span>
+        <span class="n">vhacd</span><span class="o">.</span><span class="n">mayaBin</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;maya[^/]*/bin&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vhacd</span><span class="o">.</span><span class="n">mayaBin</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;maya/bin directory not found!&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">vhacd</span><span class="o">.</span><span class="n">mayaBin</span> <span class="o">=</span> <span class="n">vhacd</span><span class="o">.</span><span class="n">mayaBin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># read all arguments and set default values</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentString</span><span class="p">(</span><span class="s1">&#39;temporaryDir&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;directory&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
+        <span class="n">exe</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;executable&#39;</span><span class="p">)):</span>
+            <span class="n">exe</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentString</span><span class="p">(</span><span class="s1">&#39;executable&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">exe</span> <span class="o">=</span> <span class="n">vhacd</span><span class="o">.</span><span class="n">mayaBin</span> <span class="o">+</span> <span class="s2">&quot;/plug-ins/bin/testVHACD&quot;</span> <span class="k">if</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s2">&quot;linux&quot;</span> <span class="ow">or</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s2">&quot;linux2&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">vhacd</span><span class="o">.</span><span class="n">mayaBin</span> <span class="o">+</span> <span class="s2">&quot;/plug-ins/bin/testVHACD.exe&quot;</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentInt</span><span class="p">(</span><span class="s1">&#39;resolution&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;resolution&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mi">100000</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentInt</span><span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mi">20</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentDouble</span><span class="p">(</span><span class="s1">&#39;concavity&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;concavity&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mf">0.001</span>
+        <span class="n">pd</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentInt</span><span class="p">(</span><span class="s1">&#39;planeDownsampling&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;planeDownsampling&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mi">4</span>
+        <span class="n">chd</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentInt</span><span class="p">(</span><span class="s1">&#39;convexHullDownsampling&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;convexHullDownsampling&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mi">4</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentDouble</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mf">0.05</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentDouble</span><span class="p">(</span><span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;beta&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mf">0.05</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentDouble</span><span class="p">(</span><span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;gamma&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mf">0.0005</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentBool</span><span class="p">(</span><span class="s1">&#39;normalizeMesh&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;normalizeMesh&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentBool</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">vtx</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentInt</span><span class="p">(</span><span class="s1">&#39;maxNumVerticesPerCH&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;maxNumVerticesPerCH&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mi">64</span>
+        <span class="n">vol</span> <span class="o">=</span> <span class="n">argData</span><span class="o">.</span><span class="n">flagArgumentDouble</span><span class="p">(</span><span class="s1">&#39;minVolumePerCH&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">argData</span><span class="o">.</span><span class="n">isFlagSet</span><span class="p">(</span><span class="s1">&#39;minVolumePerCH&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="mf">0.0001</span>
+
+        <span class="c1"># check each range constriction and print warnings messages in case of violation</span>
+        <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c1"># check write access to given tmp-directory</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">W_OK</span><span class="p">)):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: no write access to given tmp directory (&quot;</span> <span class="o">+</span> <span class="n">tmp</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">find_executable</span><span class="p">(</span><span class="n">exe</span><span class="p">)):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: could not find V-HACD executable (&quot;</span> <span class="o">+</span> <span class="n">exe</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">&lt;</span> <span class="mi">10000</span> <span class="ow">or</span> <span class="n">res</span> <span class="o">&gt;</span> <span class="mi">64000000</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: resolution is not in range 10.000 - 64.000.000 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mi">32</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: depth is not in range 1 - 32 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">con</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">con</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: concavity is not in range 0.0 - 1.0 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">con</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pd</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">pd</span> <span class="o">&gt;</span> <span class="mi">16</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: planeDownsampling is not in range 1 - 16 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">pd</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">chd</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">chd</span> <span class="o">&gt;</span> <span class="mi">16</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: convexHullDownsampling is not in range 1 - 16 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">chd</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: alpha is not in range 0.0 - 1.0 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">b</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: beta is not in range 0.0 - 1.0 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">g</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">g</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: gamma is not in range 0.0 - 1.0 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">norm</span> <span class="o">!=</span> <span class="bp">True</span> <span class="ow">and</span> <span class="n">norm</span> <span class="o">!=</span> <span class="bp">False</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: normalizeMesh is not TRUE/FALSE (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span> <span class="o">+</span><span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">mode</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">mode</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: mode is not 0/1 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">vtx</span> <span class="o">&lt;</span> <span class="mi">4</span> <span class="ow">or</span> <span class="n">vtx</span> <span class="o">&gt;</span> <span class="mi">1024</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: maxNumVerticesPerCH is not in range 4 - 1024 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">vtx</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">vol</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">vol</span> <span class="o">&gt;</span> <span class="mf">0.01</span><span class="p">):</span>
+            <span class="n">rangeViolation</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;V-HACD: minVolumePerCH is not in range 0.0 - 0.01 (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">vol</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">rangeViolation</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;tmp&#39;</span> <span class="p">:</span> <span class="n">tmp</span><span class="p">,</span> <span class="s1">&#39;exe&#39;</span> <span class="p">:</span> <span class="n">exe</span><span class="p">,</span> <span class="s1">&#39;res&#39;</span> <span class="p">:</span> <span class="n">res</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">:</span> <span class="n">d</span><span class="p">,</span> <span class="s1">&#39;con&#39;</span> <span class="p">:</span> <span class="n">con</span><span class="p">,</span> <span class="s1">&#39;pd&#39;</span> <span class="p">:</span> <span class="n">pd</span><span class="p">,</span> <span class="s1">&#39;chd&#39;</span> <span class="p">:</span> <span class="n">chd</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span> <span class="p">:</span> <span class="n">b</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span> <span class="p">:</span> <span class="n">g</span><span class="p">,</span> <span class="s1">&#39;pca&#39;</span> <span class="p">:</span> <span class="n">norm</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span> <span class="p">:</span> <span class="n">mode</span><span class="p">,</span> <span class="s1">&#39;vtx&#39;</span> <span class="p">:</span> <span class="n">vtx</span><span class="p">,</span> <span class="s1">&#39;vol&#39;</span> <span class="p">:</span> <span class="n">vol</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">doIt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argList</span><span class="p">):</span>
+        <span class="c1"># get objects from argument list</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">selList</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getArgObj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No object selected!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># read and check arguments</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">vhacd</span><span class="o">.</span><span class="n">readArgs</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">MArgParser</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">syntax</span><span class="p">(),</span> <span class="n">argList</span><span class="p">))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">args</span> <span class="o">==</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;V-HACD: one or more arguments are invalid!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># list to hold names of convex decomposition result groups</span>
+        <span class="n">objCD</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># save processes to parallelize calculations</span>
+        <span class="n">processes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># loop over all objects: select, export and convex decomposition</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">obj</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">selList</span><span class="p">):</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">tmpFile</span> <span class="o">=</span> <span class="s1">&#39;{0}tmp{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;tmp&#39;</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span>
+            <span class="c1"># export current object as *.obj file format</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">file</span><span class="p">(</span><span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.obj&#39;</span><span class="p">,</span> <span class="n">es</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;OBJexport&quot;</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># system call to vhacd library with all parameters (use non-blocking subprocess)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;exe&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;--input&#39;</span><span class="p">,</span> <span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.obj&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;--output&#39;</span><span class="p">,</span> <span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.wrl&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;--log&#39;</span><span class="p">,</span> <span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.log&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;--resolution&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;res&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--depth&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--concavity&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;con&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--planeDownsampling&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;pd&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--convexhullDownsampling&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;chd&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--alpha&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--beta&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--gamma&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;g&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--pca&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;pca&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--mode&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">])),</span>
+                <span class="s1">&#39;--maxNumVerticesPerCH&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;vtx&#39;</span><span class="p">]),</span>
+                <span class="s1">&#39;--minVolumePerCH&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;vol&#39;</span><span class="p">]),</span>
+            <span class="p">])</span>
+            <span class="c1"># save process, current object and index</span>
+            <span class="n">processes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+        <span class="c1"># loop over all created processes, wait till each one is completed and import result into maya</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span><span class="n">obj</span><span class="p">,</span><span class="n">i</span> <span class="ow">in</span> <span class="n">processes</span><span class="p">:</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+            <span class="n">tmpFile</span> <span class="o">=</span> <span class="s1">&#39;{0}tmp{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;tmp&#39;</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span>
+            <span class="c1"># call maya script &quot;wrl2am&quot; to parse file to maya format (blocking call)</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="n">vhacd</span><span class="o">.</span><span class="n">mayaBin</span> <span class="o">+</span> <span class="s1">&#39;/wrl2ma&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;-i&#39;</span><span class="p">,</span> <span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.wrl&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;_out.ma&#39;</span><span class="p">,</span>
+            <span class="p">])</span>
+
+            <span class="c1"># use eval and mel-exclusive command &#39;catchQuiet&#39; to avoid error messages popping up during file import</span>
+            <span class="c1"># cause of error messages: (ma-parser of Maya since version 2012)</span>
+            <span class="n">mel</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39; catchQuiet (` file -ra 1 -type &quot;mayaAscii&quot; -rpr &quot;{0}_vhacd&quot; -pmt 0 -i &quot;{1}tmp{2}_out.ma&quot; `) &#39;</span> <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;tmp&#39;</span><span class="p">],</span> <span class="n">i</span><span class="p">))</span>
+            <span class="c1"># rename created group for convenience</span>
+            <span class="n">objCD</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cmds</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">obj</span> <span class="o">+</span> <span class="s1">&#39;_vhacd_root&#39;</span><span class="p">,</span> <span class="n">obj</span> <span class="o">+</span> <span class="s1">&#39;_vhacd&#39;</span><span class="p">))</span>
+            <span class="c1"># delete all temporarily created files</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">sysFile</span><span class="p">(</span><span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.mtl&#39;</span><span class="p">,</span> <span class="n">delete</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">sysFile</span><span class="p">(</span><span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.obj&#39;</span><span class="p">,</span> <span class="n">delete</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">sysFile</span><span class="p">(</span><span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.wrl&#39;</span><span class="p">,</span> <span class="n">delete</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">sysFile</span><span class="p">(</span><span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;.log&#39;</span><span class="p">,</span> <span class="n">delete</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">sysFile</span><span class="p">(</span><span class="n">tmpFile</span> <span class="o">+</span> <span class="s1">&#39;_out.ma&#39;</span><span class="p">,</span> <span class="n">delete</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># set name of groups (which hold convex decomposition) as result of command</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">objCD</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">appendToResult</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+
+<span class="c1"># creator function</span>
+<div class="viewcode-block" id="vhacdCreator"><a class="viewcode-back" href="../../pk_src.vhacd.html#pk_src.vhacd.vhacdCreator">[docs]</a><span class="k">def</span> <span class="nf">vhacdCreator</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">OpenMayaMPx</span><span class="o">.</span><span class="n">asMPxPtr</span><span class="p">(</span> <span class="n">vhacd</span><span class="p">()</span> <span class="p">)</span></div>
+
+<span class="c1"># syntax creator function</span>
+<div class="viewcode-block" id="vhacdSyntaxCreator"><a class="viewcode-back" href="../../pk_src.vhacd.html#pk_src.vhacd.vhacdSyntaxCreator">[docs]</a><span class="k">def</span> <span class="nf">vhacdSyntaxCreator</span><span class="p">():</span>
+    <span class="n">syntax</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="p">()</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">setObjectType</span><span class="p">(</span><span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kStringObjects</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;tmp&quot;</span><span class="p">,</span> <span class="s2">&quot;temporaryDir&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kString</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;exe&quot;</span><span class="p">,</span> <span class="s2">&quot;executable&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kString</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;res&quot;</span><span class="p">,</span> <span class="s2">&quot;resolution&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kLong</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;depth&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kLong</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;con&quot;</span><span class="p">,</span> <span class="s2">&quot;concavity&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kDouble</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;pd&quot;</span><span class="p">,</span> <span class="s2">&quot;planeDownsampling&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kLong</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;chd&quot;</span><span class="p">,</span> <span class="s2">&quot;convexHullDownsampling&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kLong</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kDouble</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kDouble</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;gamma&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kDouble</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;pca&quot;</span><span class="p">,</span> <span class="s2">&quot;normalizeMesh&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kBoolean</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kBoolean</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;vtx&quot;</span><span class="p">,</span> <span class="s2">&quot;maxNumVerticesPerCH&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kLong</span><span class="p">)</span>
+    <span class="n">syntax</span><span class="o">.</span><span class="n">addFlag</span><span class="p">(</span><span class="s2">&quot;vol&quot;</span><span class="p">,</span> <span class="s2">&quot;minVolumePerCH&quot;</span><span class="p">,</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="o">.</span><span class="n">kDouble</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">syntax</span></div>
+
+<span class="c1"># create button for shelf</span>
+<div class="viewcode-block" id="addButton"><a class="viewcode-back" href="../../pk_src.vhacd.html#pk_src.vhacd.addButton">[docs]</a><span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="n">parentShelf</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

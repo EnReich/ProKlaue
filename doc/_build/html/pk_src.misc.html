@@ -1,0 +1,355 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>misc &mdash; ProKlaue 0.2.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="prev" title="intersection_tet_tet" href="pk_src.intersection_tet_tet.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="misc">
+<span id="id1"></span><h1>misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#sec-misc"><span class="std std-ref">Misc</span></a></p>
+<span class="target" id="module-pk_src.misc"></span><p>Module with a few helper functions for plugin <em>ProKlaue</em>.</p>
+<dl class="function">
+<dt id="pk_src.misc.areaTriangle">
+<code class="descclassname">pk_src.misc.</code><code class="descname">areaTriangle</code><span class="sig-paren">(</span><em>vertices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#areaTriangle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.areaTriangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the area of a triangle given its three vertices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vertices</strong> &#8211; list of 3 vertices defining the triangle</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value with area of triangle</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="n">points</span> <span class="o">=</span> <span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)]</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">areaTriangle</span><span class="p">([</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+<span class="c1"># Result: 0.5 #</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.centroidTriangle">
+<code class="descclassname">pk_src.misc.</code><code class="descname">centroidTriangle</code><span class="sig-paren">(</span><em>vertices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#centroidTriangle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.centroidTriangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the centroid of a triangle given its three vertices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vertices</strong> &#8211; list of 3 vertices defining the triangle</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of 3 float values representing the 3D-coordinates of the triangle&#8217;s centroid</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="n">points</span> <span class="o">=</span> <span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)]</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">centroidTriangle</span><span class="p">([</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+<span class="c1"># Result: [-0.16666666666666666, -0.16666666666666666, 0.5] #</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.getArgObj">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getArgObj</code><span class="sig-paren">(</span><em>syntax</em>, <em>argList</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getArgObj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getArgObj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to return list of objects from argument list (throws exception if no object is given or selected).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>syntax</strong> (<em>OpenMaya.MSyntax (api 1.0)</em>) &#8211; Function to syntax definition of current command</li>
+<li><strong>argList</strong> &#8211; Argument list for command</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>AttributeError</strong> &#8211; Raised when no object is selected</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of object names in argument list (or from current selection)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.getFaceNormals">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getFaceNormals</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getFaceNormals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getFaceNormals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to return all face normals. Uses the command <a class="reference external" href="http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html">polyInfo</a> to access the normal information as string and parse them to a numpy array</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) &#8211; name of object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of numpy arrays with the 3 float values for each normal</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getFaceNormals</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
+<span class="c1"># Result: [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]] #</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.getMesh">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getMesh</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getMesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to return mesh object from dag path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) &#8211; name of object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">MFnMesh object (api 2.0)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.getPoints">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getPoints</code><span class="sig-paren">(</span><em>obj</em>, <em>mfnObject=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getPoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getPoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to return MPointArray with points of object&#8217;s mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>obj</strong> (<em>string</em>) &#8211; name of object</li>
+<li><strong>mfnObject</strong> (<em>MFnMesh</em>) &#8211; mesh object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">MPointArray (api 2.0)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
+<span class="c1"># Result: maya.api.OpenMaya.MPointArray([maya.api.OpenMaya.MPoint(-0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(-0.5, -0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, -0.5, 1)]) #</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.getTriangles">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getTriangles</code><span class="sig-paren">(</span><em>obj</em>, <em>mfnObject=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getTriangles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getTriangles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to return all triangles in object mesh as nested list. Length of list is equal to number of triangles for the object. Each list element is another list of 3 vertex indices which refer to the point set of the current object mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>obj</strong> (<em>string</em>) &#8211; name of object</li>
+<li><strong>mfnObject</strong> (<em>MFnMesh</em>) &#8211; mesh object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">numpy.ndarray (e.g. array([[2,1,3],[2,3,4],[4,3,5],[4,5,6],...]) for a polygon cube)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getTriangles</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
+<span class="c1"># Result: array([[0, 1, 2],</span>
+       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span> <span class="c1">#</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.project">
+<code class="descclassname">pk_src.misc.</code><code class="descname">project</code><span class="sig-paren">(</span><em>p</em>, <em>v</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Orthogonal projection of one vector onto another.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>p</strong> (<em>[x,y,z]</em>) &#8211; vector to be projected</li>
+<li><strong>v</strong> (<em>[x,y,z]</em>) &#8211; vector where p shall be projected to</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">orthogonal projection vector [x,y,z]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.signedVolumeOfTriangle">
+<code class="descclassname">pk_src.misc.</code><code class="descname">signedVolumeOfTriangle</code><span class="sig-paren">(</span><em>p1, p2, p3, center=[0, 0, 0]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#signedVolumeOfTriangle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.signedVolumeOfTriangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates signed volume of given triangle (volume of tetrahedron with triangle topped off at origin (0,0,0))</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>p1</strong> (<em>[x,y,z]</em>) &#8211; first point of triangle</li>
+<li><strong>p2</strong> (<em>[x,y,z]</em>) &#8211; second point of triangle</li>
+<li><strong>p3</strong> (<em>[x,y,z]</em>) &#8211; third point of triangle</li>
+<li><strong>center</strong> (<em>[x,y,z]</em>) &#8211; top of tetrahedron (default (0,0,0))</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">signed volume of tetrahedron</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="n">points</span> <span class="o">=</span> <span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)]</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">signedVolumeOfTriangle</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="c1"># Result: 0.08333333333333333 #</span>
+
+<span class="c1"># Volume of whole object</span>
+<span class="n">triangles</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">getTriangles</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
+<span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="n">misc</span><span class="o">.</span><span class="n">signedVolumeOfTriangle</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">points</span><span class="p">[</span><span class="n">tri</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">points</span><span class="p">[</span><span class="n">tri</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span> <span class="k">for</span> <span class="n">tri</span> <span class="ow">in</span> <span class="n">triangles</span><span class="p">])</span>
+<span class="c1"># Result: 1.0 #</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="pk_src.intersection_tet_tet.html" title="previous chapter">intersection_tet_tet</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.misc.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/pk_src.misc.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
