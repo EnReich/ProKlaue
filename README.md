@@ -1,4 +1,4 @@
-# ProKlaue
+# ProKlaue Version 0.2.8
 ### A Python-Plugin for Maya Autodesk to support biomechanic research
 
 ProKlaue is a biomechanic research project at the Faculty of Veterinary Medicine of the University of Leipzig (Saxony, Germany). The primary goal is to be able to align bone models in a repeatable and deterministic way, as well as to export comparable measures of each bone model over a whole animation for further analysis.
