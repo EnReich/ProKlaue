@@ -1,0 +1,58 @@
+Update 0.2.8:
+   - changed import mechanism in proKlaue.py (modules will be loaded according to the given command list and during an import error only those modules causing the error are not loaded)
+   - New commands only need to be added to list 'kPluginCmdName' (file/module name, class name and command name must be the same! Functions '<cmd>Creator' and '<cmd>SyntaxCreator' must be present!)
+   - bug fix in cmds.normalize with axisOrder-Flag
+   - new command: cmds.vhacd (approx. convex decomposition using V-HACD library)
+   - cmds.intersection now uses convex decompositions to approximate the original objects
+   - cmds.intersection raises error if volume of convex decomposition is smaller than volume of object itself
+   - introduced new documentation with sphinx
+
+Update 0.2.7:
+   - new command: cmds.intersection
+   - new classes: intersection_tet_tet and collision_tet_tet
+   - minor optimizations in cmds.centerPoint, cmds.findTubeFaces
+   - update documentation and code maintenance
+
+Update 0.2.6:
+   - new method in misc.py: project (project point p onto vector v)
+   - optimization in cmds.rangeObj: use of list comprehension and lambda-expression
+   - Bugfix in cmds.eigenvector() l. 101--105: there were cases where the object gets a negative scale value in one axis which influenced the export coordinates. Now the eigenvectors with the two largest eigenvalues will always point towards their positive world axis whereas the third eigenvector will be calculated trough the cross product (right-handed coordinate system)
+   - new command: cmds.adjustAxisDirection
+
+Update 0.2.5:
+   - command cmds.normalize: screen will be refreshed after normalization of each object
+   - fixed cmds.convexHull: all triangle vertices are now defined counterclockwise when frontface is viewed (right-handed orientation)
+   - fixed bug in cmds.convexHull where name of created transform node was not correctly returned
+   - cmds.exportData: new flag "maintain Offset" to switch between export of hierarchical joint structure (offset = 0) and export of separate objects (offset = 1)
+   - new method getFaceNormals in misc.py to parse and return list of face normals for given object
+   - new command: cmds.getVolume, cmds.delaunay
+
+HotFix 0.2.4:
+   - command cmds.exportData: bugfix in one of the export arguments
+   - command cmds.exportData: Axis angles now export angle between world space axis and corresponding local axis
+
+Version 0.2.3:
+   - command cmds.getShells: small changes in the calculation of all shells which result in faster execution
+   - transfered helper functions from cmds.eigenvector to misc.py
+   - added 'centroid' option as method to position an object (weighted mean of triangles area and centroid)
+   - new command: cmds.centroidPoint
+
+HotFix 0.2.2:
+   - Script "cleanup": deactivated cmds.closeBorder and cmds.triangulate when clicking button "select" (leads to a case where number of face normals is not equal to number of triangles which produces index error in findTubeFaces)
+
+HotFix 0.2.1
+   - small bug in cmds.rangeObj fixed
+   - Script "cleanup" will now show progress in % for searching shells (percentage of triangles already inside one found shell) and finding tubes (percentage of triangles already evaluated)
+
+Version 0.2.0:
+   - General changes of UI for buttons "norm" and "exp"
+   - Helper function now in separate file misc.py
+   - Additonal checkbox for fast calculation (with convex hull; faster but inaccurate)
+   - Button "cleanup" to find all shells of currently selected object. Shells will be listed in textbox and by selecting one shell, the triangles belonging to the shell are marked inside the object (object should be set transparent). Additionally all triangles with an orthogonal distance smaller than a certain threshold can be searched and selected (small tubes connecting two shells)
+   - new commands: cmds.cleanup, cmds.convexHull, cmds.findTubeFaces, cmds.getShells, cmds.rangeObj
+
+Initial features:
+   - New shelf-tab "ProKlaue" inside Maya
+   - Button "norm" for normalization of each selected object (translation to (0,0,0) and orientation with eigenvectors of covariance matrix)
+   - Button "exp" for export of position/rotation for each selected object and each time frame in current animation
+   - commands: cmds.alignObj, cmds.centerPoint, cmds.normalize, cmds.export, cmds.eigenvector
