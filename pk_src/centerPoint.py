@@ -2,7 +2,7 @@
 Calculates the average of all points (vertices of mesh) of current selection. This command is useful to define the origin of an arbitrary object's local coordinate frame.
 Command only accepts 'transform' nodes and will only be applied to the first object of the current selection.
 
-**see also:** :ref:`centroidPoint`
+**see also:** :ref:`centroidPoint`, :ref:`axisParallelPlane`, :ref:`normalize`, :ref:`exportData`
 
 **command:** cmds.centerPoint([obj])
 

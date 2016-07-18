@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>misc &mdash; ProKlaue 0.2.8 documentation</title>
+    <title>misc &mdash; ProKlaue 0.2.9 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.8',
+        VERSION:     '0.2.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,14 +23,16 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="ProKlaue 0.2.8 documentation" href="index.html" />
+    <link rel="top" title="ProKlaue 0.2.9 documentation" href="index.html" />
     <link rel="prev" title="intersection_tet_tet" href="pk_src.intersection_tet_tet.html" />
    
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">  
+  <body role="document">
+  
 
     <div class="document">
       <div class="documentwrapper">
@@ -166,7 +168,7 @@
 
 <dl class="function">
 <dt id="pk_src.misc.getPoints">
-<code class="descclassname">pk_src.misc.</code><code class="descname">getPoints</code><span class="sig-paren">(</span><em>obj</em>, <em>mfnObject=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getPoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getPoints" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pk_src.misc.</code><code class="descname">getPoints</code><span class="sig-paren">(</span><em>obj</em>, <em>mfnObject=None</em>, <em>worldSpace=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getPoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getPoints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to return MPointArray with points of object&#8217;s mesh.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -175,6 +177,7 @@
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>obj</strong> (<em>string</em>) &#8211; name of object</li>
 <li><strong>mfnObject</strong> (<em>MFnMesh</em>) &#8211; mesh object</li>
+<li><strong>worldSpace</strong> (<em>Boolean</em>) &#8211; should coordinates be in world space (with transform) or in local space (without transform)</li>
 </ul>
 </td>
 </tr>
@@ -188,8 +191,13 @@
 <dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
 <span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
 <span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
-<span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">xform</span><span class="p">(</span><span class="n">t</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="c1"># vertices in local space (without transform)</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">,</span> <span class="n">worldSpace</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
 <span class="c1"># Result: maya.api.OpenMaya.MPointArray([maya.api.OpenMaya.MPoint(-0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(-0.5, -0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, -0.5, 1)]) #</span>
+<span class="c1"># vertices in world space (with transform)</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">,</span> <span class="n">worldSpace</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Result: maya.api.OpenMaya.MPointArray([maya.api.OpenMaya.MPoint(1.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(2.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(1.5, 1.5, 0.5, 1), maya.api.OpenMaya.MPoint(2.5, 1.5, 0.5, 1), maya.api.OpenMaya.MPoint(1.5, 1.5, -0.5, 1), maya.api.OpenMaya.MPoint(2.5, 1.5, -0.5, 1), maya.api.OpenMaya.MPoint(1.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(2.5, 0.5, -0.5, 1)]) #</span>
 </pre></div>
 </div>
 </dd>
@@ -341,7 +349,7 @@
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
       |
       <a href="_sources/pk_src.misc.txt"

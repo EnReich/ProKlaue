@@ -1,5 +1,6 @@
 """
-Insert an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object's center point.
+Inserts an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object's center point.
+The axis parallel plane can be calculated for one single time step or a complete animation.
 
 **see also:** :ref:`centerPoint`
 
@@ -118,6 +119,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
 
         argData = om.MArgParser (self.syntax(), argList)
 
+        # get parameter and check validity
         plane = argData.flagArgumentString('plane', 0) if (argData.isFlagSet('plane')) else 'xz'
         if (plane != 'xy' and plane != 'xz' and plane != 'yz'):
             cmds.error("Invalid parameter defintion of 'plane'! Expected 'xy', 'xz' or 'yz'.")
@@ -134,7 +136,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         pToN = {'xy' : [0,0,1], 'xz' : [0,1,0], 'yz' : [1,0,0]}
         # create plane
         polyPlane = cmds.polyPlane(ax = pToN[plane], w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")
-        # initialize extrem value (for one dimension) with +-infinity
+        # initialize extreme value (for one dimension) with +-infinity
         extrema = float('inf') if (position == 'min') else -float('inf')
         # initialize center variable where plane will be move to
         center = []
@@ -143,7 +145,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         index = sum(map(operator.mul, pToN[plane], [0,1,2]))
 
         # get local vertex positions to calculate bounding box (AABB) for possibly faster calculations
-        # TODO: get minimum bounding box instead (transformation matrix from cmds.alignObj(), multiply with local vertices list, get box minMax box vertices, transform back with inverse transformation matrix)
+        # TODO: get minimum bounding box instead (transformation matrix from cmds.alignObj(), multiply with local vertices list, get minMax box vertices, transform back with inverse transformation matrix)
         points = [[p.x, p.y, p.z] for p in misc.getPoints(obj, worldSpace = 0)]
         minMax = []
         for i in range(3):
@@ -155,8 +157,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         # loop over all keyframe to search minimal/maximal position in one dimension
         for key in keyframes:
             cmds.currentTime(key)
-
-            # only use heuristic if center position is set
+            # only use heuristic if center position is set (extrema is NOT +-infinity)
             if center != []:
                 # get transform matrix of current position
                 transform = np.array(cmds.xform(q = 1, m = 1)).reshape(4,4)
@@ -167,9 +168,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
                 # if maximum is searched and NO vertices are above normal, there can be no new maximum
                 if (position == 'min' and len(aboveN) == len(box)) or (position == 'max' and len(aboveN) == 0):
                     continue
-            # get points of current object in current frame
-            #points = np.array([[p.x, p.y, p.z] for p in misc.getPoints(obj)])
-            #points = points[:,index]
+            # get points of current object in current frame and select correct dimension with index
             points = [p[index] for p in misc.getPoints(obj)]
             # temp value store to evaluate if extreme value was changed
             tmp = extrema
@@ -205,4 +204,4 @@ def axisParallelPlaneSyntaxCreator():
 
 # create button for shelf
 def addButton(parentShelf):
-    cmds.shelfButton(parent = parentShelf, i = 'pythonFamily.png', c= axisParallelPlane().createUI, imageOverlayLabel = 'APP', ann='Create axis parallel plane tangential to minimum/maximum x, y or z coordinate of all vertices in object')
+    cmds.shelfButton(parent = parentShelf, i = 'pythonFamily.png', c= axisParallelPlane().createUI, imageOverlayLabel = 'app', ann='Create axis parallel plane tangential to minimum/maximum x, y or z coordinate of all vertices in object')

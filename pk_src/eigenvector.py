@@ -53,7 +53,7 @@ class eigenvector(OpenMayaMPx.MPxCommand):
         :returns: numpy.matrix object with shape (3,3)
         """
         # get and cast array of MPoint-Objects to ndarray structure (needed for ConvexHull)
-        pSet = np.squeeze(np.asarray([[p.x, p.y, p.z] for p in misc.getPoints(obj)]))
+        pSet = np.squeeze(np.asarray([[p.x, p.y, p.z] for p in misc.getPoints(obj, worldSpace = 0)]))
         simplices = None
 
         if (not fast):

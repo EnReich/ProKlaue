@@ -50,7 +50,7 @@ def getMesh(obj):
     # create a Mesh functionset from our dag object
     return (om2.MFnMesh(dag))
 
-def getPoints(obj, mfnObject = None):
+def getPoints(obj, mfnObject = None, worldSpace = True):
     """
     Method to return MPointArray with points of object's mesh.
 
@@ -58,6 +58,8 @@ def getPoints(obj, mfnObject = None):
     :type obj: string
     :param mfnObject: mesh object
     :type mfnObject: MFnMesh
+    :param worldSpace: should coordinates be in world space (with transform) or in local space (without transform); default True
+    :type worldSpace: Boolean
     :returns: MPointArray (api 2.0)
 
     **Example:**
@@ -66,9 +68,13 @@ def getPoints(obj, mfnObject = None):
             from pk_src import misc
             cmds.polyCube()
             # Result: [u'pCube1', u'polyCube1'] #
-            misc.getPoints("pCube1")
+            cmds.xform(t = [2,1,0])
+            # vertices in local space (without transform)
+            misc.getPoints("pCube1", worldSpace = 0)
             # Result: maya.api.OpenMaya.MPointArray([maya.api.OpenMaya.MPoint(-0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(-0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(-0.5, -0.5, -0.5, 1), maya.api.OpenMaya.MPoint(0.5, -0.5, -0.5, 1)]) #
-
+            # vertices in world space (with transform)
+            misc.getPoints("pCube1", worldSpace = 1)
+            # Result: maya.api.OpenMaya.MPointArray([maya.api.OpenMaya.MPoint(1.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(2.5, 0.5, 0.5, 1), maya.api.OpenMaya.MPoint(1.5, 1.5, 0.5, 1), maya.api.OpenMaya.MPoint(2.5, 1.5, 0.5, 1), maya.api.OpenMaya.MPoint(1.5, 1.5, -0.5, 1), maya.api.OpenMaya.MPoint(2.5, 1.5, -0.5, 1), maya.api.OpenMaya.MPoint(1.5, 0.5, -0.5, 1), maya.api.OpenMaya.MPoint(2.5, 0.5, -0.5, 1)]) #
     """
     if (mfnObject is None):
         # put name of object into selection list
@@ -78,8 +84,10 @@ def getPoints(obj, mfnObject = None):
         dag = selectionLs.getDagPath(0)
         # create a Mesh functionset from our dag object
         mfnObject = om2.MFnMesh(dag)
+    # set space
+    space = om2.MSpace.kWorld if (worldSpace == 1) else om2.MSpace.kObject
     # get Array of MPoint-Objects --> for better accessing reorganize MPoint-Array to array
-    return (mfnObject.getPoints())
+    return (mfnObject.getPoints(space))
 
 def getFaceNormals(obj):
     """

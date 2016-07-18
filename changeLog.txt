@@ -1,3 +1,8 @@
+Update 0.2.9:
+   - new command: cmds.axisParallelPlane
+   - added flag "worldSpace" in misc.getPoints: return world space (with transform, default) or local space (without transform) vertices; changed cmds.eigenvector to use local space vertices to ensure correct alignment
+
+
 Update 0.2.8:
    - changed import mechanism in proKlaue.py (modules will be loaded according to the given command list and during an import error only those modules causing the error are not loaded)
    - New commands only need to be added to list 'kPluginCmdName' (file/module name, class name and command name must be the same! Functions '<cmd>Creator' and '<cmd>SyntaxCreator' must be present!)
