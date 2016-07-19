@@ -44,7 +44,8 @@
   <div class="section" id="axisparallelplane">
 <span id="id1"></span><h1>axisParallelPlane<a class="headerlink" href="#axisparallelplane" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
-<span class="target" id="module-pk_src.axisParallelPlane"></span><p>Insert an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object&#8217;s center point.</p>
+<span class="target" id="module-pk_src.axisParallelPlane"></span><p>Inserts an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object&#8217;s center point.
+The axis parallel plane can be calculated for one single time step or a complete animation.</p>
 <p><strong>see also:</strong> <a class="reference internal" href="pk_src.centerPoint.html#centerpoint"><span class="std std-ref">centerPoint</span></a></p>
 <p><strong>command:</strong> cmds.axisParallelPlane([obj], plane = &#8216;yz&#8217;, position = &#8216;min&#8217;)</p>
 <dl class="docutils">
@@ -53,9 +54,12 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">plane(p):</th><td class="field-body">string (&#8216;xy&#8217;, &#8216;xz&#8217;, &#8216;yz&#8217;) to specifiy plane direction (default &#8216;yz&#8217;)</td>
+<tr class="field-odd field"><th class="field-name">plane(p):</th><td class="field-body">string (&#8216;xy&#8217;, &#8216;xz&#8217;, &#8216;yz&#8217;) to specifiy plane direction (default &#8216;xz&#8217;)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">position(pos):</th><td class="field-body">string (&#8216;min&#8217;, &#8216;max&#8217;) to specify if plane should be positioned at the minimal/maximal vertex position concerning the plane orientation</td>
+<tr class="field-even field"><th class="field-name">position(pos):</th><td class="field-body">string (&#8216;min&#8217;, &#8216;max&#8217;) to specify if plane should be positioned at the minimal/maximal vertex position concerning the plane orientation (default &#8216;min&#8217;)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">animation(anim):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">boolean flag to indicate if plane should be calculated for whole animation (True) or only for the current time step (default False)</td>
 </tr>
 </tbody>
 </table>
@@ -80,8 +84,6 @@
 </pre></div>
 </div>
 </dd>
-<dt><strong>TODO</strong></dt>
-<dd>transformation information after getPoints()</dd>
 </dl>
 </div>
 
