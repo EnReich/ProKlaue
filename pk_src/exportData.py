@@ -172,10 +172,10 @@ class exportData(OpenMayaMPx.MPxCommand):
                     continue
 
             # get rotation matrix to align object
-            rotM = np.matrix(cmds.alignObj(obj, ao = axisOrder, f = fast))
-            rotM.shape = (4,4)
+            rotM = np.matrix(cmds.alignObj(obj, ao = axisOrder, f = fast)).reshape(4,4)
             # transpose matrix and set center point for translation
             rotM = rotM.transpose().getA1().tolist()
+
             if (centerMethod == "centerPoint"):
                 rotM[12:15] = cmds.centerPoint(obj)
             elif (centerMethod == "centroidPoint"):
@@ -186,17 +186,17 @@ class exportData(OpenMayaMPx.MPxCommand):
                 rangeZ = cmds.rangeObj(obj, axis = rotM[8:11])
                 rotM[12:15] = [0.5 * (rangeX[0] + rangeX[1]), 0.5 * (rangeY[0] + rangeY[1]), 0.5 * (rangeZ[0] + rangeZ[1])]
             # save and reset position and rotation of object to ensure that locator is inside object
-            pos = cmds.xform(obj, q = 1, translation = 1)
-            rot = cmds.xform(obj, q = 1, rotation = 1)
-            cmds.xform(obj, translation = [0,0,0], rotation = [0,0,0])
+            #pos = cmds.xform(obj, q = 1, translation = 1)
+            #rot = cmds.xform(obj, q = 1, rotation = 1)
+            #cmds.xform(obj, translation = [0,0,0], rotation = [0,0,0])
             # initialize locator and set its transformation matrix
             loc = cmds.spaceLocator()
             cmds.xform(loc, m = rotM)
             # set parent constraint with 'maintainOffset' flag (locator will follow objects transformations)
             cmds.parentConstraint(obj, loc, mo = not jointHierarchy)
             # reset position/rotation
-            cmds.xform(obj, translation = pos)
-            cmds.xform(obj, rotation = rot)
+            #cmds.xform(obj, translation = pos)
+            #cmds.xform(obj, rotation = rot)
 
             # open output stream to files and write header information
             if (wt):

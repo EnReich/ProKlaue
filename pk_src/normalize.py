@@ -143,7 +143,7 @@ class normalize(OpenMayaMPx.MPxCommand):
                 cmds.addAttr(obj, longName = 'importPosition', dataType = 'float3')
             cmds.setAttr(obj + ".importPosition", cPos[0], cPos[1], cPos[2], type = 'float3')
             # set rotation of object back to its initial value
-            cmds.xform(obj, rotation = rot)
+            #cmds.xform(obj, rotation = rot)
             # finally align object according to its eigenvectors
             if (align):
                 rot = cmds.alignObj(obj, ao = axisOrder, f = fast)
