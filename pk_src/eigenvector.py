@@ -128,7 +128,11 @@ class eigenvector(OpenMayaMPx.MPxCommand):
                 m[:, options[order[i]]] = - m[:, options[order[i]]]
         # third eigenvector will be cross product of first and second vector (right-handed coordinate system)
         # to ensure right-handed coordinate system, the first vector needs to be lexicografic in front of second vector (xy, xz, yz)
-        m[:, options[order[2]]] = np.cross(m[:, min(options[order[0]], options[order[1]])].transpose(), m[:, max(options[order[0]], options[order[1]])].transpose()).transpose()
+        # in case 'xzy' and 'zxy' the sign of the cross product needs to be inverted to avoid wrong coordinate system
+        if (abs(options[order[0]] - options[order[1]]) == 2):
+            m[:, options[order[2]]] = np.cross(m[:, max(options[order[0]], options[order[1]])].transpose(), m[:, min(options[order[0]], options[order[1]])].transpose()).transpose()
+        else:
+            m[:, options[order[2]]] = np.cross(m[:, min(options[order[0]], options[order[1]])].transpose(), m[:, max(options[order[0]], options[order[1]])].transpose()).transpose()
 
     def doIt(self, argList):
         # get only the first object from argument list

@@ -2,6 +2,7 @@
 
    adjustAxisDirection <pk_src.adjustAxisDirection>
    axisParallelPlane <pk_src.axisParallelPlane>
+   altitudeMap <pk_src.altitudeMap>
    alignObj <pk_src.alignObj>
    centerPoint <pk_src.centerPoint>
    centroidPoint <pk_src.centroidPoint>

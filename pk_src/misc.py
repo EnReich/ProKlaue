@@ -89,7 +89,7 @@ def getPoints(obj, mfnObject = None, worldSpace = True):
     # get Array of MPoint-Objects --> for better accessing reorganize MPoint-Array to array
     return (mfnObject.getPoints(space))
 
-def getFaceNormals(obj):
+def getFaceNormals(obj, worldSpace = True):
     """
     Method to return all face normals. Uses the command `polyInfo <http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html>`_ to access the normal information as string and parse them to a numpy array
 
@@ -108,7 +108,15 @@ def getFaceNormals(obj):
             # Result: [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]] #
     """
     normalStrings = cmds.polyInfo(obj, fn = 1)
-    return ([ np.fromstring(str(s[20:(len(s)-1)]), dtype = float, sep = " ").tolist() for s in normalStrings])
+    normals = [ np.fromstring(str(s[20:(len(s)-1)]), dtype = float, sep = " ").tolist() for s in normalStrings]
+    # if normals should be in world space coordinates, one needs to apply the transformation of the object
+    if (worldSpace):
+        # get transformation matrix and cut away 4th row/column
+        transform = np.matrix(cmds.xform(obj, q = 1, m = 1)).reshape(4,4)[:-1]
+        transform = transform.transpose()[:-1].transpose()
+        # multiply normals with transform, discard 4th value and organize them as list of 3 floats each
+        normals = [(n * transform).tolist()[0] for n in normals]
+    return (normals)
 
 def getTriangles(obj, mfnObject = None):
     """
@@ -195,9 +203,7 @@ def centroidTriangle (vertices):
             misc.centroidTriangle([points[0], points[1], points[2]])
             # Result: [-0.16666666666666666, -0.16666666666666666, 0.5] #
     """
-    t1 = map(operator.add, vertices[0], vertices[1])
-    t2 = map(operator.add, t1, vertices[2])
-    return map(operator.mul, t2, [1.0/3.0]*3)
+    return map(operator.mul, reduce(lambda x,y: map(operator.add, x, y), vertices), [1.0/3.0]*3)
 
 def project(p, v):
     """

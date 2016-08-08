@@ -1,8 +1,8 @@
 """
 Inserts an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object's center point.
-The axis parallel plane can be calculated for one single time step or a complete animation.
+The axis parallel plane can be calculated for one single time step or a complete animation. In case of a parent node with the type 'joint' the keyframes will be automatically catched (whether the transform node or joint node is selected, the behaviour will be the same). If the first keyframe in the animation is 'separated' from all other frames, i.e. the frame distance from first to second is much larger than from second to third frame, this first keyframe will be ignored in the calculation of the axis parallel plane.
 
-**see also:** :ref:`centerPoint`
+**see also:** :ref:`centerPoint`, :ref:`altitudeMap`
 
 **command:** cmds.axisParallelPlane([obj], plane = 'yz', position = 'min')
 
@@ -64,6 +64,13 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         else:
             cmds.textField(axisParallelPlane.tf_obj, e = 1, text = "no object selected!")
 
+    def __exportCallback(*pArgs):
+        selFile = cmds.fileDialog2(fm = 0, ff = '*.txt', cap = 'specify export file')[0]
+        if (selFile[-1] == '*'):
+            selFile = selFile[0:-2]
+        options = {'file':selFile}
+        cmds.altitudeMap(**options)
+
     def createUI (self, *pArgs):
         if cmds.window(self.windowID, exists = True):
             cmds.deleteUI(self.windowID)
@@ -73,9 +80,9 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         cmds.window(self.windowID, title = 'axisParallelPlaneUI', sizeable = True, resizeToFitChildren = True)
         cmds.columnLayout(columnAttach = ('both', 5), columnWidth = 260)
 
-        cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (90, 170), columnAlign2 = ("right", "center") )
+        cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (70, 160), columnAlign2 = ("right", "center") )
 
-        cmds.text(label = 'current object:', width = 80, align = 'right')
+        cmds.text(label = 'current object:', width = 70, align = 'right')
         axisParallelPlane.tf_obj = cmds.textField(text = 'no object selected!', ed = 0, width = 150)
         selList = cmds.ls(orderedSelection = 1)
         if (len (selList) > 0):
@@ -100,11 +107,12 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
 
         cmds.setParent('..')
 
-        animation = cmds.checkBox(label = 'animation', width = 250)
+        animation = cmds.checkBox(label = 'animation', width = 250, ann = "Use minimum position over all keyframes")
         cmds.setParent('..')
 
-        cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (125, 125), columnAlign2 = ("center", "center"))
+        cmds.rowLayout(numberOfColumns = 3, columnWidth3 = (80, 80, 80), columnAlign3 = ("center", "center", "center"))
         cmds.button(label = 'create', command = partial(self.__createCallback, plane, position, animation) , width = 80)
+        cmds.button(label = 'export', command = self.__exportCallback, width = 80)
         cmds.button(label = 'cancel', command = self.__cancelCallback, width = 80)
         #cmds.window("wNormalize", e = 1, wh = [250,120])
         cmds.showWindow()
@@ -113,6 +121,20 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         # get objects from argument list
         try:
             obj = misc.getArgObj(self.syntax(), argList)[0]
+            # if joint is selected, get child node as object
+            if (cmds.objectType(obj) == "joint"):
+                # find transform node(s) in joint
+                obj = [x for x in cmds.listRelatives() if cmds.objectType(x) == "transform"]
+                if (len(obj) == 1):
+                    obj = obj[0]
+                else:
+                    cmds.warning("There are multiple transform nodes grouped under joint! ", obj)
+                    return
+            # if object under joint is selected, change selection to parent node for keyframe information
+            parent = cmds.listRelatives(p = 1)
+
+            if (parent != None and cmds.objectType(parent) == "joint"):
+                cmds.select(parent)
         except:
             cmds.warning("No object selected!")
             return
@@ -131,13 +153,26 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         # get animation flag
         animation = argData.flagArgumentBool('anim', 0) if (argData.isFlagSet('anim')) else False
         # if animation flag is set, get list of all keyframes (else set to current keyframe)
-        keyframes = list(set(cmds.keyframe(q = 1))) if (animation) else [cmds.currentTime(q = 1)]
+        keyframes = sorted(list(set(cmds.keyframe(q = 1))) if (animation) else [cmds.currentTime(q = 1)])
+        if (len(keyframes) == 1 and animation):
+            cmds.warning("There seems to be no keyframe information, but animation flag is true!")
+            return
+        # sometimes first keyframe is frame 0 (from normalization) but this is NOT the start of the animation
+        # check the frame distances between the first few frames and decide whether or not to begin at frame 0
+        if (len(keyframes) > 3):
+            tmp = map(operator.sub, keyframes[1:4], keyframes[0:3])
+            if (tmp[0] > tmp[1] + tmp[2]):
+                keyframes = keyframes[1:]
+
         # dictionary to link string of plane orientation to normal used for maya object definition
         pToN = {'xy' : [0,0,1], 'xz' : [0,1,0], 'yz' : [1,0,0]}
-        # create plane
-        polyPlane = cmds.polyPlane(ax = pToN[plane], w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")
         # initialize extreme value (for one dimension) with +-infinity
         extrema = float('inf') if (position == 'min') else -float('inf')
+        # create plane
+        if (extrema > 0):
+            polyPlane = cmds.polyPlane(ax = pToN[plane], w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")
+        else:
+            polyPlane = cmds.polyPlane(ax = map(operator.mul, pToN[plane], [-1.0]*3), w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")
         # initialize center variable where plane will be move to
         center = []
         extremeKey = []
@@ -186,6 +221,8 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
 
         cmds.xform(polyPlane, t = center)
         cmds.makeIdentity(polyPlane, a = 1, t = 1)
+
+        cmds.select(polyPlane, obj)
 
         self.setResult(polyPlane)
 

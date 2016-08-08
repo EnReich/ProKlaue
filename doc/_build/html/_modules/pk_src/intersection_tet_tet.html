@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pk_src.intersection_tet_tet &mdash; ProKlaue 0.2.9 documentation</title>
+    <title>pk_src.intersection_tet_tet &mdash; ProKlaue 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.9',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="ProKlaue 0.2.9 documentation" href="../../index.html" />
+    <link rel="top" title="ProKlaue 0.3.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -45,9 +45,9 @@
 <span class="sd">The second tetrahedron will be clipped against the first tetrahedron with a simplified sutherland-hodgman approach.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
-<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">ConvexHull</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="k">import</span> <span class="n">ConvexHull</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">operator</span>
 
@@ -61,7 +61,7 @@
 <span class="n">centroid_tri</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">div</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">),</span> <span class="n">v3</span><span class="p">),</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
 <span class="sd">&quot;&quot;&quot;centroid of tri (3 3D-points) as lambda function to speed up calculation&quot;&quot;&quot;</span>
 
-<span class="n">EPSILON</span> <span class="o">=</span> <span class="mf">10e-10</span>
+<span class="n">EPSILON</span> <span class="o">=</span> <span class="mi">10</span><span class="n">e</span><span class="o">-</span><span class="mi">10</span>
 
 <div class="viewcode-block" id="intersection_tet_tet"><a class="viewcode-back" href="../../pk_src.intersection_tet_tet.html#pk_src.intersection_tet_tet.intersection_tet_tet">[docs]</a><span class="k">class</span> <span class="nc">intersection_tet_tet</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -70,17 +70,17 @@
 <span class="sd">    :param tetra1: list of the 4 3D-vertices describing the first tetrahedron</span>
 <span class="sd">    :param tetra2: list of the 4 3D-vertices describing the second tetrahedron</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tetra1</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">tetra2</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tetra1</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tetra2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="c1"># tetrahedra point definition</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">V1</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">V2</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># normal vectors of faces belonging to first tetrahedron (there are always exactly 4 face normals)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">Normals</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="mi">4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Normals</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span><span class="o">*</span><span class="mi">4</span>
         <span class="c1"># 3d points of centroid on each face (there are always exactly 4 face centroids)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">Centroids</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="mi">4</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">tetra1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Centroids</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span><span class="o">*</span><span class="mi">4</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tetra1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">setV1</span><span class="p">(</span><span class="n">tetra1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">tetra2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tetra2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">V2</span> <span class="o">=</span> <span class="n">tetra2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">masks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="nb">int</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coord_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
@@ -191,7 +191,7 @@
             <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">):</span>
                 <span class="k">return</span> <span class="p">[]</span>
             <span class="c1"># get center of convex polygon to test normal direction</span>
-            <span class="n">center</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">div</span><span class="p">,</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">vertices</span><span class="p">),</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">))]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
+            <span class="n">center</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">div</span><span class="p">,</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">vertices</span><span class="p">),</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">))]</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span>
             <span class="c1"># check order of vertices for each triangle and insert them into output list</span>
             <span class="k">for</span> <span class="n">tri</span> <span class="ow">in</span> <span class="n">hull</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">hull</span><span class="o">.</span><span class="n">simplices</span><span class="p">]:</span>
                 <span class="n">v1</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="n">tri</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tri</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -236,7 +236,7 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
     </div>

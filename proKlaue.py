@@ -36,7 +36,7 @@ Troubleshooting
 Installation and configuration of the Plugin
 ============================================
 - Copy everything to 'Autodesk/maya<version>/bin/plug-ins' so that the file 'proKlaue.py' lies directly inside this directory
-- Inside Maya: Windows --> Settings/Preferences --> Plugi-in Manager --> Refresh
+- Inside Maya: Windows --> Settings/Preferences --> Plugin-in Manager --> Refresh
 - Search for the entry 'proKlaue.py' and check 'Loaded' and 'Auto load'
 
 After the plugin has been successfully loaded a new shelf tab named 'ProKlaue' will appear.
@@ -54,7 +54,7 @@ import sys
 import re
 
 # list with all commands (command names must have the same name as their class AND module to be loaded without errors)
-kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "alignObj", "exportData", "rangeObj", "convexHull", "getShells", "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection", "adjustAxisDirection", "vhacd", "axisParallelPlane"]
+kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "alignObj", "exportData", "rangeObj", "convexHull", "getShells", "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection", "adjustAxisDirection", "vhacd", "axisParallelPlane", "altitudeMap"]
 
 # current plugin version
 pk_version = "0.2.8"

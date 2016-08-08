@@ -10,6 +10,7 @@ All the information will be tracked via maya's space locators which sometimes ma
     :path(p): path to target directory
     :filePrefix(fp): prefix of all files
     :centerMethod(cm): string 'centerPoint' (default) to use average of all points as position, 'centroidPoint' to use weighted mean of triangle centroid and area as position or 'centerOBB' to use center of oriented bounding box as position (only when 'align' is True)
+    :jointHierarchy(jh): flag to indicate if objects are organized in an hierarchy (True) or are completely independent of each other (default False)
     :fast(f): flag to indicate if covariance matrix  should use the convex hull (True) or all points (False) (default FALSE)
     :writeTransformM(tm): flag to indicate if transform matrix shall be written to file
     :writeTranslation(wt): flag to indicate if translation shall be written to file
@@ -152,15 +153,16 @@ class exportData(OpenMayaMPx.MPxCommand):
         wr = argData.flagArgumentBool('writeRotations', 0) if (argData.isFlagSet('writeRotations')) else True
         centerMethod = argData.flagArgumentString('centerMethod', 0) if (argData.isFlagSet('centerMethod')) else "centerPoint"
         fast = argData.flagArgumentBool('fast', 0) if (argData.isFlagSet('fast')) else False
-        jointHierarchy = argData.flagArgumentBool('jointHierarchy', 0) if (argData.isFlagSet('jointHierarchy')) else True
+        jointHierarchy = argData.flagArgumentBool('jointHierarchy', 0) if (argData.isFlagSet('jointHierarchy')) else False
 
         # get playback options and set current time step to beginning of animation
         start = argData.flagArgumentDouble('animationStart', 0) if argData.isFlagSet('animationStart') else cmds.playbackOptions(q = 1, animationStartTime = 1)
         end = argData.flagArgumentDouble('animationEnd', 0) if argData.isFlagSet('animationEnd') else cmds.playbackOptions(q = 1, animationEndTime = 1)
         step = argData.flagArgumentDouble('by', 0) if argData.isFlagSet('by') else cmds.playbackOptions(q = 1, by = 1)
-        cmds.currentTime(start)
 
         for obj in selList:
+            # set time to first animated keyframe for current object
+            cmds.currentTime(min(cmds.keyframe(obj, q = 1)))
             # user can call command with joint as argument iff actual object is direct child of joint
             if (cmds.objectType(obj) == "joint"):
                 # find transform node(s) in joint

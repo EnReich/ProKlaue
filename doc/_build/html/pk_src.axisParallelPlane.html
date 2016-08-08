@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>axisParallelPlane &mdash; ProKlaue 0.2.9 documentation</title>
+    <title>axisParallelPlane &mdash; ProKlaue 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.9',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,9 +23,9 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="ProKlaue 0.2.9 documentation" href="index.html" />
+    <link rel="top" title="ProKlaue 0.3.0 documentation" href="index.html" />
     <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
-    <link rel="next" title="alignObj" href="pk_src.alignObj.html" />
+    <link rel="next" title="altitudeMap" href="pk_src.altitudeMap.html" />
     <link rel="prev" title="adjustAxisDirection" href="pk_src.adjustAxisDirection.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -45,8 +45,8 @@
 <span id="id1"></span><h1>axisParallelPlane<a class="headerlink" href="#axisparallelplane" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
 <span class="target" id="module-pk_src.axisParallelPlane"></span><p>Inserts an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object&#8217;s center point.
-The axis parallel plane can be calculated for one single time step or a complete animation.</p>
-<p><strong>see also:</strong> <a class="reference internal" href="pk_src.centerPoint.html#centerpoint"><span class="std std-ref">centerPoint</span></a></p>
+The axis parallel plane can be calculated for one single time step or a complete animation. In case of a parent node with the type &#8216;joint&#8217; the keyframes will be automatically catched (whether the transform node or joint node is selected, the behaviour will be the same). If the first keyframe in the animation is &#8216;separated&#8217; from all other frames, i.e. the frame distance from first to second is much larger than from second to third frame, this first keyframe will be ignored in the calculation of the axis parallel plane.</p>
+<p><strong>see also:</strong> <a class="reference internal" href="pk_src.centerPoint.html#centerpoint"><span class="std std-ref">centerPoint</span></a>, <a class="reference internal" href="pk_src.altitudeMap.html#altitudemap"><span class="std std-ref">altitudeMap</span></a></p>
 <p><strong>command:</strong> cmds.axisParallelPlane([obj], plane = &#8216;yz&#8217;, position = &#8216;min&#8217;)</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
@@ -98,7 +98,7 @@ The axis parallel plane can be calculated for one single time step or a complete
   <li><a href="index.html">Documentation overview</a><ul>
   <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
       <li>Previous: <a href="pk_src.adjustAxisDirection.html" title="previous chapter">adjustAxisDirection</a></li>
-      <li>Next: <a href="pk_src.alignObj.html" title="next chapter">alignObj</a></li>
+      <li>Next: <a href="pk_src.altitudeMap.html" title="next chapter">altitudeMap</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -128,7 +128,7 @@ The axis parallel plane can be calculated for one single time step or a complete
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
       |

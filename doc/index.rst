@@ -11,7 +11,6 @@ Welcome to ProKlaue's documentation!
 
 .. automodule:: proKlaue
 
-
 .. _commands:
 
 Commands

@@ -1,7 +1,12 @@
+Update 0.3.0:
+   - new command: cmds.altitudeMap
+   - Button for altitudeMap data export directly from UI of axisParallelPlane 
+
 Update 0.2.9:
    - new command: cmds.axisParallelPlane
-   - added flag "worldSpace" in misc.getPoints: return world space (with transform, default) or local space (without transform) vertices; changed cmds.eigenvector to use local space vertices to ensure correct alignment
+   - added flag "worldSpace" in misc.getPoints and misc.getFaceNormals: return world space (with transform, default) or local space (without transform) vertices; changed cmds.eigenvector to use local space vertices to ensure correct alignment
    - normalize, exportData and centerPoint will now use world space coordinates (instead of local space)
+   - bug-fix in cmds.eigenvector(): in cases 'xzy'/'zxy' the last axis pointed in wrong direction
 
 Update 0.2.8:
    - changed import mechanism in proKlaue.py (modules will be loaded according to the given command list and during an import error only those modules causing the error are not loaded)
