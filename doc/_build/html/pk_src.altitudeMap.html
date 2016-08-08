@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>altitudeMap &mdash; ProKlaue 0.3.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="ProKlaue 0.3.0 documentation" href="index.html" />
+    <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
+    <link rel="next" title="alignObj" href="pk_src.alignObj.html" />
+    <link rel="prev" title="axisParallelPlane" href="pk_src.axisParallelPlane.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="altitudemap">
+<span id="id1"></span><h1>altitudeMap<a class="headerlink" href="#altitudemap" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
+<span class="target" id="module-pk_src.altitudeMap"></span><p>Uses an axis parallel plane (app) and the object model connected to this plane to create an altitude map, i.e. a set of perpendicular distances from the faces of the object to the plane. The distance is measures from the plane to the centroid of each face. A ray is constructed from each of the faces to the plane and only those faces without any other intersection than the plane (only faces directly visible from the plane) are considered part of the altitude map.
+Points with a larger distance than a given threshold will be discarded.</p>
+<p><strong>see also:</strong> <a class="reference internal" href="pk_src.axisParallelPlane.html#axisparallelplane"><span class="std std-ref">axisParallelPlane</span></a></p>
+<p><strong>command:</strong> cmds.altitudeMap([obj, plane], file = &#8220;&#8221;, threshold = 10.0)</p>
+<dl class="docutils">
+<dt><strong>Args:</strong></dt>
+<dd><table class="first last docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">file(f):</th><td class="field-body">path to save altitude map to ASCII-file; if string is empty, no data will be written</td>
+</tr>
+<tr class="field-even field"><th class="field-name">threshold(t):</th><td class="field-body">threshold of maximum distance from plane; all points with larger distance will be discarded (default 10.0)</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">list of centroid points of faces, their indices in the mesh vtx-list and their distances to the plane, i.e. &#8216;[[n_1, x_1, y_1, z_1, d_1], [n_2, x_2, y_2, z_2, d_2], ...]&#8217;</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">xform</span><span class="p">(</span><span class="n">ro</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">axisParallelPlane</span><span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="s1">&#39;xz&#39;</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="s1">&#39;min&#39;</span><span class="p">)</span>
+<span class="c1"># Result: [u&#39;pCube1_app&#39;, u&#39;polyPlane1&#39;] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyTriangulate</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
+<span class="c1"># Result: [u&#39;polyTriangulate1&#39;] #</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">altitudeMap</span><span class="p">(</span><span class="s1">&#39;pCube1&#39;</span><span class="p">,</span> <span class="s1">&#39;pCube1_app&#39;</span><span class="p">)</span>
+<span class="c1"># Result: [[4, -0.3983890351647723, 0.0597721458595899, -0.3785089467837944, 0.7449914933365491],</span>
+<span class="c1"># [5, 0.019866728794979728, -0.07780045709588722, -0.5469076316145288, 0.607418890381072],</span>
+<span class="c1"># [6, 0.021764807311746848, -0.5225944965679014, -0.1788206947620432, 0.16262485090905787],</span>
+<span class="c1"># [7, 0.4192048032181355, -0.3599696226914842, 0.01564478359550836, 0.32524972478547504],</span>
+<span class="c1"># [10, -0.3964909566480051, -0.3850218936124242, -0.010422009931308688, 0.300197453864535],</span>
+<span class="c1"># [11, -0.4173067247013684, -0.08482441678052995, 0.35244215325697736, 0.6003949306964292]] # </span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="pk_src.axisParallelPlane.html" title="previous chapter">axisParallelPlane</a></li>
+      <li>Next: <a href="pk_src.alignObj.html" title="next chapter">alignObj</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pk_src.altitudeMap.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Enrico Reich.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/pk_src.altitudeMap.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
