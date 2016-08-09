@@ -112,7 +112,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
 
         cmds.rowLayout(numberOfColumns = 3, columnWidth3 = (80, 80, 80), columnAlign3 = ("center", "center", "center"))
         cmds.button(label = 'create', command = partial(self.__createCallback, plane, position, animation) , width = 80)
-        cmds.button(label = 'export', command = self.__exportCallback, width = 80)
+        cmds.button(label = 'export', command = self.__exportCallback, width = 80, ann = 'Export altitude map raw data')
         cmds.button(label = 'cancel', command = self.__cancelCallback, width = 80)
         #cmds.window("wNormalize", e = 1, wh = [250,120])
         cmds.showWindow()

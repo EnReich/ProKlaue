@@ -57,7 +57,7 @@ import re
 kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "alignObj", "exportData", "rangeObj", "convexHull", "getShells", "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection", "adjustAxisDirection", "vhacd", "axisParallelPlane", "altitudeMap"]
 
 # current plugin version
-pk_version = "0.2.8"
+pk_version = "0.3.0"
 
 # Initialize the script plug-in
 def initializePlugin(mobject):
