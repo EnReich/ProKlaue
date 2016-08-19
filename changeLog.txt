@@ -1,6 +1,11 @@
 Update 0.3.0:
    - new command: cmds.altitudeMap
-   - Button for altitudeMap data export directly from UI of axisParallelPlane 
+   - Button for altitudeMap data export directly from UI of axisParallelPlane
+   - axisParallelPlane: transform will not be frozen
+   - axisParallelPlane: use centroids of each triangle as points instead of the vertices (to be consistent with altitudeMap distance)
+   - axisParallelPlane: object is set as parent of calculated plane
+   - altitudeMap: plane needs to be grouped under object and altitude information is exported with plane fixed at bone
+   - small change in misc.getFaceNormals: matrix-matrix multiplication instead of vector-matrix multiplication
 
 Update 0.2.9:
    - new command: cmds.axisParallelPlane

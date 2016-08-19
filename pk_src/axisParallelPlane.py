@@ -64,11 +64,11 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         else:
             cmds.textField(axisParallelPlane.tf_obj, e = 1, text = "no object selected!")
 
-    def __exportCallback(*pArgs):
+    def __exportCallback(self, CBanimation, *pArgs):
         selFile = cmds.fileDialog2(fm = 0, ff = '*.txt', cap = 'specify export file')[0]
         if (selFile[-1] == '*'):
             selFile = selFile[0:-2]
-        options = {'file':selFile}
+        options = {'file':selFile, 'anim':cmds.checkBox(CBanimation, q = 1, v = 1)}
         cmds.altitudeMap(**options)
 
     def createUI (self, *pArgs):
@@ -112,7 +112,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
 
         cmds.rowLayout(numberOfColumns = 3, columnWidth3 = (80, 80, 80), columnAlign3 = ("center", "center", "center"))
         cmds.button(label = 'create', command = partial(self.__createCallback, plane, position, animation) , width = 80)
-        cmds.button(label = 'export', command = self.__exportCallback, width = 80, ann = 'Export altitude map raw data')
+        cmds.button(label = 'export', command = partial(self.__exportCallback, animation), width = 80, ann = 'Export altitude map raw data')
         cmds.button(label = 'cancel', command = self.__cancelCallback, width = 80)
         #cmds.window("wNormalize", e = 1, wh = [250,120])
         cmds.showWindow()
@@ -170,9 +170,9 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         extrema = float('inf') if (position == 'min') else -float('inf')
         # create plane
         if (extrema > 0):
-            polyPlane = cmds.polyPlane(ax = pToN[plane], w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")
+            polyPlane = cmds.polyPlane(ax = pToN[plane], w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")[0]
         else:
-            polyPlane = cmds.polyPlane(ax = map(operator.mul, pToN[plane], [-1.0]*3), w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")
+            polyPlane = cmds.polyPlane(ax = map(operator.mul, pToN[plane], [-1.0]*3), w = 10, h = 10, sx = 1, sy = 1, n = obj + "_app")[0]
         # initialize center variable where plane will be move to
         center = []
         extremeKey = []
@@ -182,6 +182,10 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         # get local vertex positions to calculate bounding box (AABB) for possibly faster calculations
         # TODO: get minimum bounding box instead (transformation matrix from cmds.alignObj(), multiply with local vertices list, get minMax box vertices, transform back with inverse transformation matrix)
         points = [[p.x, p.y, p.z] for p in misc.getPoints(obj, worldSpace = 0)]
+        # instead of vertices use the centroids of the triangles as alignment
+        triangles = misc.getTriangles(obj)
+        points = [misc.centroidTriangle([points[tri[0]], points[tri[1]], points[tri[2]]]) for tri in triangles]
+
         minMax = []
         for i in range(3):
             tmp = [p[i] for p in points]
@@ -196,7 +200,7 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
             if center != []:
                 # get transform matrix of current position
                 transform = np.array(cmds.xform(q = 1, m = 1)).reshape(4,4)
-                # if all transformed box vertices are 'above'/'below' normal, there can be no new minimum/maximum
+                # if all transformed box vertices are 'above'/'below' plane, there can be no new minimum/maximum
                 # matrix multiplication of box vertices with transform matrix and check if dot product of vector from each vertex to center of plane and plane normal is less 0 --> box vertex is above normal
                 aboveN = [p for p in box * transform if dot(center - np.array(p)[0][:-1], pToN[plane]) < 0.0]
                 # if minimum is searched and ALL vertices are above normal, there can be no new minimum
@@ -220,8 +224,10 @@ class axisParallelPlane(OpenMayaMPx.MPxCommand):
         center[sum(map(operator.mul, pToN[plane], [0,1,2]))] = extrema
 
         cmds.xform(polyPlane, t = center)
-        cmds.makeIdentity(polyPlane, a = 1, t = 1)
+        #cmds.makeIdentity(polyPlane, a = 1, t = 1)
+        # set obj as parent of polyPlane
 
+        cmds.parent(polyPlane, obj)
         cmds.select(polyPlane, obj)
 
         self.setResult(polyPlane)

@@ -115,7 +115,8 @@ def getFaceNormals(obj, worldSpace = True):
         transform = np.matrix(cmds.xform(obj, q = 1, m = 1)).reshape(4,4)[:-1]
         transform = transform.transpose()[:-1].transpose()
         # multiply normals with transform, discard 4th value and organize them as list of 3 floats each
-        normals = [(n * transform).tolist()[0] for n in normals]
+        #normals = [(n * transform).tolist()[0] for n in normals]
+        normals = (normals * transform).tolist()
     return (normals)
 
 def getTriangles(obj, mfnObject = None):
