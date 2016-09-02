@@ -1,6 +1,6 @@
 """
-Exports the specified information for a list of objects for a whole animation. Information will be written to separate files. The file names will be the object names with a possible prefix. The files itself will contain a tab-separated table with one entry/row for each animation time step. Because the whole export runs in Maya's main thread, there is currently no possibility to cancel already started export commands and one needs to wait until the export is finished which, depending on the length of the animation and number of selected objects, can take a few minutes. The current progress of the export always shows the active time frame and for each selected object the whole animation will run through once.
-All the information will be tracked via maya's space locators which sometimes may show unexpected behaviour. The space locators is not directly set inside the bone model but at the normalized position, where the bone model would be after the execution of the command :ref:`normalize`.
+Exports the specified information for a list of objects for a whole animation. Information will be written to separate files. The file names will be the object names with a possible prefix. The files itself will contain a tab-separated table with one entry/row for each animation time step. Because the whole export runs in Maya's main thread, there is currently no possibility to cancel already started export commands and one needs to wait until the export is finished which, depending on the length of the animation and number of selected objects, can take a few minutes (to speed up the export with multiple models, one can move the camera away from the scene and all objects, so the rendering step runs much faster). The current progress of the export always shows the active time frame and for each selected object the whole animation will run through once.
+All the information will be tracked via maya's space locators which sometimes may show unexpected behaviour. The space locators is not directly set inside the bone model but at the normalized position, where the bone model would be after the execution of the command :ref:`normalize`. Additionally the normalized position of each bone model is taken in world coordinates from the first keyframe > 0, which may affect the overall orientation. Lastly, in combination with joint-hierarchies it does not matter, which object is selected (the transform bone model or the parent joint node), the script will automatically combine the keyframes of both transform node and joint node, find the transform node as child of the joint node (respectively the joint node as parent of the transform node) and apply all necessary transformations to the mesh object. Requirement for this behaviour to work is the explicit hierarchical order (joint nodes should have only ONE direct transform node as child and each transform node must have an unique parent joint node; to attach multiple transform nodes under a common ancestor, one needs to use intermediate joint nodes for each level of the hierarchy).
 
 **see also:** :ref:`normalize`
 
@@ -14,8 +14,8 @@ All the information will be tracked via maya's space locators which sometimes ma
     :fast(f): flag to indicate if covariance matrix  should use the convex hull (True) or all points (False) (default FALSE)
     :writeTransformM(tm): flag to indicate if transform matrix shall be written to file
     :writeTranslation(wt): flag to indicate if translation shall be written to file
-    :writeAngles(wa): flag to indicate if projected angles shall be written to file
-    :writeRotations(wr): flag to indicate if rotation values shall be written to file
+    :writeAngles(wa): flag to indicate if projected angles shall be written to file (deprecated)
+    :writeRotations(wr): flag to indicate if rotation values shall be written to file (deprecated)
     :axisOrder(ao): string with axis ordering of eigenvectors (default 'yzx')
     :animationStart(as): first time step where information shall be exported (default *animationStartTime* of **playbackOptions**)
     :animationEnd(ae): last time step where information shall be exported (default *animationEndTime* of **playbackOptions**)
@@ -161,17 +161,33 @@ class exportData(OpenMayaMPx.MPxCommand):
         step = argData.flagArgumentDouble('by', 0) if argData.isFlagSet('by') else cmds.playbackOptions(q = 1, by = 1)
 
         for obj in selList:
-            # set time to first animated keyframe for current object
-            cmds.currentTime(min(cmds.keyframe(obj, q = 1)))
             # user can call command with joint as argument iff actual object is direct child of joint
             if (cmds.objectType(obj) == "joint"):
                 # find transform node(s) in joint
-                obj = [x for x in cmds.listRelatives() if cmds.objectType(x) == "transform"]
+                obj = [x for x in cmds.listRelatives(obj) if cmds.objectType(x) == "transform"]
                 if (len(obj) == 1):
                     obj = obj[0]
                 else:
                     cmds.warning("There are multiple transform nodes grouped under joint! skip object ", obj)
                     continue
+                # save object and its parent joint
+                tmp = [obj] + cmds.listRelatives(obj, p = 1)
+            # if object is NO joint (that means it should be an transform object), it still COULD HAVE a parent joint
+            else:
+                tmp = [obj]
+                # check if object has some kind of parent
+                parent = cmds.listRelatives(obj, p = 1)
+                # if parent exists, add it to list (tmp)
+                if (parent != None):
+                    tmp += parent
+            
+            # set keyframe
+            try:
+                cmds.currentTime(min([key for key in cmds.keyframe(tmp, q = 1) if key > 0]))
+            except:
+                cmds.warning("No keyframes for object or its possible parent are found!", tmp)
+                continue
+
 
             # get rotation matrix to align object
             rotM = np.matrix(cmds.alignObj(obj, ao = axisOrder, f = fast)).reshape(4,4)

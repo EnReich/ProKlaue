@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to ProKlaue’s documentation! &mdash; ProKlaue 0.3.0 documentation</title>
+    <title>Welcome to ProKlaue’s documentation! &#8212; ProKlaue 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -27,6 +27,7 @@
     <link rel="next" title="&lt;no title&gt;" href="pk_src.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
@@ -174,8 +175,15 @@
       <span class="n">c</span><span class="o">=</span><span class="n">foo</span><span class="p">()</span><span class="o">.</span><span class="n">createUI</span><span class="p">,</span> <span class="n">imageOverlayLabel</span> <span class="o">=</span> <span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="n">ann</span><span class="o">=</span><span class="s2">&quot;do something&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>All emphasized lines are required definitions: class <strong>foo</strong> inherited from <em>OpenMayaMPx.MPxCommand</em>, its constructor <strong>foo.__init__</strong>, the function <strong>foo.doIt</strong> which will be triggered at command invocation, function <strong>fooCreator</strong> which just returns a class instance, function <strong>fooSyntaxCreator</strong> which returns the syntax definition and function <strong>addButton</strong> where a shelf button under the shelf tab <em>ProKlaue</em> can be defined.</p>
 <p>In this echo-server example a command button is defined with an input text field and two buttons (<em>apply</em> and <em>cancel</em>) inside the user interface. By pressing button <em>apply</em> the text field content will be echoed to the console whereas <em>cancel</em> closes the user interface. The same effect (without the user interface) can be achieved by typing <em>cmds.foo(t = &#8216;echo&#8217;)</em>.</p>
+<p>All emphasized lines are required definitions: class <strong>foo</strong> inherited from <em>OpenMayaMPx.MPxCommand</em>, its constructor <strong>foo.__init__</strong>, the function <strong>foo.doIt</strong> which will be triggered at command invocation, function <strong>fooCreator</strong> which just returns a pointer to a class instance, function <strong>fooSyntaxCreator</strong> which returns the syntax definition and function <strong>addButton</strong> where a shelf button under the shelf tab <em>ProKlaue</em> can be defined. If no syntax definition is needed, the function <strong>fooSyntaxCreator</strong> still needs to return an object of type <em>MSyntax</em>, otherwise the command registration will fail with an error message. Same applies to the function <strong>addButton(parentShelf)</strong>: if no button is needed, this function is still required for the registration step. See following case without syntax definition and shelf button:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">fooSyntaxCreator</span><span class="p">():</span>
+   <span class="n">syntax</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">MSyntax</span><span class="p">()</span>
+   <span class="k">return</span> <span class="n">syntax</span>
+<span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="n">parentShelf</span><span class="p">):</span>
+   <span class="k">pass</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="indices-and-tables">
 <h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
@@ -244,8 +252,8 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="_sources/index.txt"

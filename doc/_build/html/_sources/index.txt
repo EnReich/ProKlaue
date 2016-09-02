@@ -94,14 +94,23 @@ The necessary parts of a new command need to be defined in a source file *foo.py
       cmds.shelfButton(parent = parentShelf, i = "pythonFamily.png",
          c=foo().createUI, imageOverlayLabel = "foo", ann="do something")
 
-All emphasized lines are required definitions: class **foo** inherited from *OpenMayaMPx.MPxCommand*, its constructor **foo.__init__**, the function **foo.doIt** which will be triggered at command invocation, function **fooCreator** which just returns a class instance, function **fooSyntaxCreator** which returns the syntax definition and function **addButton** where a shelf button under the shelf tab *ProKlaue* can be defined.
 
 In this echo-server example a command button is defined with an input text field and two buttons (*apply* and *cancel*) inside the user interface. By pressing button *apply* the text field content will be echoed to the console whereas *cancel* closes the user interface. The same effect (without the user interface) can be achieved by typing *cmds.foo(t = 'echo')*.
 
 
+All emphasized lines are required definitions: class **foo** inherited from *OpenMayaMPx.MPxCommand*, its constructor **foo.__init__**, the function **foo.doIt** which will be triggered at command invocation, function **fooCreator** which just returns a pointer to a class instance, function **fooSyntaxCreator** which returns the syntax definition and function **addButton** where a shelf button under the shelf tab *ProKlaue* can be defined. If no syntax definition is needed, the function **fooSyntaxCreator** still needs to return an object of type *MSyntax*, otherwise the command registration will fail with an error message. Same applies to the function **addButton(parentShelf)**: if no button is needed, this function is still required for the registration step. See following case without syntax definition and shelf button:
+
+.. code-block:: python
+
+   def fooSyntaxCreator():
+      syntax = om.MSyntax()
+      return syntax
+   def addButton(parentShelf):
+      pass
+
+
 Indices and tables
 ------------------
-
 
 * :ref:`genindex`
 * :ref:`modindex`

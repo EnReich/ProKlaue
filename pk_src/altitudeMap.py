@@ -9,6 +9,7 @@ Points with a larger distance than a given threshold will be discarded.
 **Args:**
     :file(f): path to save altitude map to ASCII-file; if string is empty, no data will be written
     :threshold(t): threshold of maximum distance from plane; all points with larger distance will be discarded (default 10.0)
+    :anim(a): boolean flag to indicate if altitude map shall be calculation for each frame (TRUE) or only for the current frame (FALSE, default). If TRUE a file name needs to be specified, because the amount of data could massively slow down maya if its only kept in work memory.
 
 :returns: list of centroid points of faces, their indices in the mesh vtx-list and their distances to the plane, i.e. '[[n_1, x_1, y_1, z_1, d_1], [n_2, x_2, y_2, z_2, d_2], ...]'
 

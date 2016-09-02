@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>altitudeMap &mdash; ProKlaue 0.3.0 documentation</title>
+    <title>altitudeMap &#8212; ProKlaue 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,6 +29,7 @@
     <link rel="prev" title="axisParallelPlane" href="pk_src.axisParallelPlane.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
@@ -58,6 +59,8 @@ Points with a larger distance than a given threshold will be discarded.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">threshold(t):</th><td class="field-body">threshold of maximum distance from plane; all points with larger distance will be discarded (default 10.0)</td>
 </tr>
+<tr class="field-odd field"><th class="field-name">anim(a):</th><td class="field-body">boolean flag to indicate if altitude map shall be calculation for each frame (TRUE) or only for the current frame (FALSE, default). If TRUE a file name needs to be specified, because the amount of data could massively slow down maya if its only kept in work memory.</td>
+</tr>
 </tbody>
 </table>
 </dd>
@@ -85,7 +88,7 @@ Points with a larger distance than a given threshold will be discarded.</p>
 <span class="c1"># [6, 0.021764807311746848, -0.5225944965679014, -0.1788206947620432, 0.16262485090905787],</span>
 <span class="c1"># [7, 0.4192048032181355, -0.3599696226914842, 0.01564478359550836, 0.32524972478547504],</span>
 <span class="c1"># [10, -0.3964909566480051, -0.3850218936124242, -0.010422009931308688, 0.300197453864535],</span>
-<span class="c1"># [11, -0.4173067247013684, -0.08482441678052995, 0.35244215325697736, 0.6003949306964292]] # </span>
+<span class="c1"># [11, -0.4173067247013684, -0.08482441678052995, 0.35244215325697736, 0.6003949306964292]] #</span>
 </pre></div>
 </div>
 </dd>
@@ -133,8 +136,8 @@ Points with a larger distance than a given threshold will be discarded.</p>
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="_sources/pk_src.altitudeMap.txt"

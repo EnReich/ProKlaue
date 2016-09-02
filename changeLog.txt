@@ -1,3 +1,10 @@
+local:
+   - exportData: keyframe used to determine alignment is set to first frame of animation (time > 0) of given object and its possible parent joint
+
+Known Issues/TODO:
+   - No Shelf tab/buttons in Maya 2016
+   - Rework UI (show currently selected object(s), progress, info-messages, etc.)
+
 Update 0.3.0:
    - new command: cmds.altitudeMap
    - Button for altitudeMap data export directly from UI of axisParallelPlane

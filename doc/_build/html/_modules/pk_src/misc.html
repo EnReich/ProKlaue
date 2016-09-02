@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pk_src.misc &mdash; ProKlaue 0.3.0 documentation</title>
+    <title>pk_src.misc &#8212; ProKlaue 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -27,6 +27,7 @@
     <link rel="up" title="Module code" href="../index.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
@@ -157,7 +158,8 @@
         <span class="n">transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">cmds</span><span class="o">.</span><span class="n">xform</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">transpose</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
         <span class="c1"># multiply normals with transform, discard 4th value and organize them as list of 3 floats each</span>
-        <span class="n">normals</span> <span class="o">=</span> <span class="p">[(</span><span class="n">n</span> <span class="o">*</span> <span class="n">transform</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">normals</span><span class="p">]</span>
+        <span class="c1">#normals = [(n * transform).tolist()[0] for n in normals]</span>
+        <span class="n">normals</span> <span class="o">=</span> <span class="p">(</span><span class="n">normals</span> <span class="o">*</span> <span class="n">transform</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">normals</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="getTriangles"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getTriangles">[docs]</a><span class="k">def</span> <span class="nf">getTriangles</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">mfnObject</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -335,8 +337,8 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>
 

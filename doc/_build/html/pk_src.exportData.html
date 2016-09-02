@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>exportData &mdash; ProKlaue 0.3.0 documentation</title>
+    <title>exportData &#8212; ProKlaue 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -30,6 +30,7 @@
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+  
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
@@ -44,8 +45,8 @@
   <div class="section" id="exportdata">
 <span id="id1"></span><h1>exportData<a class="headerlink" href="#exportdata" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
-<span class="target" id="module-pk_src.exportData"></span><p>Exports the specified information for a list of objects for a whole animation. Information will be written to separate files. The file names will be the object names with a possible prefix. The files itself will contain a tab-separated table with one entry/row for each animation time step. Because the whole export runs in Maya&#8217;s main thread, there is currently no possibility to cancel already started export commands and one needs to wait until the export is finished which, depending on the length of the animation and number of selected objects, can take a few minutes. The current progress of the export always shows the active time frame and for each selected object the whole animation will run through once.
-All the information will be tracked via maya&#8217;s space locators which sometimes may show unexpected behaviour. The space locators is not directly set inside the bone model but at the normalized position, where the bone model would be after the execution of the command <a class="reference internal" href="pk_src.normalize.html#normalize"><span class="std std-ref">normalize</span></a>.</p>
+<span class="target" id="module-pk_src.exportData"></span><p>Exports the specified information for a list of objects for a whole animation. Information will be written to separate files. The file names will be the object names with a possible prefix. The files itself will contain a tab-separated table with one entry/row for each animation time step. Because the whole export runs in Maya&#8217;s main thread, there is currently no possibility to cancel already started export commands and one needs to wait until the export is finished which, depending on the length of the animation and number of selected objects, can take a few minutes (to speed up the export with multiple models, one can move the camera away from the scene and all objects, so the rendering step runs much faster). The current progress of the export always shows the active time frame and for each selected object the whole animation will run through once.
+All the information will be tracked via maya&#8217;s space locators which sometimes may show unexpected behaviour. The space locators is not directly set inside the bone model but at the normalized position, where the bone model would be after the execution of the command <a class="reference internal" href="pk_src.normalize.html#normalize"><span class="std std-ref">normalize</span></a>. Additionally the normalized position of each bone model is taken in world coordinates from the first keyframe &gt; 0, which may affect the overall orientation. Lastly, in combination with joint-hierarchies it does not matter, which object is selected (the transform bone model or the parent joint node), the script will automatically combine the keyframes of both transform node and joint node, find the transform node as child of the joint node (respectively the joint node as parent of the transform node) and apply all necessary transformations to the mesh object. Requirement for this behaviour to work is the explicit hierarchical order (joint nodes should have only ONE direct transform node as child and each transform node must have an unique parent joint node; to attach multiple transform nodes under a common ancestor, one needs to use intermediate joint nodes for each level of the hierarchy).</p>
 <p><strong>see also:</strong> <a class="reference internal" href="pk_src.normalize.html#normalize"><span class="std std-ref">normalize</span></a></p>
 <p><strong>command:</strong> cmds.exportData([obj], p = &#8220;&#8221;, fp = &#8220;&#8221;, cm = &#8220;centerPoint&#8221;, f = False, tm = True, wt = True, wa = True, wr = True, ao = &#8216;yzx&#8217;)</p>
 <dl class="docutils">
@@ -73,10 +74,10 @@ All the information will be tracked via maya&#8217;s space locators which someti
 <tr class="field-odd field"><td>&nbsp;</td><td class="field-body">flag to indicate if translation shall be written to file</td>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">writeAngles(wa):</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body">flag to indicate if projected angles shall be written to file</td>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">flag to indicate if projected angles shall be written to file (deprecated)</td>
 </tr>
 <tr class="field-odd field"><th class="field-name" colspan="2">writeRotations(wr):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">flag to indicate if rotation values shall be written to file</td>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">flag to indicate if rotation values shall be written to file (deprecated)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">axisOrder(ao):</th><td class="field-body">string with axis ordering of eigenvectors (default &#8216;yzx&#8217;)</td>
 </tr>
@@ -136,8 +137,8 @@ All the information will be tracked via maya&#8217;s space locators which someti
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
       <a href="_sources/pk_src.exportData.txt"

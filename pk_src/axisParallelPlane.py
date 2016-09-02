@@ -9,7 +9,7 @@ The axis parallel plane can be calculated for one single time step or a complete
 **Args:**
     :plane(p): string ('xy', 'xz', 'yz') to specifiy plane direction (default 'xz')
     :position(pos): string ('min', 'max') to specify if plane should be positioned at the minimal/maximal vertex position concerning the plane orientation (default 'min')
-    :animation(anim): boolean flag to indicate if plane should be calculated for whole animation (True) or only for the current time step (default False)
+    :anim(a): boolean flag to indicate if plane should be calculated for the whole animation (True) or only for the current time step (default False)
 
 :returns: name of created polyPlane object (name will be object name plus '_app')
 
