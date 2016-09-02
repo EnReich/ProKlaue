@@ -905,6 +905,8 @@ Uses the V-HACD library (\url{https://github.com/kmammou/v-hacd}) to calculate a
 
 The available properties and settings of V-HACD are taken directly from the \href{http://kmamou.blogspot.de/2014/12/v-hacd-20-parameters-description.html}{description page}.
 
+Script makes use of the \emph{wrl2ma}-command under \emph{maya/bin} to parse to and from different formats. Apparently there are some old parser-inconsistencies which may produce warning or error messages, which (as far as observed) have no visible effect on the produces mesh. Also the path to the directories \emph{maya/bin} for \emph{wrl2ma} and \emph{plug-ins/bin} for V-HACD is guessed through the environment path variable of the operating system.
+
 \textbf{command:} cmds.vhacd({[}obj{]}, tmp = `\textasciitilde{}/', exe = `../maya/bin/plug-ins/bin/testVHACD', res = 100000, d = 20, con = 0.001, pd = 4, chd = 4, a = 0.05, b = 0.05, g = 0.0005, pca = False, m = 0, vtx = 64, vol = 0.0001)
 \begin{description}
 \item[{\textbf{Args:}}] \leavevmode\begin{quote}\begin{description}
@@ -1645,9 +1647,17 @@ The necessary parts of a new command need to be defined in a source file \emph{f
       \PYG{n}{c}\PYG{o}{=}\PYG{n}{foo}\PYG{p}{(}\PYG{p}{)}\PYG{o}{.}\PYG{n}{createUI}\PYG{p}{,} \PYG{n}{imageOverlayLabel} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{foo}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{ann}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{do something}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
 \end{Verbatim}
 
-All emphasized lines are required definitions: class \textbf{foo} inherited from \emph{OpenMayaMPx.MPxCommand}, its constructor \textbf{foo.\_\_init\_\_}, the function \textbf{foo.doIt} which will be triggered at command invocation, function \textbf{fooCreator} which just returns a class instance, function \textbf{fooSyntaxCreator} which returns the syntax definition and function \textbf{addButton} where a shelf button under the shelf tab \emph{ProKlaue} can be defined.
-
 In this echo-server example a command button is defined with an input text field and two buttons (\emph{apply} and \emph{cancel}) inside the user interface. By pressing button \emph{apply} the text field content will be echoed to the console whereas \emph{cancel} closes the user interface. The same effect (without the user interface) can be achieved by typing \emph{cmds.foo(t = `echo')}.
+
+All emphasized lines are required definitions: class \textbf{foo} inherited from \emph{OpenMayaMPx.MPxCommand}, its constructor \textbf{foo.\_\_init\_\_}, the function \textbf{foo.doIt} which will be triggered at command invocation, function \textbf{fooCreator} which just returns a pointer to a class instance, function \textbf{fooSyntaxCreator} which returns the syntax definition and function \textbf{addButton} where a shelf button under the shelf tab \emph{ProKlaue} can be defined. If no syntax definition is needed, the function \textbf{fooSyntaxCreator} still needs to return an object of type \emph{MSyntax}, otherwise the command registration will fail with an error message. Same applies to the function \textbf{addButton(parentShelf)}: if no button is needed, this function is still required for the registration step. See following case without syntax definition and shelf button:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{fooSyntaxCreator}\PYG{p}{(}\PYG{p}{)}\PYG{p}{:}
+   \PYG{n}{syntax} \PYG{o}{=} \PYG{n}{om}\PYG{o}{.}\PYG{n}{MSyntax}\PYG{p}{(}\PYG{p}{)}
+   \PYG{k}{return} \PYG{n}{syntax}
+\PYG{k}{def} \PYG{n+nf}{addButton}\PYG{p}{(}\PYG{n}{parentShelf}\PYG{p}{)}\PYG{p}{:}
+   \PYG{k}{pass}
+\end{Verbatim}
 
 
 \chapter{Indices and tables}
@@ -1689,6 +1699,7 @@ In this echo-server example a command button is defined with an input text field
 \item {\texttt{pk\_src.normalize}}, \pageref{pk_src.normalize:module-pk_src.normalize}
 \item {\texttt{pk\_src.rangeObj}}, \pageref{pk_src.rangeObj:module-pk_src.rangeObj}
 \item {\texttt{pk\_src.vhacd}}, \pageref{pk_src.vhacd:module-pk_src.vhacd}
+\item {\texttt{proKlaue}} \emph{(Unix, Windows)}, \pageref{index:module-proKlaue}
 \end{theindex}
 
 \renewcommand{\indexname}{Index}

@@ -3,6 +3,8 @@ Uses the V-HACD library (https://github.com/kmammou/v-hacd) to calculate an appr
 
 The available properties and settings of V-HACD are taken directly from the `description page <http://kmamou.blogspot.de/2014/12/v-hacd-20-parameters-description.html>`_.
 
+Script makes use of the *wrl2ma*-command under *maya/bin* to parse to and from different formats. Apparently there are some old parser-inconsistencies which may produce warning or error messages, which (as far as observed) have no visible effect on the produces mesh. Also the path to the directories *maya/bin* for *wrl2ma* and *plug-ins/bin* for V-HACD is guessed through the environment path variable of the operating system.
+
 **command:** cmds.vhacd([obj], tmp = '~/', exe = '../maya/bin/plug-ins/bin/testVHACD', res = 100000, d = 20, con = 0.001, pd = 4, chd = 4, a = 0.05, b = 0.05, g = 0.0005, pca = False, m = 0, vtx = 64, vol = 0.0001)
 
 **Args:**
