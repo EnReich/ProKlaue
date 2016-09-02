@@ -5,6 +5,10 @@ The available properties and settings of V-HACD are taken directly from the `des
 
 Script makes use of the *wrl2ma*-command under *maya/bin* to parse to and from different formats. Apparently there are some old parser-inconsistencies which may produce warning or error messages, which (as far as observed) have no visible effect on the produces mesh. Also the path to the directories *maya/bin* for *wrl2ma* and *plug-ins/bin* for V-HACD is guessed through the environment path variable of the operating system.
 
+**NOTE:** There are observed cases where V-HACD was not able to create a real solid geometry for a given mesh (without any topological holes) but rather creates a convex decomposition where the summed volume of the convex parts is smaller than the volume of the original mesh, i.e. the decomposition creates a topologically different model where the inner area is hollow. Therefore one should always verify the output mesh and in case of a faulty decomposition choose different parameter settings (a smaller *depth*-value usually avoids this problem).
+
+**see also:** :ref:`getVolume`, :ref:`intersection`
+
 **command:** cmds.vhacd([obj], tmp = '~/', exe = '../maya/bin/plug-ins/bin/testVHACD', res = 100000, d = 20, con = 0.001, pd = 4, chd = 4, a = 0.05, b = 0.05, g = 0.0005, pca = False, m = 0, vtx = 64, vol = 0.0001)
 
 **Args:**
