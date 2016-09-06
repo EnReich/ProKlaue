@@ -52,7 +52,9 @@ class eigenvector(OpenMayaMPx.MPxCommand):
         :param fast: if true all calculations will be done using the convex hull which is much faster but less accurate
         :returns: numpy.matrix object with shape (3,3)
         """
+
         # get and cast array of MPoint-Objects to ndarray structure (needed for ConvexHull)
+        # Use numpy array instead of list to allow indexing with lists of lists (line 75 'pSet[simplices')
         pSet = np.squeeze(np.asarray([[p.x, p.y, p.z] for p in misc.getPoints(obj, worldSpace = 1)]))
         simplices = None
 
