@@ -33,6 +33,7 @@ import operator
 import math
 import string
 import misc
+import sys
 
 class exportData(OpenMayaMPx.MPxCommand):
     windowID = 'wExportData'
@@ -159,9 +160,9 @@ class exportData(OpenMayaMPx.MPxCommand):
         if (path == ""):
             cmds.warning("Please specify output path!")
             return
-        # check if path directory ends with slash
-        if (path[-1] != "/"):
-            path += "/"
+        # check if path directory ends with slash/backslash (depending on operating system)
+        if (path[-1] != "/" and path[-1] != "\\"):
+            path += "/" if (sys.platform == "linux" or sys.platform == "linux2") else "\\"
         # add prefix (if specified) after directory path
         prefix = argData.flagArgumentString('filePrefix', 0) if (argData.isFlagSet('filePrefix')) else ""
         path += prefix
