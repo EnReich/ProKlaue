@@ -2,6 +2,11 @@ Known Issues/TODO:
    - No Shelf tab/buttons in Maya 2016
    - Rework UI (show currently selected object(s), progress, info-messages, remove deprecated elements, etc.)
 
+Update 0.3.1:
+   - new command: cmds.coordinateSystem
+   - small non-functional fixes (string optimization)
+   - exportData: additional flag in UI to switch between automatic coordinate system (normalized position) and arbitrary coordinate system (as transform node grouped under object) as base for all export data
+
 Update 0.3.0:
    - new command: cmds.altitudeMap
    - Button for altitudeMap data export directly from UI of axisParallelPlane

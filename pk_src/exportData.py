@@ -1,17 +1,19 @@
 """
 Exports the specified information for a list of objects for a whole animation. Information will be written to separate files. The file names will be the object names with a possible prefix. The files itself will contain a tab-separated table with one entry/row for each animation time step. Because the whole export runs in Maya's main thread, there is currently no possibility to cancel already started export commands and one needs to wait until the export is finished which, depending on the length of the animation and number of selected objects, can take a few minutes (to speed up the export with multiple models, one can move the camera away from the scene and all objects, so the rendering step runs much faster). The current progress of the export always shows the active time frame and for each selected object the whole animation will run through once.
-All the information will be tracked via maya's space locators which sometimes may show unexpected behaviour. The space locators is not directly set inside the bone model but at the normalized position, where the bone model would be after the execution of the command :ref:`normalize`. Additionally the normalized position of each bone model is taken in world coordinates from the first keyframe > 0, which may affect the overall orientation. Lastly, in combination with joint-hierarchies it does not matter, which object is selected (the transform bone model or the parent joint node), the script will automatically combine the keyframes of both transform node and joint node, find the transform node as child of the joint node (respectively the joint node as parent of the transform node) and apply all necessary transformations to the mesh object. Requirement for this behaviour to work is the explicit hierarchical order (joint nodes should have only ONE direct transform node as child and each transform node must have an unique parent joint node; to attach multiple transform nodes under a common ancestor, one needs to use intermediate joint nodes for each level of the hierarchy).
 
-**see also:** :ref:`normalize`
+All the information will be tracked via maya's space locators which sometimes may show unexpected behaviour. The space locators is not directly set inside the bone model but at the normalized position, where the bone model would be after the execution of the command :ref:`normalize`. Alternatively the flag *localCoordinateSystem* allows to define an arbitrary coordinate system which will be used instead of the automatically calculated one. This coordinate system needs to be grouped under the transform node of the current object. Additionally the normalized position of each bone model is taken in world coordinates from the first keyframe > 0, which may affect the overall orientation. Lastly, in combination with joint-hierarchies it does not matter, which object is selected (the transform bone model or the parent joint node), the script will automatically combine the keyframes of both transform node and joint node, find the transform node as child of the joint node (respectively the joint node as parent of the transform node) and apply all necessary transformations to the mesh object. Requirement for this behaviour to work is the explicit hierarchical order (joint nodes should have only ONE direct transform node as child and each transform node must have an unique parent joint node; to attach multiple transform nodes under a common ancestor, one needs to use intermediate joint nodes for each level of the hierarchy).
 
-**command:** cmds.exportData([obj], p = "", fp = "", cm = "centerPoint", f = False, tm = True, wt = True, wa = True, wr = True, ao = 'yzx')
+**see also:** :ref:`normalize`, :ref:`coordinateSystem`
+
+**command:** cmds.exportData([obj], p = "", fp = "", cm = "centerPoint", lcs = False, jh = False, f = False, tm = True, wt = True, wa = True, wr = True, ao = 'yzx')
 
 **Args:**
     :path(p): path to target directory
     :filePrefix(fp): prefix of all files
     :centerMethod(cm): string 'centerPoint' (default) to use average of all points as position, 'centroidPoint' to use weighted mean of triangle centroid and area as position or 'centerOBB' to use center of oriented bounding box as position (only when 'align' is True)
+    :localCoordinateSystem(lcs): flag to indicate if objects have their own local coordinate system (True) or the normalized orientation (False) shall be used for export data (default False)
     :jointHierarchy(jh): flag to indicate if objects are organized in an hierarchy (True) or are completely independent of each other (default False)
-    :fast(f): flag to indicate if covariance matrix  should use the convex hull (True) or all points (False) (default FALSE)
+    :fast(f): flag to indicate if covariance matrix should use the convex hull (True) or all points (False) (default FALSE)
     :writeTransformM(tm): flag to indicate if transform matrix shall be written to file
     :writeTranslation(wt): flag to indicate if translation shall be written to file
     :writeAngles(wa): flag to indicate if projected angles shall be written to file (deprecated)
@@ -46,6 +48,16 @@ class exportData(OpenMayaMPx.MPxCommand):
     def __applyCallback(self, path, prefix, FFstart, FFend, FFstep, RCcenterMethod, CHjointHierarchy, OMaxisOrder, CBfast, CBcenterPoint, CBwr, CBtm, CBwa, *pArgs):
         options = {'p':cmds.textField(path, q = 1, text = 1), 'fp':cmds.textField(prefix, q = 1, text = 1), 'as':cmds.floatField(FFstart, q = 1, value = 1), 'ae':cmds.floatField(FFend, q = 1, value = 1), 'by':cmds.floatField(FFstep, q = 1, value = 1), 'f':cmds.checkBox(CBfast, q = 1, v = 1), 'cm':cmds.radioCollection(RCcenterMethod, q = 1, sl = 1), 'wt':cmds.checkBox(CBcenterPoint, q = 1, v = 1), 'jh': cmds.checkBox(CHjointHierarchy, q = 1, v = 1), 'wr':cmds.checkBox(CBwr, q = 1, v = 1), 'tm':cmds.checkBox(CBtm, q = 1, v = 1), 'wa':cmds.checkBox(CBwa, q = 1, v = 1), 'ao':cmds.optionMenu(OMaxisOrder, q = 1, v = 1)}
         cmds.exportData(**options)
+
+    # executed when state of lcs-checkBox is changed; will grey-out optionMenu 'axisOrder' and checkBox 'fast'
+    def __changeLcsState(self, CBlcs, OMaxisOrder, CBfast, *pArgs):
+        lcs = cmds.checkBox(CBlcs, q = 1, v = 1)
+        if (lcs):
+            cmds.optionMenu(OMaxisOrder, e = 1, enable = False)
+            cmds.checkBox(CBfast, e = 1, enable = False)
+        else:
+            cmds.optionMenu(OMaxisOrder, e = 1, enable = True)
+            cmds.checkBox(CBfast, e = 1, enable = True)
 
     # function to handle file dialogs and update corresponding text field
     def __fileDialog(self, field, *pArgs):
@@ -94,6 +106,11 @@ class exportData(OpenMayaMPx.MPxCommand):
         cmds.setParent('..')
 
         cmds.text(label = '---------- Orientation ----------')
+        # create checkbox to switch between local and automatic coordinate system
+        cmds.rowLayout(numberOfColumns = 1, columnWidth1 = 80)
+        lcs = cmds.checkBox(label = 'Use Local Coordinate System', value = False, ann = 'If activated a local coordinate system must be grouped under current transform node')
+        cmds.setParent('..')
+
         cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (130, 130))
         # create dropdown menu for different alignment options
         axisOrder = cmds.optionMenu( label='axis order:')
@@ -106,6 +123,9 @@ class exportData(OpenMayaMPx.MPxCommand):
         cmds.optionMenu(axisOrder, e = 1, select = 4)
         fast = cmds.checkBox(label = 'fast calculation', value = False)
         cmds.setParent('..')
+
+        # edit lcs checkbox and add changeCommand flag which is triggered when state is changed ('axisOrder' and 'fast' are disabled/enabled)
+        cmds.checkBox(lcs, e = 1, cc = partial(self.__changeLcsState, lcs, axisOrder, fast))
 
         cmds.text(label = '---------- Export ----------')
         cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (130, 130))
@@ -153,6 +173,7 @@ class exportData(OpenMayaMPx.MPxCommand):
         wr = argData.flagArgumentBool('writeRotations', 0) if (argData.isFlagSet('writeRotations')) else True
         centerMethod = argData.flagArgumentString('centerMethod', 0) if (argData.isFlagSet('centerMethod')) else "centerPoint"
         fast = argData.flagArgumentBool('fast', 0) if (argData.isFlagSet('fast')) else False
+        lcs = argData.flagArgumentBool('localCoordinateSystem', 0) if (argData.isFlagSet('localCoordinateSystem')) else False
         jointHierarchy = argData.flagArgumentBool('jointHierarchy', 0) if (argData.isFlagSet('jointHierarchy')) else False
 
         # get playback options and set current time step to beginning of animation
@@ -188,33 +209,42 @@ class exportData(OpenMayaMPx.MPxCommand):
                 cmds.warning("No keyframes for object or its possible parent are found!", tmp)
                 continue
 
+            # if local coordinate system shall be used, check for transform node grouped under object
+            if (lcs):
+                cs = cmds.listRelatives(obj, type = 'transform')
+                if (len(cs) == 1):
+                    cs = cs[0]
+                elif (len(cs) == 0):
+                    cmds.warning("Could not find a local coordinate system grouped under object as transform node! skip object ", obj)
+                    continue
+                else:
+                    cmds.warning("Multiple transform nodes are grouped under object and it is not clear which one is the local coordinate system! skip object ", obj)
 
-            # get rotation matrix to align object
-            rotM = np.matrix(cmds.alignObj(obj, ao = axisOrder, f = fast)).reshape(4,4)
-            # transpose matrix and set center point for translation
-            rotM = rotM.transpose().getA1().tolist()
-
-            if (centerMethod == "centerPoint"):
-                rotM[12:15] = cmds.centerPoint(obj)
-            elif (centerMethod == "centroidPoint"):
-                rotM[12:15] = cmds.centroidPoint(obj)
+                # get transformation matrix from local coordinate system
+                rotM = cmds.xform(cs, q = 1, m = 1, ws = 1)
+            # else use normalized position and get transformation matrix from alignment of object
             else:
-                rangeX = cmds.rangeObj(obj, axis = rotM[0:3])
-                rangeY = cmds.rangeObj(obj, axis = rotM[4:7])
-                rangeZ = cmds.rangeObj(obj, axis = rotM[8:11])
-                rotM[12:15] = [0.5 * (rangeX[0] + rangeX[1]), 0.5 * (rangeY[0] + rangeY[1]), 0.5 * (rangeZ[0] + rangeZ[1])]
-            # save and reset position and rotation of object to ensure that locator is inside object
-            #pos = cmds.xform(obj, q = 1, translation = 1)
-            #rot = cmds.xform(obj, q = 1, rotation = 1)
-            #cmds.xform(obj, translation = [0,0,0], rotation = [0,0,0])
+                # get rotation matrix to align object
+                rotM = np.matrix(cmds.alignObj(obj, ao = axisOrder, f = fast)).reshape(4,4)
+                # transpose matrix and set center point for translation
+                rotM = rotM.transpose().getA1().tolist()
+
+                if (centerMethod == "centerPoint"):
+                    rotM[12:15] = cmds.centerPoint(obj)
+                elif (centerMethod == "centroidPoint"):
+                    rotM[12:15] = cmds.centroidPoint(obj)
+                else:
+                    rangeX = cmds.rangeObj(obj, axis = rotM[0:3])
+                    rangeY = cmds.rangeObj(obj, axis = rotM[4:7])
+                    rangeZ = cmds.rangeObj(obj, axis = rotM[8:11])
+                    rotM[12:15] = [0.5 * (rangeX[0] + rangeX[1]), 0.5 * (rangeY[0] + rangeY[1]), 0.5 * (rangeZ[0] + rangeZ[1])]
+            
             # initialize locator and set its transformation matrix
             loc = cmds.spaceLocator()
             cmds.xform(loc, m = rotM)
             # set parent constraint with 'maintainOffset' flag (locator will follow objects transformations)
+            # 'maintainOffset' is important to ensure correct position of locator
             cmds.parentConstraint(obj, loc, mo = not jointHierarchy)
-            # reset position/rotation
-            #cmds.xform(obj, translation = pos)
-            #cmds.xform(obj, rotation = rot)
 
             # open output stream to files and write header information
             if (wt):
@@ -236,10 +266,12 @@ class exportData(OpenMayaMPx.MPxCommand):
                 cmds.currentTime(t)
                 if (wt):
                     fileMean.write (str(t))
-                    fileMean.write ("\t" + "\t".join([ string.strip(s, "[ ]") for s in string.split(str(cmds.xform(loc, q = 1, translation = 1)), ",")]) + "\n")
+                    # parse python list of values to tab separated strings
+                    fileMean.write ("\t" + "\t".join([ s.strip("[ ]") for s in str(cmds.xform(loc, q = 1, translation = 1)).split(",")]) + "\n")
                 if (tm):
                     fileMatrix.write (str(t))
-                    fileMatrix.write("\t" + "\t".join([ string.strip (s, "[ ]") for s in string.split(str(cmds.xform(loc, q = 1, m = 1)) , ",") ]) + "\n")
+                    # parse python list of values to tab separated strings
+                    fileMatrix.write("\t" + "\t".join([ s.strip("[ ]") for s in str(cmds.xform(loc, q = 1, m = 1)).split(",") ]) + "\n")
                 if (wa):
                     fileAngles.write(str(t))
                     # write projected angles to file (acos of each value in main diagonal)
@@ -253,11 +285,12 @@ class exportData(OpenMayaMPx.MPxCommand):
                         # normalize projected vector
                         v = map(operator.div, v, [np.sqrt(v[e] * v[e] + v[e-2] * v[e-2] )] * 3)
                         # angle between current local and world space axis
-                        fileAngles.write("\t" + str(math.acos(v[e]) * 180 / math.pi) )
+                        fileAngles.write("\t%d" % (math.acos(v[e]) * 180 / math.pi) )
                     fileAngles.write("\n")
                 if (wr):
                     fileRot.write (str(t))
-                    fileRot.write ("\t" + "\t".join([ string.strip(s, "[ ]") for s in string.split(str(cmds.xform(loc, q = 1, rotation = 1)), ",")]) + "\n")
+                    # parse python list of values to tab separated strings
+                    fileRot.write ("\t" + "\t".join([ s.strip("[ ]") for s in str(cmds.xform(loc, q = 1, rotation = 1)).split(",")]) + "\n")
             if (wt):
                 fileMean.close()
             if (tm):
@@ -280,6 +313,7 @@ def exportDataSyntaxCreator():
     syntax.addFlag("p", "path", om.MSyntax.kString)
     syntax.addFlag("fp", "filePrefix", om.MSyntax.kString)
     syntax.addFlag("cm", "centerMethod", om.MSyntax.kString)
+    syntax.addFlag("lcs", "localCoordinateSystem", om.MSyntax.kBoolean)
     syntax.addFlag("jh", "jointHierarchy", om.MSyntax.kBoolean)
     syntax.addFlag("f", "fast", om.MSyntax.kBoolean)
     syntax.addFlag("tm", "writeTransformM", om.MSyntax.kBoolean)

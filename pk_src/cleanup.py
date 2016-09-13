@@ -89,7 +89,8 @@ class cleanup(OpenMayaMPx.MPxCommand):
                 shell_indices.extend(s)
         # delete all faces in list
         if (len(shell_indices)):
-            cmds.delete([ cleanup.obj + ".f[" + str(i) + "]" for i in shell_indices])
+            #cmds.delete([ cleanup.obj + ".f[" + str(i) + "]" for i in shell_indices])
+            cmds.delete([ "%s.f[%d]" % (cleanup.obj, i) for i in shell_indices ])
         # clear selection and remove item from scrollList
         cmds.select(clear = True)
         cmds.textScrollList(SLlist, e = 1, removeAll = 1)
@@ -107,9 +108,11 @@ class cleanup(OpenMayaMPx.MPxCommand):
         # get selected item in scrollList as string
         item = str(cmds.textScrollList(SLlist, q = 1, selectItem = 1)[0])
         # split string into shells index and extract substring to reference shell nested list by its index
-        item = int(str.split(item)[0][5:])
+        #item = int(str.split(item)[0][5:])
+        item = int(item.split()[0][5:])
         print("select Shell" + str(item))
-        cmds.select([ cleanup.obj + ".f[" + str(i) + "]" for i in cleanup.shells[item]])
+        #cmds.select([ cleanup.obj + ".f[" + str(i) + "]" for i in cleanup.shells[item]])
+        cmds.select(["%s.f[%d]" % (cleanup.obj, i) for i in cleanup.shells[item] ])
 
         self.__updateProgress(Tprogress, 3)
 
@@ -130,7 +133,8 @@ class cleanup(OpenMayaMPx.MPxCommand):
             self.__updateProgress(Tprogress, 5)
         else:
             for i,s in enumerate(cleanup.shells):
-                cmds.textScrollList(SLlist, e = 1, append = ["Shell" + str(i) + " (" + str(len(s)) + ")"])
+                #cmds.textScrollList(SLlist, e = 1, append = ["Shell" + str(i) + " (" + str(len(s)) + ")"])
+                cmds.textScrollList(SLlist, e = 1, append = ["Shell%d (%d)" % (i, len(s) ) ])
             cmds.textScrollList(SLlist, e = 1, sc = partial(self.__applyScrollCallback, SLlist, Tprogress))
             self.__updateProgress(Tprogress, 2)
 

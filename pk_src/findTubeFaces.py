@@ -72,7 +72,8 @@ class findTubeFaces(OpenMayaMPx.MPxCommand):
             hitResult = mfnObject.closestIntersection(origin, normal, om2.MSpace.kObject, threshold, False, accelParams = accel)
             # check for hit and save current triangle's ID
             if (hitResult[3] != -1):
-                tubeCandidates.extend([obj + ".f[" + str(i) + "]"])
+                #tubeCandidates.extend([obj + ".f[" + str(i) + "]"])
+                tubeCandidates.extend(["%s.f[%d]" % (obj, i)])
 
             try:
                 # set progress bar

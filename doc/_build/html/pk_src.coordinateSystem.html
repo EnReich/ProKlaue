@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>findTubeFaces &#8212; ProKlaue 0.3.1 documentation</title>
+    <title>coordinateSystem &#8212; ProKlaue 0.3.1 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="ProKlaue 0.3.1 documentation" href="index.html" />
     <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
-    <link rel="next" title="getShells" href="pk_src.getShells.html" />
-    <link rel="prev" title="exportData" href="pk_src.exportData.html" />
+    <link rel="next" title="delaunay" href="pk_src.delaunay.html" />
+    <link rel="prev" title="convexHull" href="pk_src.convexHull.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -42,13 +42,13 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="findtubefaces">
-<span id="id1"></span><h1>findTubeFaces<a class="headerlink" href="#findtubefaces" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="coordinatesystem">
+<span id="id1"></span><h1>coordinateSystem<a class="headerlink" href="#coordinatesystem" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
-<span class="target" id="module-pk_src.findTubeFaces"></span><p>Calculates the triangles of current object with an orthogonal distance to the next surface below a given threshold, which indicates a tube/tunnel to connect two shells of the object with each other. All those triangles will be selected and can be deleted by the standard user action.
+<span class="target" id="module-pk_src.coordinateSystem"></span><p>Initializes a local coordinate system for the given object consisting of 3 colored axes. Will be grouped under the given transform object. Can be used in the export-command instead of the normalized position.
 Command only accepts &#8216;transform&#8217; nodes and will only be applied to the first object of the current selection.</p>
-<p><strong>see also:</strong> <a class="reference internal" href="pk_src.cleanup.html#cleanup"><span class="std std-ref">cleanup</span></a>, <a class="reference internal" href="pk_src.getShells.html#getshells"><span class="std std-ref">getShells</span></a></p>
-<p><strong>command:</strong> cmds.findTubeFaces([obj], t = 0.1)</p>
+<p><strong>see also:</strong> <a class="reference internal" href="pk_src.normalize.html#normalize"><span class="std std-ref">normalize</span></a>, <a class="reference internal" href="pk_src.exportData.html#exportdata"><span class="std std-ref">exportData</span></a></p>
+<p><strong>command:</strong> cmds.coordinateSystem([obj], ao = &#8216;yzx&#8217;, f = False)</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
 <dd><table class="first last docutils field-list" frame="void" rules="none">
@@ -57,7 +57,9 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object&#8217;s name inside maya</td>
 </tr>
-<tr class="field-even field"><th class="field-name">threshold(t):</th><td class="field-body">threshold of orthogonal distance between triangles. All triangles closer to each other than this threshold will be selected (default 0.1)</td>
+<tr class="field-even field"><th class="field-name">axisOrder(ao):</th><td class="field-body">string with axis ordering of eigenvectors (default &#8216;yzx&#8217;)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">fast(f):</th><td class="field-body">flag to indicate if covariance matrix should use the convex hull (True) or all points (False) (default True)</td>
 </tr>
 </tbody>
 </table>
@@ -75,8 +77,8 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
   <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
-      <li>Previous: <a href="pk_src.exportData.html" title="previous chapter">exportData</a></li>
-      <li>Next: <a href="pk_src.getShells.html" title="next chapter">getShells</a></li>
+      <li>Previous: <a href="pk_src.convexHull.html" title="previous chapter">convexHull</a></li>
+      <li>Next: <a href="pk_src.delaunay.html" title="next chapter">delaunay</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -84,7 +86,7 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/pk_src.findTubeFaces.txt"
+      <li><a href="_sources/pk_src.coordinateSystem.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -110,7 +112,7 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
-      <a href="_sources/pk_src.findTubeFaces.txt"
+      <a href="_sources/pk_src.coordinateSystem.txt"
           rel="nofollow">Page source</a>
     </div>
 

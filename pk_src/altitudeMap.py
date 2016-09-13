@@ -104,6 +104,9 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
             o_file = open(s_file, 'w')
             o_file.write("Frame\tN\tTx\tTy\tTz\td\n")
 
+        # list of replace operations to parse list of lists to tab separated string using reduce operation
+        repl = ('[', ''), (']', ''), (',', ''), (' ', '\t')
+
         # loop over all keyframes and gather the distances
         for key in keyframes:
             cmds.currentTime(key)
@@ -166,7 +169,8 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
             if (s_file != ""):
                 # for each item in altitude map, remove brackets and comma
                 for item in altitudeMap:
-                    o_file.write("%s\n" % string.replace(string.replace(string.strip(str(item), '[]'), ',', ''), ' ', '\t'))
+                    #o_file.write("%s\n" % string.replace(string.replace(string.strip(str(item), '[]'), ',', ''), ' ', '\t'))
+                    o_file.write("%s\n" % reduce(lambda a, kv: a.replace(*kv), repl, str(item)))
 
         # if animation flag is False, return altitudeMap
         if (s_file != ""):

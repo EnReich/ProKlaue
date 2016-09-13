@@ -54,10 +54,10 @@ import sys
 import re
 
 # list with all commands (command names must have the same name as their class AND module to be loaded without errors)
-kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "alignObj", "exportData", "rangeObj", "convexHull", "getShells", "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection", "adjustAxisDirection", "vhacd", "axisParallelPlane", "altitudeMap"]
+kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "alignObj", "exportData", "rangeObj", "convexHull", "getShells", "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection", "adjustAxisDirection", "vhacd", "axisParallelPlane", "altitudeMap", "coordinateSystem"]
 
 # current plugin version
-pk_version = "0.3.0"
+pk_version = "0.3.1"
 
 # Initialize the script plug-in
 def initializePlugin(mobject):

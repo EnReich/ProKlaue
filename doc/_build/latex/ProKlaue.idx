@@ -8,49 +8,50 @@
 \indexentry{pk\_src.centroidPoint (module)|hyperpage}{10}
 \indexentry{pk\_src.cleanup (module)|hyperpage}{10}
 \indexentry{pk\_src.convexHull (module)|hyperpage}{11}
+\indexentry{pk\_src.coordinateSystem (module)|hyperpage}{11}
 \indexentry{pk\_src.delaunay (module)|hyperpage}{11}
 \indexentry{pk\_src.eigenvector (module)|hyperpage}{12}
-\indexentry{pk\_src.exportData (module)|hyperpage}{12}
-\indexentry{pk\_src.findTubeFaces (module)|hyperpage}{13}
+\indexentry{pk\_src.exportData (module)|hyperpage}{13}
+\indexentry{pk\_src.findTubeFaces (module)|hyperpage}{14}
 \indexentry{pk\_src.getShells (module)|hyperpage}{14}
 \indexentry{pk\_src.getVolume (module)|hyperpage}{14}
-\indexentry{pk\_src.intersection (module)|hyperpage}{14}
-\indexentry{pk\_src.normalize (module)|hyperpage}{16}
+\indexentry{pk\_src.intersection (module)|hyperpage}{15}
+\indexentry{pk\_src.normalize (module)|hyperpage}{17}
 \indexentry{pk\_src.rangeObj (module)|hyperpage}{17}
 \indexentry{pk\_src.vhacd (module)|hyperpage}{17}
-\indexentry{pk\_src.collision\_tet\_tet (module)|hyperpage}{19}
-\indexentry{Collision\_tet\_tet (class in pk\_src.collision\_tet\_tet)|hyperpage}{19}
-\indexentry{check() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{19}
-\indexentry{separating\_plane\_edge\_A() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{19}
-\indexentry{separating\_plane\_faceA\_1() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{19}
-\indexentry{separating\_plane\_faceA\_2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{20}
-\indexentry{separating\_plane\_faceB\_1() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{20}
-\indexentry{separating\_plane\_faceB\_2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{20}
-\indexentry{setV1() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{20}
-\indexentry{setV1V2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{20}
-\indexentry{setV2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{20}
-\indexentry{shifts (pk\_src.collision\_tet\_tet.Collision\_tet\_tet attribute)|hyperpage}{20}
-\indexentry{cross() (in module pk\_src.collision\_tet\_tet)|hyperpage}{20}
-\indexentry{dot() (in module pk\_src.collision\_tet\_tet)|hyperpage}{20}
-\indexentry{pk\_src.intersection\_tet\_tet (module)|hyperpage}{20}
-\indexentry{centroid\_tri() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{20}
-\indexentry{cross() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{20}
-\indexentry{dot() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{20}
-\indexentry{intersection\_tet\_tet (class in pk\_src.intersection\_tet\_tet)|hyperpage}{21}
-\indexentry{intersect() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{21}
-\indexentry{setCentroid() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{21}
-\indexentry{setNormals() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{21}
-\indexentry{setV1() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{21}
-\indexentry{setV1V2() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{21}
-\indexentry{setV2() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{21}
-\indexentry{normalize() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{21}
-\indexentry{pk\_src.misc (module)|hyperpage}{21}
-\indexentry{areaTriangle() (in module pk\_src.misc)|hyperpage}{21}
-\indexentry{centroidTriangle() (in module pk\_src.misc)|hyperpage}{22}
-\indexentry{getArgObj() (in module pk\_src.misc)|hyperpage}{22}
-\indexentry{getFaceNormals() (in module pk\_src.misc)|hyperpage}{22}
-\indexentry{getMesh() (in module pk\_src.misc)|hyperpage}{22}
-\indexentry{getPoints() (in module pk\_src.misc)|hyperpage}{22}
-\indexentry{getTriangles() (in module pk\_src.misc)|hyperpage}{23}
-\indexentry{project() (in module pk\_src.misc)|hyperpage}{24}
-\indexentry{signedVolumeOfTriangle() (in module pk\_src.misc)|hyperpage}{24}
+\indexentry{pk\_src.collision\_tet\_tet (module)|hyperpage}{21}
+\indexentry{Collision\_tet\_tet (class in pk\_src.collision\_tet\_tet)|hyperpage}{21}
+\indexentry{check() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{21}
+\indexentry{separating\_plane\_edge\_A() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{21}
+\indexentry{separating\_plane\_faceA\_1() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{21}
+\indexentry{separating\_plane\_faceA\_2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{22}
+\indexentry{separating\_plane\_faceB\_1() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{22}
+\indexentry{separating\_plane\_faceB\_2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{22}
+\indexentry{setV1() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{22}
+\indexentry{setV1V2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{22}
+\indexentry{setV2() (pk\_src.collision\_tet\_tet.Collision\_tet\_tet method)|hyperpage}{22}
+\indexentry{shifts (pk\_src.collision\_tet\_tet.Collision\_tet\_tet attribute)|hyperpage}{22}
+\indexentry{cross() (in module pk\_src.collision\_tet\_tet)|hyperpage}{22}
+\indexentry{dot() (in module pk\_src.collision\_tet\_tet)|hyperpage}{22}
+\indexentry{pk\_src.intersection\_tet\_tet (module)|hyperpage}{22}
+\indexentry{centroid\_tri() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{22}
+\indexentry{cross() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{22}
+\indexentry{dot() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{22}
+\indexentry{intersection\_tet\_tet (class in pk\_src.intersection\_tet\_tet)|hyperpage}{23}
+\indexentry{intersect() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{23}
+\indexentry{setCentroid() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{23}
+\indexentry{setNormals() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{23}
+\indexentry{setV1() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{23}
+\indexentry{setV1V2() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{23}
+\indexentry{setV2() (pk\_src.intersection\_tet\_tet.intersection\_tet\_tet method)|hyperpage}{23}
+\indexentry{normalize() (in module pk\_src.intersection\_tet\_tet)|hyperpage}{23}
+\indexentry{pk\_src.misc (module)|hyperpage}{23}
+\indexentry{areaTriangle() (in module pk\_src.misc)|hyperpage}{23}
+\indexentry{centroidTriangle() (in module pk\_src.misc)|hyperpage}{24}
+\indexentry{getArgObj() (in module pk\_src.misc)|hyperpage}{24}
+\indexentry{getFaceNormals() (in module pk\_src.misc)|hyperpage}{24}
+\indexentry{getMesh() (in module pk\_src.misc)|hyperpage}{24}
+\indexentry{getPoints() (in module pk\_src.misc)|hyperpage}{24}
+\indexentry{getTriangles() (in module pk\_src.misc)|hyperpage}{25}
+\indexentry{project() (in module pk\_src.misc)|hyperpage}{26}
+\indexentry{signedVolumeOfTriangle() (in module pk\_src.misc)|hyperpage}{26}

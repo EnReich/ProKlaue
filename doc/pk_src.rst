@@ -8,6 +8,7 @@
    centroidPoint <pk_src.centroidPoint>
    cleanup <pk_src.cleanup>
    convexHull <pk_src.convexHull>
+   coordinateSystem <pk_src.coordinateSystem>
    delaunay <pk_src.delaunay>
    eigenvector <pk_src.eigenvector>
    exportData <pk_src.exportData>
