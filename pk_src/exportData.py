@@ -109,6 +109,10 @@ class exportData(OpenMayaMPx.MPxCommand):
         cmds.text(label = '---------- Orientation ----------')
         # create checkbox to switch between local and automatic coordinate system
         cmds.rowLayout(numberOfColumns = 1, columnWidth1 = 80)
+        # cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (80, 80))
+        # cs = cmds.radioCollection()
+        # automatic = cmds.radioButton("Automatic CS", label = 'automatic', select = 1)
+        # manual = cmds.radioButton("Manual CS", label = 'manual')
         lcs = cmds.checkBox(label = 'Use Local Coordinate System', value = False, ann = 'If activated a local coordinate system must be grouped under current transform node')
         cmds.setParent('..')
 
@@ -126,6 +130,7 @@ class exportData(OpenMayaMPx.MPxCommand):
         cmds.setParent('..')
 
         # edit lcs checkbox and add changeCommand flag which is triggered when state is changed ('axisOrder' and 'fast' are disabled/enabled)
+        # cmds.radioButton(automatic, e = 1, cc = partial(self.__changeLcsState, cs, axisOrder, fast))
         cmds.checkBox(lcs, e = 1, cc = partial(self.__changeLcsState, lcs, axisOrder, fast))
 
         cmds.text(label = '---------- Export ----------')
