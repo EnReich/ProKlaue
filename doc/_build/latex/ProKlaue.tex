@@ -32,7 +32,7 @@
 
 
 \title{ProKlaue Documentation}
-\date{Sep 13, 2016}
+\date{Sep 14, 2016}
 \release{0.3.1}
 \author{Enrico Reich}
 \newcommand{\sphinxlogo}{}
@@ -1658,12 +1658,12 @@ The necessary parts of a new command need to be defined in a source file \emph{f
    \PYG{k}{def} \PYG{n+nf}{createUI} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{o}{*}\PYG{n}{pArgs}\PYG{p}{)}\PYG{p}{:}
       \PYG{k}{if} \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{window}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{windowID}\PYG{p}{,} \PYG{n}{exists} \PYG{o}{=} \PYG{n+nb+bp}{True}\PYG{p}{)}\PYG{p}{:}
          \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{deleteUI}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{windowID}\PYG{p}{)}
-         \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{window}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{windowID}\PYG{p}{,} \PYG{n}{title} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{fooUI}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{sizeable} \PYG{o}{=} \PYG{n+nb+bp}{True}\PYG{p}{,} \PYG{n}{resizeToFitChildren} \PYG{o}{=} \PYG{n+nb+bp}{True}\PYG{p}{)}
-         \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{rowColumnLayout}\PYG{p}{(}\PYG{n}{numberOfColumns} \PYG{o}{=} \PYG{l+m+mi}{2}\PYG{p}{)}
-         \PYG{n}{text} \PYG{o}{=} \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{textField}\PYG{p}{(}\PYG{n}{visible} \PYG{o}{=} \PYG{n+nb+bp}{True}\PYG{p}{,} \PYG{n}{width} \PYG{o}{=} \PYG{l+m+mi}{140}\PYG{p}{)}
-         \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{button}\PYG{p}{(}\PYG{n}{label} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{apply}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{command} \PYG{o}{=} \PYG{n}{partial}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}applyCallback}\PYG{p}{,} \PYG{n}{text}\PYG{p}{)}\PYG{p}{,} \PYG{n}{width} \PYG{o}{=} \PYG{l+m+mi}{100} \PYG{p}{)}
-         \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{button}\PYG{p}{(}\PYG{n}{label} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{cancel}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{command} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}cancelCallback}\PYG{p}{,} \PYG{n}{width} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{)}
-         \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{showWindow}\PYG{p}{(}\PYG{p}{)}
+      \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{window}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{windowID}\PYG{p}{,} \PYG{n}{title} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{fooUI}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{sizeable} \PYG{o}{=} \PYG{n+nb+bp}{True}\PYG{p}{,} \PYG{n}{resizeToFitChildren} \PYG{o}{=} \PYG{n+nb+bp}{True}\PYG{p}{)}
+      \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{rowColumnLayout}\PYG{p}{(}\PYG{n}{numberOfColumns} \PYG{o}{=} \PYG{l+m+mi}{2}\PYG{p}{)}
+      \PYG{n}{text} \PYG{o}{=} \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{textField}\PYG{p}{(}\PYG{n}{visible} \PYG{o}{=} \PYG{n+nb+bp}{True}\PYG{p}{,} \PYG{n}{width} \PYG{o}{=} \PYG{l+m+mi}{140}\PYG{p}{)}
+      \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{button}\PYG{p}{(}\PYG{n}{label} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{apply}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{command} \PYG{o}{=} \PYG{n}{partial}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}applyCallback}\PYG{p}{,} \PYG{n}{text}\PYG{p}{)}\PYG{p}{,} \PYG{n}{width} \PYG{o}{=} \PYG{l+m+mi}{100} \PYG{p}{)}
+      \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{button}\PYG{p}{(}\PYG{n}{label} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{cancel}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{command} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}cancelCallback}\PYG{p}{,} \PYG{n}{width} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{)}
+      \PYG{n}{cmds}\PYG{o}{.}\PYG{n}{showWindow}\PYG{p}{(}\PYG{p}{)}
 
    \PYG{k}{def} \PYG{n+nf}{doIt}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{argList}\PYG{p}{)}\PYG{p}{:}
       \PYG{n}{argData} \PYG{o}{=} \PYG{n}{om}\PYG{o}{.}\PYG{n}{MArgParser} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{syntax}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,} \PYG{n}{argList}\PYG{p}{)}
@@ -1734,6 +1734,7 @@ All emphasized lines are required definitions: class \textbf{foo} inherited from
 \item {\texttt{pk\_src.normalize}}, \pageref{pk_src.normalize:module-pk_src.normalize}
 \item {\texttt{pk\_src.rangeObj}}, \pageref{pk_src.rangeObj:module-pk_src.rangeObj}
 \item {\texttt{pk\_src.vhacd}}, \pageref{pk_src.vhacd:module-pk_src.vhacd}
+\item {\texttt{proKlaue}} \emph{(Unix, Windows)}, \pageref{index:module-proKlaue}
 \end{theindex}
 
 \renewcommand{\indexname}{Index}

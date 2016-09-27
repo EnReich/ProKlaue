@@ -72,12 +72,12 @@ The necessary parts of a new command need to be defined in a source file *foo.py
       def createUI (self, *pArgs):
          if cmds.window(self.windowID, exists = True):
             cmds.deleteUI(self.windowID)
-            cmds.window(self.windowID, title = "fooUI", sizeable = True, resizeToFitChildren = True)
-            cmds.rowColumnLayout(numberOfColumns = 2)
-            text = cmds.textField(visible = True, width = 140)
-            cmds.button(label = "apply", command = partial(self.__applyCallback, text), width = 100 )
-            cmds.button(label = "cancel", command = self.__cancelCallback, width = 100)
-            cmds.showWindow()
+         cmds.window(self.windowID, title = "fooUI", sizeable = True, resizeToFitChildren = True)
+         cmds.rowColumnLayout(numberOfColumns = 2)
+         text = cmds.textField(visible = True, width = 140)
+         cmds.button(label = "apply", command = partial(self.__applyCallback, text), width = 100 )
+         cmds.button(label = "cancel", command = self.__cancelCallback, width = 100)
+         cmds.showWindow()
 
       def doIt(self, argList):
          argData = om.MArgParser (self.syntax(), argList)

@@ -50,8 +50,8 @@ class coordinateSystem(OpenMayaMPx.MPxCommand):
         # combine both object
         xAxis = cmds.polyUnite(xCyl, xCone, ch = 0, n = "x")
         # create y and z axes by duplicating x axis
-        yAxis = cmds.duplicate("x", n = "y")
-        zAxis = cmds.duplicate("x", n = "z")
+        yAxis = cmds.duplicate(xAxis, n = "y")
+        zAxis = cmds.duplicate(xAxis, n = "z")
         cmds.xform(yAxis, ro = [0,0,90])
         cmds.xform(zAxis, ro = [0,-90,0])
         # freeze rotation of y-axis and z-axis
@@ -61,12 +61,23 @@ class coordinateSystem(OpenMayaMPx.MPxCommand):
         #origin = cmds.spaceLocator(n = "origin")
 
         # create shading nodes for each axis (x = red, y = green, z = blue)
-        lx = cmds.shadingNode('lambert', asShader = 1, n = 'xAxis')
-        cmds.setAttr(lx + '.color', 1, 0, 0, type = 'double3')
-        ly = cmds.shadingNode('lambert', asShader = 1, n = 'yAxis')
-        cmds.setAttr(ly + '.color', 0, 1, 0, type = 'double3')
-        lz = cmds.shadingNode('lambert', asShader = 1, n = 'zAxis')
-        cmds.setAttr(lz + '.color', 0, 0, 1, type = 'double3')
+        if (len(cmds.ls('xAxis', type = 'lambert'))):
+            lx = cmds.ls('xAxis', type = 'lambert')[0]
+        else:
+            lx = cmds.shadingNode('lambert', asShader = 1, n = 'xAxis')
+            cmds.setAttr(lx + '.color', 1, 0, 0, type = 'double3')
+
+        if (len(cmds.ls('yAxis', type = 'lambert'))):
+            ly = cmds.ls('yAxis', type = 'lambert')[0]
+        else:
+            ly = cmds.shadingNode('lambert', asShader = 1, n = 'yAxis')
+            cmds.setAttr(ly + '.color', 0, 1, 0, type = 'double3')
+
+        if (len(cmds.ls('zAxis', type = 'lambert'))):
+            lz = cmds.ls('zAxis', type = 'lambert')[0]
+        else:
+            lz = cmds.shadingNode('lambert', asShader = 1, n = 'zAxis')
+            cmds.setAttr(lz + '.color', 0, 0, 1, type = 'double3')
 
         # select each axis and assign shader node
         cmds.select(xAxis)
@@ -77,7 +88,8 @@ class coordinateSystem(OpenMayaMPx.MPxCommand):
         cmds.hyperShade(assign = lz)
 
         # group all object
-        cs = cmds.group(xAxis, yAxis, zAxis, n = "CS")
+        #cs = cmds.group(xAxis, yAxis, zAxis, n = "CS")
+        cs = cmds.polyUnite(xAxis, yAxis, zAxis, ch = 0, n = "CS")
         # make sure pivots are in origin
         cmds.xform(cs, piv = [0,0,0])
 
