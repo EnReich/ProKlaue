@@ -63,7 +63,7 @@ The necessary parts of a new command need to be defined in a source file *foo.py
 
       def __cancelCallback(*pArgs):
          if cmds.window(exportData.windowID, exists = True):
-         cmds.deleteUI(exportData.windowID)
+            cmds.deleteUI(exportData.windowID)
 
       def __applyCallback(self, textF, *pArgs):
          options = {"text":cmds.textField(textF, q = 1, text = 1)}
