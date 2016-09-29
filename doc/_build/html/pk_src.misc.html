@@ -206,6 +206,42 @@
 </dd></dl>
 
 <dl class="function">
+<dt id="pk_src.misc.getTriangleEdges">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getTriangleEdges</code><span class="sig-paren">(</span><em>triangles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getTriangleEdges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getTriangleEdges" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to return all edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices&#8217; list; key is the index of the current vertex and for each outgoing edge the value contains an index to the corresponding vertex. Values are always lists of indices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>triangles</strong> (<em>[[1, 2, 3], [1, 3, 4], ...]</em>) &#8211; list of triangle definitions (in index represenation, see <em>misc.getTriangles</em>)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict (keys: index of current vertex, values: list of vertices with existing edge)</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] # </span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">polyTriangulate</span><span class="p">()</span>
+<span class="c1"># Result: [u&#39;polyTriangulate1&#39;] # </span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getTriangleEdges</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">getTriangles</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">))</span>
+<span class="c1"># Result: {0: [1, 2, 4, 6, 7], </span>
+        <span class="mi">1</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> 
+        <span class="mi">2</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> 
+        <span class="mi">3</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> 
+        <span class="mi">4</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> 
+        <span class="mi">5</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> 
+        <span class="mi">6</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> 
+        <span class="mi">7</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]}</span> <span class="c1"># </span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="pk_src.misc.getTriangles">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getTriangles</code><span class="sig-paren">(</span><em>obj</em>, <em>mfnObject=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getTriangles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getTriangles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to return all triangles in object mesh as nested list. Length of list is equal to number of triangles for the object. Each list element is another list of 3 vertex indices which refer to the point set of the current object mesh.</p>

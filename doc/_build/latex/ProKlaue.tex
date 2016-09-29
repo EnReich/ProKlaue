@@ -32,7 +32,7 @@
 
 
 \title{ProKlaue Documentation}
-\date{Sep 14, 2016}
+\date{Sep 29, 2016}
 \release{0.3.1}
 \author{Enrico Reich}
 \newcommand{\sphinxlogo}{}
@@ -1507,6 +1507,42 @@ MPointArray (api 2.0)
 
 \end{fulllineitems}
 
+\index{getTriangleEdges() (in module pk\_src.misc)}
+
+\begin{fulllineitems}
+\phantomsection\label{pk_src.misc:pk_src.misc.getTriangleEdges}\pysiglinewithargsret{\sphinxcode{pk\_src.misc.}\sphinxbfcode{getTriangleEdges}}{\emph{triangles}}{}
+Method to return all edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices' list; key is the index of the current vertex and for each outgoing edge the value contains an index to the corresponding vertex. Values are always lists of indices.
+\begin{quote}\begin{description}
+\item[{Parameters}] \leavevmode
+\textbf{\texttt{triangles}} (\emph{\texttt{{[}{[}1, 2, 3{]}, {[}1, 3, 4{]}, ...{]}}}) -- list of triangle definitions (in index represenation, see \emph{misc.getTriangles})
+
+\item[{Returns}] \leavevmode
+dict (keys: index of current vertex, values: list of vertices with existing edge)
+
+\end{description}\end{quote}
+\begin{description}
+\item[{\textbf{Example:}}] \leavevmode
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{pk\PYGZus{}src} \PYG{k+kn}{import} \PYG{n}{misc}
+\PYG{n}{cmds}\PYG{o}{.}\PYG{n}{polyCube}\PYG{p}{(}\PYG{p}{)}
+\PYG{c+c1}{\PYGZsh{} Result: [u\PYGZsq{}pCube1\PYGZsq{}, u\PYGZsq{}polyCube1\PYGZsq{}] \PYGZsh{} }
+\PYG{n}{cmds}\PYG{o}{.}\PYG{n}{polyTriangulate}\PYG{p}{(}\PYG{p}{)}
+\PYG{c+c1}{\PYGZsh{} Result: [u\PYGZsq{}polyTriangulate1\PYGZsq{}] \PYGZsh{} }
+\PYG{n}{misc}\PYG{o}{.}\PYG{n}{getTriangleEdges}\PYG{p}{(}\PYG{n}{misc}\PYG{o}{.}\PYG{n}{getTriangles}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pCube1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}\PYG{p}{)}
+\PYG{c+c1}{\PYGZsh{} Result: \PYGZob{}0: [1, 2, 4, 6, 7], }
+        \PYG{l+m+mi}{1}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{7}\PYG{p}{]}\PYG{p}{,} 
+        \PYG{l+m+mi}{2}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{]}\PYG{p}{,} 
+        \PYG{l+m+mi}{3}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{,} \PYG{l+m+mi}{5}\PYG{p}{,} \PYG{l+m+mi}{7}\PYG{p}{]}\PYG{p}{,} 
+        \PYG{l+m+mi}{4}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{5}\PYG{p}{,} \PYG{l+m+mi}{6}\PYG{p}{]}\PYG{p}{,} 
+        \PYG{l+m+mi}{5}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{,} \PYG{l+m+mi}{6}\PYG{p}{,} \PYG{l+m+mi}{7}\PYG{p}{]}\PYG{p}{,} 
+        \PYG{l+m+mi}{6}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{,} \PYG{l+m+mi}{5}\PYG{p}{,} \PYG{l+m+mi}{7}\PYG{p}{]}\PYG{p}{,} 
+        \PYG{l+m+mi}{7}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{5}\PYG{p}{,} \PYG{l+m+mi}{6}\PYG{p}{]}\PYG{p}{\PYGZcb{}} \PYG{c+c1}{\PYGZsh{} }
+\end{Verbatim}
+
+\end{description}
+
+\end{fulllineitems}
+
 \index{getTriangles() (in module pk\_src.misc)}
 
 \begin{fulllineitems}
@@ -1734,7 +1770,6 @@ All emphasized lines are required definitions: class \textbf{foo} inherited from
 \item {\texttt{pk\_src.normalize}}, \pageref{pk_src.normalize:module-pk_src.normalize}
 \item {\texttt{pk\_src.rangeObj}}, \pageref{pk_src.rangeObj:module-pk_src.rangeObj}
 \item {\texttt{pk\_src.vhacd}}, \pageref{pk_src.vhacd:module-pk_src.vhacd}
-\item {\texttt{proKlaue}} \emph{(Unix, Windows)}, \pageref{index:module-proKlaue}
 \end{theindex}
 
 \renewcommand{\indexname}{Index}

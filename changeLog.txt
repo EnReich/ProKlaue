@@ -7,6 +7,7 @@ Update 0.3.1:
    - small non-functional fixes (string optimization)
    - exportData: additional flag in UI to switch between automatic coordinate system (normalized position) and arbitrary coordinate system (as transform node grouped under object) as base for all export data
    - coordinateSystem: bug fix and reuse of materials
+   - new function: misc.getTriangleEdges
 
 Update 0.3.0:
    - new command: cmds.altitudeMap

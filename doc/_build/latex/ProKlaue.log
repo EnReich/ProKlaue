@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016/Arch Linux) (preloaded format=pdflatex 2016.8.17)  14 SEP 2016 15:36
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016/Arch Linux) (preloaded format=pdflatex 2016.8.17)  29 SEP 2016 09:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1158,28 +1158,28 @@ Overfull \vbox (2.02737pt too high) detected at line 1367
 [23]
 LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <10> not available
 (Font)              Font shape `T1/pcr/m/sl' tried instead on input line 1409.
- [24] [25] [26]
+ [24] [25] [26] [27] [28
+
+]
 Chapter 5.
 LaTeX Font Info:    Font shape `T1/phv/bx/it' in size <14.4> not available
-(Font)              Font shape `T1/phv/b/it' tried instead on input line 1623.
+(Font)              Font shape `T1/phv/b/it' tried instead on input line 1659.
 LaTeX Font Info:    Font shape `T1/phv/b/it' in size <14.4> not available
-(Font)              Font shape `T1/phv/b/sl' tried instead on input line 1623.
+(Font)              Font shape `T1/phv/b/sl' tried instead on input line 1659.
 
-Overfull \vbox (12.7651pt too high) detected at line 1682
+Overfull \vbox (12.7651pt too high) detected at line 1718
  []
 
-[27
-
-] [28]
+[29] [30]
 Chapter 6.
-[29
+[31
 
-] [30
+] [32
 
-] [31
+] [33
 
 
-] (./ProKlaue.ind [32
+] (./ProKlaue.ind [34
 
 
 ]
@@ -1188,131 +1188,131 @@ Underfull \hbox (badness 10000) in paragraph at lines 11--12
  []
 
 
-Overfull \hbox (0.86891pt too wide) in paragraph at lines 31--32
+Overfull \hbox (0.86891pt too wide) in paragraph at lines 32--33
 []\T1/ptm/m/n/10 intersect() (pk_src.intersection_tet_tet.intersection_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 67--69
+Underfull \hbox (badness 10000) in paragraph at lines 68--70
 []\T1/ptm/m/n/10 separating_plane_edge_A()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 67--69
+Underfull \hbox (badness 10000) in paragraph at lines 68--70
 \T1/ptm/m/n/10 (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 69--71
+Underfull \hbox (badness 10000) in paragraph at lines 70--72
 []\T1/ptm/m/n/10 separating_plane_faceA_1()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 69--71
+Underfull \hbox (badness 10000) in paragraph at lines 70--72
 \T1/ptm/m/n/10 (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 71--73
+Underfull \hbox (badness 10000) in paragraph at lines 72--74
 []\T1/ptm/m/n/10 separating_plane_faceA_2()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 71--73
+Underfull \hbox (badness 10000) in paragraph at lines 72--74
 \T1/ptm/m/n/10 (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 73--75
+Underfull \hbox (badness 10000) in paragraph at lines 74--76
 []\T1/ptm/m/n/10 separating_plane_faceB_1()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 73--75
+Underfull \hbox (badness 10000) in paragraph at lines 74--76
 \T1/ptm/m/n/10 (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 75--77
+Underfull \hbox (badness 10000) in paragraph at lines 76--78
 []\T1/ptm/m/n/10 separating_plane_faceB_2()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 75--77
+Underfull \hbox (badness 10000) in paragraph at lines 76--78
 \T1/ptm/m/n/10 (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Overfull \hbox (13.09889pt too wide) in paragraph at lines 77--79
+Overfull \hbox (13.09889pt too wide) in paragraph at lines 78--80
 []\T1/ptm/m/n/10 setCentroid() (pk_src.intersection_tet_tet.intersection_tet_te
 t
  []
 
 
-Overfull \hbox (12.53883pt too wide) in paragraph at lines 79--80
+Overfull \hbox (12.53883pt too wide) in paragraph at lines 80--81
 []\T1/ptm/m/n/10 setNormals() (pk_src.intersection_tet_tet.intersection_tet_tet
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 80--81
+Underfull \hbox (badness 10000) in paragraph at lines 81--82
 []\T1/ptm/m/n/10 setV1() (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 81--82
+Underfull \hbox (badness 10000) in paragraph at lines 82--83
 []\T1/ptm/m/n/10 setV1() (pk_src.intersection_tet_tet.intersection_tet_tet
  []
 
-[33
+[35
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 82--83
+Underfull \hbox (badness 10000) in paragraph at lines 83--84
 []\T1/ptm/m/n/10 setV1V2() (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Overfull \hbox (2.53923pt too wide) in paragraph at lines 83--84
+Overfull \hbox (2.53923pt too wide) in paragraph at lines 84--85
 []\T1/ptm/m/n/10 setV1V2() (pk_src.intersection_tet_tet.intersection_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 84--85
+Underfull \hbox (badness 10000) in paragraph at lines 85--86
 []\T1/ptm/m/n/10 setV2() (pk_src.collision_tet_tet.Collision_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 85--86
+Underfull \hbox (badness 10000) in paragraph at lines 86--87
 []\T1/ptm/m/n/10 setV2() (pk_src.intersection_tet_tet.intersection_tet_tet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 86--87
+Underfull \hbox (badness 10000) in paragraph at lines 87--88
 []\T1/ptm/m/n/10 shifts (pk_src.collision_tet_tet.Collision_tet_tet at-
  []
 
-[34
+[36
 
 ])
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1742.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1742.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1777.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 1777.
  (./ProKlaue.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1742.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1742.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1777.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1777.
 
 Package rerunfilecheck Info: File `ProKlaue.out' has not changed.
-(rerunfilecheck)             Checksum: 16C49078771A66DA7B5E720A7DF5BD0F;4022.
+(rerunfilecheck)             Checksum: 3B64767972C5A50595BA90CCB59315BF;4022.
 
 
 LaTeX Warning: There were multiply-defined labels.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1742.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1777.
  ) 
 Here is how much of TeX's memory you used:
- 13705 strings out of 493013
- 187130 string characters out of 6139317
- 332691 words of memory out of 5000000
- 16798 multiletter control sequences out of 15000+600000
+ 13709 strings out of 493013
+ 187197 string characters out of 6139317
+ 332723 words of memory out of 5000000
+ 16799 multiletter control sequences out of 15000+600000
  67139 words of font info for 86 fonts, out of 8000000 for 9000
  1142 hyphenation exceptions out of 8191
  36i,19n,45p,1572b,633s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1332,10 +1332,10 @@ fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/time
 s/utmb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/sha
 re/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texmf-dist/fonts/typ
 e1/urw/times/utmri8a.pfb>
-Output written on ProKlaue.pdf (38 pages, 278569 bytes).
+Output written on ProKlaue.pdf (40 pages, 280346 bytes).
 PDF statistics:
- 654 PDF objects out of 1000 (max. 8388607)
- 584 compressed objects within 6 object streams
- 129 named destinations out of 1000 (max. 500000)
+ 663 PDF objects out of 1000 (max. 8388607)
+ 591 compressed objects within 6 object streams
+ 132 named destinations out of 1000 (max. 500000)
  277 words of extra memory for PDF output out of 10000 (max. 10000000)
 

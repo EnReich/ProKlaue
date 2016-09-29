@@ -162,6 +162,44 @@ def getTriangles(obj, mfnObject = None):
     tri = [x for x in mfnObject.getTriangles()[1]]
     return (np.squeeze(np.asarray([ [tri[i], tri[i+1], tri[i+2]] for i in range(len(tri))[0::3]] )) )
 
+def getTriangleEdges(triangles):
+    """
+    Method to return all edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices' list; key is the index of the current vertex and for each outgoing edge the value contains an index to the corresponding vertex. Values are always lists of indices.
+
+    :param triangles: list of triangle definitions (in index represenation, see *misc.getTriangles*)
+    :type triangles: [[1, 2, 3], [1, 3, 4], ...]
+    :returns: dict (keys: index of current vertex, values: list of vertices with existing edge)
+
+    **Example:**
+        .. code-block:: python
+
+            from pk_src import misc
+            cmds.polyCube()
+            # Result: [u'pCube1', u'polyCube1'] # 
+            cmds.polyTriangulate()
+            # Result: [u'polyTriangulate1'] # 
+            misc.getTriangleEdges(misc.getTriangles("pCube1"))
+            # Result: {0: [1, 2, 4, 6, 7], 
+                    1: [0, 2, 3, 7], 
+                    2: [0, 1, 3, 4], 
+                    3: [1, 2, 4, 5, 7], 
+                    4: [0, 2, 3, 5, 6], 
+                    5: [3, 4, 6, 7], 
+                    6: [0, 4, 5, 7], 
+                    7: [0, 1, 3, 5, 6]} # 
+    """
+
+    # initialize dictionary with edge connections
+    edges = {}
+    # for each triangle definition add list of edges
+    for tri in triangles:
+        # each vertex has 2 outgoing edges, if index already exist as key in dictionary, add the two other indices to the value-list and eliminate duplicates
+        edges[tri[0]] = list(set(edges[tri[0]] + [tri[1], tri[2]])) if (tri[0] in edges) else [tri[1], tri[2]]
+        edges[tri[1]] = list(set(edges[tri[1]] + [tri[0], tri[2]])) if (tri[1] in edges) else [tri[0], tri[2]]
+        edges[tri[2]] = list(set(edges[tri[2]] + [tri[0], tri[1]])) if (tri[2] in edges) else [tri[0], tri[1]]
+
+    return edges
+
 def areaTriangle (vertices):
     """
     Returns the area of a triangle given its three vertices.

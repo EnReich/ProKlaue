@@ -27,7 +27,7 @@
 \contentsline {section}{\numberline {4.1}collision\_tet\_tet}{21}{section.4.1}
 \contentsline {section}{\numberline {4.2}intersection\_tet\_tet}{22}{section.4.2}
 \contentsline {section}{\numberline {4.3}misc}{23}{section.4.3}
-\contentsline {chapter}{\numberline {5}HowTo: Add new commands to plugin \emph {ProKlaue}}{27}{chapter.5}
-\contentsline {chapter}{\numberline {6}Indices and tables}{29}{chapter.6}
-\contentsline {chapter}{Python Module Index}{31}{section*.59}
-\contentsline {chapter}{Index}{33}{section*.60}
+\contentsline {chapter}{\numberline {5}HowTo: Add new commands to plugin \emph {ProKlaue}}{29}{chapter.5}
+\contentsline {chapter}{\numberline {6}Indices and tables}{31}{chapter.6}
+\contentsline {chapter}{Python Module Index}{33}{section*.60}
+\contentsline {chapter}{Index}{35}{section*.61}

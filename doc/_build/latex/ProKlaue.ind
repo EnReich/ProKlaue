@@ -24,7 +24,8 @@
   \item getFaceNormals() (in module pk\_src.misc), \hyperpage{24}
   \item getMesh() (in module pk\_src.misc), \hyperpage{24}
   \item getPoints() (in module pk\_src.misc), \hyperpage{24}
-  \item getTriangles() (in module pk\_src.misc), \hyperpage{25}
+  \item getTriangleEdges() (in module pk\_src.misc), \hyperpage{25}
+  \item getTriangles() (in module pk\_src.misc), \hyperpage{26}
 
   \indexspace
   \bigletter I
