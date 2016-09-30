@@ -2,6 +2,9 @@ Known Issues/TODO:
    - No Shelf tab/buttons in Maya 2016
    - Rework UI (show currently selected object(s), progress, info-messages, remove deprecated elements, etc.)
 
+Update 0.3.2:
+    -fixed a bug: normalize AxisPlane when executing altitudeMap
+
 Update 0.3.1:
    - new command: cmds.coordinateSystem
    - small non-functional fixes (string optimization)
