@@ -19,7 +19,7 @@ def getArgObj(syntax, argList):
 
     :returns: list of object names in argument list (or from current selection)
     """
-    argData = om.MArgParser (syntax, argList)
+    argData = om.MArgParser(syntax, argList)
     objStrings = []
     argData.getObjects(objStrings)
     # check if objects are selected or object is given as argument (only use first selection/argument)
@@ -197,10 +197,45 @@ def getTriangleEdges(triangles):
         edges[tri[0]] = list(set(edges[tri[0]] + [tri[1], tri[2]])) if (tri[0] in edges) else [tri[1], tri[2]]
         edges[tri[1]] = list(set(edges[tri[1]] + [tri[0], tri[2]])) if (tri[1] in edges) else [tri[0], tri[2]]
         edges[tri[2]] = list(set(edges[tri[2]] + [tri[0], tri[1]])) if (tri[2] in edges) else [tri[0], tri[1]]
-
     return edges
 
-def areaTriangle (vertices):
+def getTriangleEdgesCount(triangles):
+    """
+    Method to return the reference count of all  edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices' list; key is the set of indices of the current vertex-pair for an edge and the value contains the count of triangles with a reference to that edge. Values are always integer. Only edges with at least 1 reference appear in the dict.
+
+    :param triangles: list of triangle definitions (in index represenation, see *misc.getTriangles*)
+    :type triangles: [[1, 2, 3], [1, 3, 4], ...]
+    :returns: dict (keys: a set with exactly 2 indices of vertices, values: count of triangles which reference the given edge)
+
+    **Example:**
+        .. code-block:: python
+
+            from pk_src import misc
+            cmds.polyCube()
+            # Result: [u'pCube1', u'polyCube1'] #
+            cmds.polyTriangulate()
+            # Result: [u'polyTriangulate1'] #
+            misc.getTriangleEdges(misc.getTriangles("pCube1"))
+            # Result: {0: [1, 2, 4, 6, 7],
+                    1: [0, 2, 3, 7],
+                    2: [0, 1, 3, 4],
+                    3: [1, 2, 4, 5, 7],
+                    4: [0, 2, 3, 5, 6],
+                    5: [3, 4, 6, 7],
+                    6: [0, 4, 5, 7],
+                    7: [0, 1, 3, 5, 6]} #
+    """
+
+    # initialize dictionary with edge counts
+    edgeCount = {}
+    # for each triangle definition count references of edges
+    for tri in triangles:
+        edgeCount[set([tri[0], tri[1]])] += 1
+        edgeCount[set([tri[0], tri[2]])] += 1
+        edgeCount[set([tri[1], tri[2]])] += 1
+    return edgeCount
+
+def areaTriangle(vertices):
     """
     Returns the area of a triangle given its three vertices.
 

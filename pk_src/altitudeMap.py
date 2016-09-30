@@ -38,11 +38,14 @@ import maya.api.OpenMaya as om2
 import maya.cmds as cmds
 import operator
 import misc
+import math
 import string
 import numpy as np
 
 dot = lambda x,y: sum(map(operator.mul, x, y))
 """dot product as lambda function to speed up calculation"""
+normalize = lambda v: map(operator.div, v, [math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])]*3)
+"""normalization of 3D-vector as lambda function to speed up calculation"""
 EPSILON = 1e-5
 
 class altitudeMap(OpenMayaMPx.MPxCommand):
@@ -128,7 +131,7 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
             # cut 4th row/column to perform 3d vector multiplication with 3x3 rotation matrix (speedup)
             tmp = tmp[:-1].transpose()[:-1].transpose()
             # transform the plane's normal
-            plane_n_ws = (plane_n * tmp).tolist()[0]
+            plane_n_ws = normalize((plane_n * tmp).tolist()[0])
 
             # cut 4th row/column and transform object normals to world space (no translation necessary)
             transform_obj = transform_obj[:-1].transpose()[:-1].transpose()
@@ -153,7 +156,8 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
             for c in obj_centroid:
                 # move origin a little bit away from centroid to avoid self intersection
                 origin = om2.MFloatPoint(c[1:]) + EPSILON*ray_dir
-
+                print c
+                print plane_centroid_ws
                 # method returns list ([hitPoint], hitParam, hitFace, hitTriangle, hitBary2, hitBary2)
                 # value hitFace equals -1 iff no intersection was found
                 hitResult = mfnObject.closestIntersection(origin, ray_dir, om2.MSpace.kWorld, threshold, False, accelParams = accel)
@@ -161,9 +165,11 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
                 if (hitResult[3] == -1):
                     # distance from centroid to plane is the length of the projection v (centroid plane to centroid triangle) onto unit normal vector of plane
                     d = dot(map(operator.sub, c[1:], plane_centroid_ws), plane_n_ws)
+                    print d
                     # add centroid as 3D point and distance to plane to altitude map
                     if (d <= threshold):
                         altitudeMap.append ( [key] + c + [d] )
+
 
             # if file name is given, write altitude map
             if (s_file != ""):
