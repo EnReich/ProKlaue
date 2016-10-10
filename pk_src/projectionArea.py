@@ -7,7 +7,6 @@ import misc
 import math
 import string
 import numpy as np
-from contourShape import contourShape
 
 dot = lambda x, y: sum(map(operator.mul, x, y))
 """dot product as lambda function to speed up calculation"""
@@ -121,25 +120,35 @@ class projectionArea(OpenMayaMPx.MPxCommand):
 
             print obj_tri_bc
 
-            d = misc.getTriangleEdgesReferences(obj_tri_bc)
+            tris = map(lambda x: x[1:], obj_tri_bc)
+            d = misc.getTriangleEdgesReferences(tris)
             for k in d:
                 pts = set([])
                 for tri in d[k]:
-                    for pt in obj_tri_bc[tri]:
-                        print k
-                        print obj_tri_bc[tri]
+                    for pt in tris[tri]:
                         if pt not in k:
                             pts.add(pt)
 
                 pts = list(pts)
                 kl = list(k)
                 edge = [obj_vtx_ws[kl[0]], obj_vtx_ws[kl[1]]]
-                turn = contourShape.Turn(edge[0], edge[1], obj_vtx_ws[pts[0]])
+                edge[0]=[edge[0][0], edge[0][2]]
+                edge[1] = [edge[1][0], edge[1][2]]
+                pt= obj_vtx_ws[pts[0]]
+                pt=[pt[0], pt[2]]
+                turn = contourShape.Turn(edge[0], edge[1], pt)
                 for pt in pts[1:]:
-                    if turn == contourShape.Turn(edge[0], edge[1], obj_vtx_ws[pt]):
-                        print k
-                        print d[k]
+                    ptc = obj_vtx_ws[pt]
+                    ptc = [ptc[0], ptc[2]]
+                    if turn == contourShape.Turn(edge[0], edge[1], ptc):
                         print pts
+                        print kl
+                        print pt
+                        print edge[0]
+                        print edge[1]
+                        print obj_vtx_ws[pts[0]]
+                        print obj_vtx_ws[pt]
+                        print contourShape.Turn(edge[0], edge[1], obj_vtx_ws[pt])
                         print 'HERE! FOUND ONE! !!!!!!!!!!!!!!!!!'
 
             # list to store points and their distance to the plane
@@ -151,8 +160,8 @@ class projectionArea(OpenMayaMPx.MPxCommand):
             for c in obj_centroid:
                 # move origin a little bit away from centroid to avoid self intersection
                 origin = om2.MFloatPoint(c[1:]) + EPSILON * ray_dir
-                print c
-                print plane_centroid_ws
+                #print c
+                #print plane_centroid_ws
                 # method returns list ([hitPoint], hitParam, hitFace, hitTriangle, hitBary2, hitBary2)
                 # value hitFace equals -1 iff no intersection was found
                 hitResult = mfnObject.closestIntersection(origin, ray_dir, om2.MSpace.kWorld, threshold, False,
@@ -161,7 +170,7 @@ class projectionArea(OpenMayaMPx.MPxCommand):
                 if (hitResult[3] == -1):
                     # distance from centroid to plane is the length of the projection v (centroid plane to centroid triangle) onto unit normal vector of plane
                     d = dot(map(operator.sub, c[1:], plane_centroid_ws), plane_n_ws)
-                    print d
+                    #print d
                     # add centroid as 3D point and distance to plane to altitude map
                     if (d <= threshold):
                         altitudeMap.append([key] + c + [d])

@@ -19,108 +19,117 @@ cross = lambda x,y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y
 
 EPSILON = 2e-15
 
-class point:
+
+class Point:
+
     # coordinates
-    x=0
-    y=0
+    x = 0
+    y = 0
     # index in point field
-    ind=-1
+    ind = -1
     # created point (for intersection or boolean)
-    created=True
-    neighbors = set([])
+    created = True
+    #neighbor points in order of x coordinates
+    prev = None
+    next = None
+
+    def __init__(self, x, y, ind, created, prev, next):
+        self.x = x
+        self.y = y
+        self.ind = ind
+        self.created = created
+        self.prev = prev
+        self.next = next
 
 
-class contourShape:
-    def getContourShape(pts):
-        return pts
+def turn(p1,p2,p3):
+    A = (p3[1]-p1[1])*(p2[0]-p1[0])
+    B = (p2[1]-p1[1])*(p3[0]-p1[0])
+    return 1 if (A > B+EPSILON) else -1 if (A+EPSILON < B) else 0
 
-    @staticmethod
-    def Turn(p1,p2,p3):
-        A = (p3[1]-p1[1])*(p2[0]-p1[0])
-        B = (p2[1]-p1[1])*(p3[0]-p1[0])
-        return 1 if (A > B+EPSILON) else -1 if (A+EPSILON < B) else 0
 
-    @staticmethod
-    def isIntersect(p1,p2,p3,p4):
-        return (Turn(p1, p3, p4) != Turn(p2, p3, p4)) & (Turn(p1, p2, p3) != Turn(p1, p2, p4))
+def isIntersect(p1,p2,p3,p4):
+    return (turn(p1, p3, p4) != turn(p2, p3, p4)) & (turn(p1, p2, p3) != turn(p1, p2, p4))
 
-    @staticmethod
-    def getIntersectionPoint(l1p1,l1p2,l2p1,l2p2):
-        u1 = ((float(l2p2[0])-l2p1[0])*(l1p1[1]-l2p1[1]) - (l2p2[1]-l2p1[1])*(l1p1[1]-l2p1[1])) / ((l2p2[1]-l2p1[1])*(l1p2[0]-l1p1[0]) - (l2p2[0]-l2p1[0])*(l1p2[1]-l1p1[1]))
-        if u1<0 | u1>1:
-            return None
+
+def getIntersectionPoint(l1p1,l1p2,l2p1,l2p2):
+    u1 = ((float(l2p2[0])-l2p1[0])*(l1p1[1]-l2p1[1]) - (l2p2[1]-l2p1[1])*(l1p1[1]-l2p1[1])) / ((l2p2[1]-l2p1[1])*(l1p2[0]-l1p1[0]) - (l2p2[0]-l2p1[0])*(l1p2[1]-l1p1[1]))
+    if u1<0 | u1>1:
+        return None
+    else:
+        return l1p1+u1*(l1p2-l1p1)
+
+
+def isOuterEdge(points, edge, trisForEdge):
+    # edge is an outer edge if referenced by exactly one face/triangle
+    return len(trisForEdge) == 1
+
+
+def getOuterEdges(points, triEdgesRef):
+    outerEdges = set([])
+    for edg in triEdgesRef:
+        if isOuterEdge(points, edg, triEdgesRef[edg]):
+            outerEdges.add(edg)
+
+    return outerEdges
+
+
+def getPolygon(ptsCord, edges):
+    pts = {}
+    for edge in edges:
+        for pt in edge:
+            if pt not in pts:
+                pts[pt] = Point(ptsCord[pt][0], ptsCord[pt][1], pt, False, None, None)
+
+        edgeList = list(edge)
+
+        pt0 = pts[edgeList[0]]
+        pt1 = pts[edgeList[1]]
+
+        if (pt0.next is not None) & (pt1.next is None):
+            pt0, pt1 = pt1, pt0
+
+        if pt0.next is None:
+            if pt1.prev is not None:
+                #reverse the order of the list
+                pt = pt1
+                while pt is not None:
+                    pt.prev, pt.next = pt.next, pt.prev
+                    pt = pt.next
+
         else:
-            return l1p1+u1*(l1p2-l1p1)
-
-    @staticmethod
-    def isOuterEdge(points, edge, trisForEdge):
-        # edge is an outer edge if referenced by exactly one face/triangle
-        if len(trisForEdge) == 1:
-            return True
-
-        edge = list(edge)
-        p1_ind, p2_ind = edge[0], edge[1]
-        p1,p2 = points[p1_ind], points[p2_ind]
-
-        p3_ind = None
-        for ind in tri:
-            if (p1_ind != ind) & (p2_ind != ind):
-                p3_ind=ind
-                break
-        p3=points[p3_ind]
-        turn = Turn(p1,p2,p3)
-
-        # if all triangles on the edge turn the same way the edge is an outer edge but due to the projection the triangles overlap
-        for tri in trisForEdge:
-            p3_ind = None
-            for ind in tri:
-                if (p1_ind != ind) & (p2_ind != ind):
-                    p3_ind = ind
-                    break
-            p3 = points[p3_ind]
-            if(Turn(p1, p2, p3)!= turn):
-                return False
-
-        return True
+            # reverse the order of the list
+            pt = pt0
+            while pt is not None:
+                pt.prev, pt.next = pt.next, pt.prev
+                pt = pt.prev
 
 
-    def prepareEdges(points, edges, trisForEdges):
-        # if edges are referenced more than 2 times, there are edges who overlap at this point, so intersect them and build the final edges
-        npts = {}
+        pt1.prev = pt0
+        pt0.next = pt1
+
+    poly = []
+
+    pt =pt0
+
+    while pt not in poly:
+        poly.append(pt)
+        pt = pt.next
+
+    return poly
 
 
-        edge = list(edge)
-        p1_ind, p2_ind = edge[0], edge[1]
-        p1, p2 = points[p1_ind], points[p2_ind]
-
-        p3_ind = None
-        for ind in tri:
-            if (p1_ind != ind) & (p2_ind != ind):
-                p3_ind = ind
-                break
-        p3 = points[p3_ind]
-        turn = Turn(p1, p2, p3)
 
 
-        for tri in trisForEdge:
-            p3_ind = None
-            for ind in tri:
-                if (p1_ind != ind) & (p2_ind != ind):
-                    p3_ind = ind
-                    break
-            p3 = points[p3_ind]
-            if (Turn(p1, p2, p3) != turn):
-                return False
 
-        return True
 
-    def getOuterEdges(points, triEdgesRef):
-        outerEdges = set([])
-        for edg in triEdgesRef:
-            if(isOuterEdge(points, edg, triEdgesRef[edg])):
-                outerEdges.add(edg)
 
-        return outerEdges
+
+
+
+
+
+
 
 
 

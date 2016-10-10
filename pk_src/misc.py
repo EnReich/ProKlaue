@@ -90,7 +90,7 @@ def getPoints(obj, mfnObject = None, worldSpace = True):
     return (mfnObject.getPoints(space))
 
 
-def getPointsAsArray(obj, worldSpace = True):
+def getPointsAsList(obj, worldSpace = True):
     """
     Method to return MPointArray with points of object's mesh.
 
