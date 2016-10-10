@@ -73,7 +73,7 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
                 obj[0], obj[1] = obj[1], obj[0]
                 obj_vtx, plane_vtx = plane_vtx, obj_vtx
                 obj_n, plane_n = plane_n, obj_n
-            
+
             plane_n = plane_n[0]
             plane_centroid = map(operator.div, reduce(lambda x,y: map(operator.add, x,y), plane_vtx), [4.0]*4)
         except:

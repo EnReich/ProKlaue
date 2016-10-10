@@ -89,6 +89,30 @@ def getPoints(obj, mfnObject = None, worldSpace = True):
     # get Array of MPoint-Objects --> for better accessing reorganize MPoint-Array to array
     return (mfnObject.getPoints(space))
 
+
+def getPointsAsArray(obj, worldSpace = True):
+    """
+    Method to return MPointArray with points of object's mesh.
+
+    :param obj: name of object
+    :type obj: string
+    :param worldSpace: should coordinates be in world space (with transform) or in local space (without transform); default True
+    :type worldSpace: Boolean
+    :returns: array of coordinates of points
+
+    **Example:**
+        .. code-block:: python
+
+            from pk_src import misc
+            cmds.polyCube()
+            misc.getPointsAsArray('pCube1')
+            # Result: [(-0.5, -0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (-0.5, 0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5)] #
+    """
+
+    xOrig = cmds.xform(obj+'.vtx[*]', q=True, ws=worldSpace, t=True)
+    origPts = zip(xOrig[0::3], xOrig[1::3], xOrig[2::3])
+    return origPts
+
 def getFaceNormals(obj, worldSpace = True):
     """
     Method to return all face normals. Uses the command `polyInfo <http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html>`_ to access the normal information as string and parse them to a numpy array
@@ -205,35 +229,49 @@ def getTriangleEdgesCount(triangles):
 
     :param triangles: list of triangle definitions (in index represenation, see *misc.getTriangles*)
     :type triangles: [[1, 2, 3], [1, 3, 4], ...]
-    :returns: dict (keys: a set with exactly 2 indices of vertices, values: count of triangles which reference the given edge)
-
-    **Example:**
-        .. code-block:: python
-
-            from pk_src import misc
-            cmds.polyCube()
-            # Result: [u'pCube1', u'polyCube1'] #
-            cmds.polyTriangulate()
-            # Result: [u'polyTriangulate1'] #
-            misc.getTriangleEdges(misc.getTriangles("pCube1"))
-            # Result: {0: [1, 2, 4, 6, 7],
-                    1: [0, 2, 3, 7],
-                    2: [0, 1, 3, 4],
-                    3: [1, 2, 4, 5, 7],
-                    4: [0, 2, 3, 5, 6],
-                    5: [3, 4, 6, 7],
-                    6: [0, 4, 5, 7],
-                    7: [0, 1, 3, 5, 6]} #
+    :returns: dict (keys: a frozenset with exactly 2 indices of vertices, values: count of triangles which reference the given edge)
     """
 
     # initialize dictionary with edge counts
     edgeCount = {}
     # for each triangle definition count references of edges
     for tri in triangles:
-        edgeCount[set([tri[0], tri[1]])] += 1
-        edgeCount[set([tri[0], tri[2]])] += 1
-        edgeCount[set([tri[1], tri[2]])] += 1
+        edgeCount[frozenset([tri[0], tri[1]])] = edgeCount.get(frozenset([tri[0], tri[1]]), 0) + 1
+        edgeCount[frozenset([tri[0], tri[2]])] = edgeCount.get(frozenset([tri[0], tri[2]]), 0) + 1
+        edgeCount[frozenset([tri[1], tri[2]])] = edgeCount.get(frozenset([tri[1], tri[2]]), 0) + 1
     return edgeCount
+
+def getTriangleEdgesReferences(triangles):
+    """
+    Method to return the references to face indices of all  edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices' list; key is the set of indices of the current vertex-pair for an edge and the value contains a set of triangle indices with a reference to that edge. Values are always integer. Only edges with at least 1 reference appear in the dict.
+
+    :param triangles: list of triangle definitions (in index represenation, see *misc.getTriangles*)
+    :type triangles: [[1, 2, 3], [1, 3, 4], ...]
+    :returns: dict (keys: a frozenset with exactly 2 indices of vertices, values: set of triangle indices which reference the given edge)
+    """
+
+    # initialize dictionary with edge counts
+    edgeRefs = {}
+    # for each triangle definition count references of edges
+    for ind, tri in enumerate(triangles):
+
+        if frozenset([tri[0], tri[1]]) in edgeRefs:
+            edgeRefs[frozenset([tri[0], tri[1]])].add(ind)
+        else:
+            edgeRefs[frozenset([tri[0], tri[1]])] = {ind}
+
+        if frozenset([tri[1], tri[2]]) in edgeRefs:
+            edgeRefs[frozenset([tri[1], tri[2]])].add(ind)
+        else:
+            edgeRefs[frozenset([tri[1], tri[2]])] = {ind}
+
+        if frozenset([tri[0], tri[2]]) in edgeRefs:
+            edgeRefs[frozenset([tri[0], tri[2]])].add(ind)
+        else:
+            edgeRefs[frozenset([tri[0], tri[2]])] = {ind}
+
+    return edgeRefs
+
 
 def areaTriangle(vertices):
     """
