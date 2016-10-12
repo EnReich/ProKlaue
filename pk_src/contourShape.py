@@ -20,8 +20,113 @@ cross = lambda x,y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y
 EPSILON = 2e-15
 
 
-class Point:
+class SearchTreeNode:
+    key = 0
+    val = None
+    parent = None
+    left = None
+    right = None
 
+    def __init__(self, key, val, parent, left, right):
+        self.key=key
+        self.val=val
+        self.parent=parent
+        self.left =left
+        self.right = right
+
+
+class SearchTree:
+    root = None
+
+    def search(self, key):
+        node = self.root
+        while node is not None:
+            if node.key == key:
+                return node
+            else:
+                if key < node.key:
+                    node = node.left
+                else:
+                    node = node.right
+        return None
+
+    def insertRec(self, lastNode, nodeToInsert):
+        if nodeToInsert.key > lastNode.key:
+            if lastNode.right is not None:
+                self.insertRec(lastNode.right, nodeToInsert)
+            else:
+                lastNode.right = nodeToInsert
+                nodeToInsert.parent = lastNode
+        else:
+            if lastNode.left is not None:
+                self.insertRec(lastNode.left, nodeToInsert)
+            else:
+                lastNode.left = nodeToInsert
+                nodeToInsert.parent = lastNode
+
+    def insert(self, nodeToInsert):
+        if self.root is not None:
+            self.insertRec(self.root, nodeToInsert)
+        else:
+            self.root = nodeToInsert
+
+    def delete(self, nodeToDelete):
+        #no children just delete
+        if (nodeToDelete.right is None) & (nodeToDelete.left is None):
+            if nodeToDelete.parent is not None:
+                if nodeToDelete.key < nodeToDelete.parent.key:
+                    nodeToDelete.parent.left = None
+                else:
+                    nodeToDelete.parent.right = None
+            if self.root is nodeToDelete:
+                self.root=None
+
+        #one children just give it to parent
+        elif nodeToDelete.right is None:
+            if nodeToDelete is not self.root:
+                if nodeToDelete.left.key < nodeToDelete.parent.key:
+                    nodeToDelete.parent.left = nodeToDelete.left
+                else:
+                    nodeToDelete.parent.right = nodeToDelete.left
+
+                nodeToDelete.left.parent = nodeToDelete.parent
+            else:
+                self.root = nodeToDelete.left
+                self.root.parent = None
+
+        elif nodeToDelete.left is None:
+            if nodeToDelete is not self.root:
+                if nodeToDelete.right.key < nodeToDelete.parent.key:
+                    nodeToDelete.parent.left = nodeToDelete.right
+                else:
+                    nodeToDelete.parent.right = nodeToDelete.right
+
+                nodeToDelete.right.parent = nodeToDelete.parent
+            else:
+                self.root = nodeToDelete.right
+                self.root = None
+
+        #two children
+        else:
+            #find most right child in left subtree
+            maxChild = self.findMaximum(nodeToDelete.left)
+            key = maxChild.key
+            val = maxChild.val
+            self.delete(maxChild)
+            nodeToDelete.key = key
+            nodeToDelete.val = val
+
+    def findMaximum(self, root):
+        if root.right is not None:
+            return self.findMaximum(root.right)
+        else:
+            return root
+
+    def __init__(self):
+        self.root = None
+
+
+class Point:
     # coordinates
     x = 0
     y = 0
@@ -33,7 +138,7 @@ class Point:
     prev = None
     next = None
 
-    def __init__(self, x, y, ind, created, prev, next):
+    def __init__(self, x, y, ind=-1, created=True, prev=None, next=None):
         self.x = x
         self.y = y
         self.ind = ind
@@ -79,7 +184,7 @@ def getPolygon(ptsCord, edges):
     for edge in edges:
         for pt in edge:
             if pt not in pts:
-                pts[pt] = Point(ptsCord[pt][0], ptsCord[pt][1], pt, False, None, None)
+                pts[pt] = Point(x = ptsCord[pt][0], y = ptsCord[pt][1], ind = pt, created = False, prev = None, next = None)
 
         edgeList = list(edge)
 
@@ -119,6 +224,18 @@ def getPolygon(ptsCord, edges):
     return poly
 
 
+def signedArea(poly, firstDoubled= False):
+    sumArea = 0
+    if firstDoubled:
+        indices = range(len(poly))
+    else:
+        indices = range(len(poly)+1)
+        indices[len(poly)] = 0
+    for i in range(len(indices)-1):
+        p1 = poly[indices[i]]
+        p2 = poly[indices[i+1]]
+        sumArea += p1.x*p2.y - p2.x*p1.y
+    return sumArea
 
 
 
