@@ -7,6 +7,7 @@ import maya.OpenMaya as om
 import maya.cmds as cmds
 import numpy as np
 import operator
+import math
 
 def getArgObj(syntax, argList):
     """
@@ -372,3 +373,29 @@ def signedVolumeOfTriangle(p1, p2, p3, center = [0,0,0]):
     v321 = p3[0]*p2[1]*p1[2]
 
     return (1.0/6.0 * reduce(lambda x,y: x+y, [v123, -v132, v312, -v213, v231, -v321]))
+
+def alignYAxis():
+    """Calculates the necessary rotations to align the y axis of one object with the position of another object, i.e. the local y-vector of the first selected objects will point towards the position (in worldspace) of the second selected object.
+
+    If not exactly two objects are selected, a warning message will be displayed.
+    """
+
+    # normalization of 3d vector
+    normalize = lambda v: map(operator.div, v, [math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])]*3)
+    # sign function (returns +1 true iff given value is greater 0, -1 iff given value is less 0, and 0 if value equals 0)
+    sign = lambda x: (x > 0) - (x < 0)
+
+    objList = cmds.ls(orderedSelection = 1)
+    if (len(objList) == 2):
+        # vector FROM 1st TO 2nd selected object
+        t = map(operator.sub, cmds.xform(objList[1], q = 1, t = 1, ws = 1), cmds.xform(objList[0], q = 1, t = 1, ws = 1))
+        t = normalize(t)
+        # calculate angles a and z (rotation around x and z axis)
+        # calculation are derived from the transformation matrix: R*y = t where t is the new direction and y = (0,1,0). The three equations are: (1) -sin(c) = t_x, (2) cos(a)*cos(c) = t_y and (3) sin(a) = t_z
+        a = math.asin(t[2])
+        # the term sign(math.asin(...)) is necessary because the direction of rotation depends on the quadrant in which the target direction is (function z = math.atan2(math.asin(-t[0]), t[1]) does more or less the same but with visible inaccuracy)
+        c = sign(math.asin(-t[0])) * math.acos(t[1] / math.cos(a))
+        # set rotation angles (degree) for 1st object
+        cmds.xform(objList[0], ro = map(operator.mul, [a, 0, c], [180/math.pi]*3), ws = 1)
+    else:
+        cmds.warning("Select exactly two coordinate systems!")
