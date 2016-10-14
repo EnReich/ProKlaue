@@ -11,6 +11,7 @@ Before calling 'Collision_tet_tet.check()' the two tetrahedra need to be set wit
 
 import numpy as np
 import operator
+import math
 
 dot = lambda x,y: sum(map(operator.mul, x, y))
 """dot product as lambda function to speed up calculations"""
@@ -18,15 +19,9 @@ cross = lambda x,y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y
 """cross product as lambda function to speed up calculations"""
 
 EPSILON = 2e-15
-
+GRAD_TO_RAD = math.pi/180
 
 class SearchTreeNode:
-    key = 0
-    val = None
-    parent = None
-    left = None
-    right = None
-
     def __init__(self, key, val, parent, left, right):
         self.key=key
         self.val=val
@@ -36,8 +31,6 @@ class SearchTreeNode:
 
 
 class SearchTree:
-    root = None
-
     def search(self, key):
         node = self.root
         while node is not None:
@@ -127,17 +120,6 @@ class SearchTree:
 
 
 class Point:
-    # coordinates
-    x = 0
-    y = 0
-    # index in point field
-    ind = -1
-    # created point (for intersection or boolean)
-    created = True
-    #neighbor points in order of x coordinates
-    prev = None
-    next = None
-
     def __init__(self, x, y, ind=-1, created=True, prev=None, next=None):
         self.x = x
         self.y = y
@@ -179,12 +161,15 @@ def getOuterEdges(points, triEdgesRef):
     return outerEdges
 
 
-def getPolygon(ptsCord, edges):
+def getPolygon(ptsCord, edges, matrix = True):
     pts = {}
     for edge in edges:
         for pt in edge:
             if pt not in pts:
-                pts[pt] = Point(x = ptsCord[pt][0], y = ptsCord[pt][1], ind = pt, created = False, prev = None, next = None)
+                if matrix:
+                    pts[pt] = Point(x=ptsCord[pt][0,0], y=ptsCord[pt][0,1], ind=pt, created=False, prev=None, next=None)
+                else:
+                    pts[pt] = Point(x = ptsCord[pt][0], y = ptsCord[pt][1], ind = pt, created = False, prev = None, next = None)
 
         edgeList = list(edge)
 
@@ -235,7 +220,31 @@ def signedArea(poly, firstDoubled= False):
         p1 = poly[indices[i]]
         p2 = poly[indices[i+1]]
         sumArea += p1.x*p2.y - p2.x*p1.y
-    return sumArea
+    return sumArea/2
+
+
+def getRotationMatrix(alpha, beta, gamma, rad = True):
+    if not rad:
+        alpha *= GRAD_TO_RAD
+        beta *= GRAD_TO_RAD
+        gamma *= GRAD_TO_RAD
+    return np.array([
+                [math.cos(beta)*math.cos(gamma), math.cos(beta)*math.sin(gamma), -math.sin(beta)],
+                [-math.cos(alpha)*math.sin(gamma)+math.sin(alpha)*math.sin(beta)*math.cos(gamma), math.cos(alpha)*math.cos(gamma)+math.sin(alpha)*math.sin(beta)*math.sin(gamma), math.sin(alpha)*math.cos(beta)],
+                [math.sin(alpha)*math.sin(gamma)+math.cos(alpha)*math.sin(beta)*math.cos(gamma), -math.sin(alpha)*math.cos(gamma)+math.cos(alpha)*math.sin(beta)*math.sin(gamma), math.cos(alpha)*math.cos(beta)]
+            ])
+
+def rotate(pts, rp, alpha, beta, gamma, rad = False):
+    rot = np.mat(getRotationMatrix(alpha= alpha, beta= beta, gamma=gamma, rad=rad)).transpose()
+    npts = []
+    rp = np.array(rp)
+    for pt in pts:
+        npt = np.mat(pt - rp)*rot + rp
+        npts.append(npt)
+    return npts
+
+
+
 
 
 

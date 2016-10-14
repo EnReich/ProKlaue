@@ -65,10 +65,25 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         # remove all triangles whose face normal points in same direction as plane normal (backface culling)
         obj_tri_bc = [obj_tri[i] for i, n in enumerate(obj_n) if dot(plane_n, n) < 0]
 
+        #get rotate pivot point
+        rp = cmds.xform(obj[1], q=1, rp=1, ws = 1)
+
+        #get rotation of plane
+        r = cmds.xform(obj[1], q=1, ro=1)
+
+
+        #rotate points around pivot point such that the object lies onto the x-y plane (z-coordinates of plane would be equal at evry point)
+        obj_vtx_rotated = contourShape.rotate(obj_vtx, rp, r[0]-90, r[1], r[2], rad=False)
+
         triRefs = misc.getTriangleEdgesReferences(obj_tri_bc)
+
         outerEdges = contourShape.getOuterEdges(obj_vtx, triRefs)
-        poly = contourShape.getPolygon(obj_vtx, outerEdges)
-        print poly
+
+        print obj_vtx_rotated
+        print outerEdges
+
+        poly = contourShape.getPolygon(obj_vtx_rotated, outerEdges)
+
         area = contourShape.signedArea(poly)
 
         self.setResult(area)
