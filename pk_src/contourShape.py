@@ -12,6 +12,8 @@ Before calling 'Collision_tet_tet.check()' the two tetrahedra need to be set wit
 import numpy as np
 import operator
 import math
+import heapq
+import bisect
 
 dot = lambda x,y: sum(map(operator.mul, x, y))
 """dot product as lambda function to speed up calculations"""
@@ -23,11 +25,22 @@ GRAD_TO_RAD = math.pi/180
 
 class SearchTreeNode:
     def __init__(self, key, val, parent, left, right):
-        self.key=key
-        self.val=val
-        self.parent=parent
-        self.left =left
+        self.left = left #left Node
+        self.right = right #right Node
+        self.up = up #polygon is up from segment
+
+        self.key = key
+        self.val = val
+
+        self.parent = parent
+        self.left = left
         self.right = right
+
+    def getKey(self, x):
+        if self.right.x == self.left.x:
+            return self.right.y
+        else:
+            return ((x-self.left.x)/(self.right.x-self.left.x))*(self.right.y-self.left.y)+self.left.y
 
 
 class SearchTree:
@@ -42,6 +55,7 @@ class SearchTree:
                 else:
                     node = node.right
         return None
+
 
     def insertRec(self, lastNode, nodeToInsert):
         if nodeToInsert.key > lastNode.key:
@@ -115,23 +129,76 @@ class SearchTree:
         else:
             return root
 
+    def findMinimum(self, root):
+        if root.left is not None:
+            return self.findMinimum(root.left)
+        else:
+            return root
+
+    def findNext(self, root):
+        if root.right is not None:
+            return self.findMinimum(root.right)
+        else:
+            last = root
+            actual = root.parent
+            while actual is not None:
+                if actual.left is last:
+                    return actual
+                else:
+                    last = actual
+                    actual = actual.parent
+            return None
+
+
+    def findPrev(self, root):
+        if root.left is not None:
+            return self.findMaximum(root.left)
+        else:
+            last = root
+            actual = root.parent
+            while actual is not None:
+                if actual.right is last:
+                    return actual
+                else:
+                    last = actual
+                    actual = actual.parent
+            return None
+
     def __init__(self):
         self.root = None
 
 
 class Point:
-    def __init__(self, x, y, ind=-1, created=True, prev=None, next=None):
-        self.x = x
+    def __init__(self, x, y, ind=-1, created=True, prev=None, next=None, up=False):
+        self.x = x                  #coordinates
         self.y = y
-        self.ind = ind
-        self.created = created
+        self.ind = ind              #indice in the point field
+        self.created = created      #was point created
         self.prev = prev
         self.next = next
+        self.up=up                  #polygon lies upwards to point
 
 
-def turn(p1,p2,p3):
-    A = (p3[1]-p1[1])*(p2[0]-p1[0])
-    B = (p2[1]-p1[1])*(p3[0]-p1[0])
+class Segment:
+    def __init__(self, ind, left, right, up):
+        self.ind = ind
+        self.left = left
+        self.right = right
+        self.turn = turn
+
+class SweepEvent:
+    def __init__(self, p, other, left, right, crossing, turn):
+        self.p = p                  #point of the event
+        self.other = other          #other point of the edge
+        self.left = left            #is this the left endpoint
+        self.right = right          #is this the right endpoint
+        self.crossing = crossing    #is this a crossing point
+        self.turn = turn            #the turn of the segment to this point (left -> (crossing) -> right)
+
+
+def turn(p1x, p1y, p2x, p2y, p3x,p3y):
+    A = (p3y-p1y)*(p2x-p1x)
+    B = (p2y-p1y)*(p3x-p1x)
     return 1 if (A > B+EPSILON) else -1 if (A+EPSILON < B) else 0
 
 
@@ -146,57 +213,106 @@ def getIntersectionPoint(l1p1,l1p2,l2p1,l2p2):
     else:
         return l1p1+u1*(l1p2-l1p1)
 
-
-def isOuterEdge(points, edge, trisForEdge):
-    # edge is an outer edge if referenced by exactly one face/triangle
-    return len(trisForEdge) == 1
-
-
-def getOuterEdges(points, triEdgesRef):
-    outerEdges = set([])
-    for edg in triEdgesRef:
-        if isOuterEdge(points, edg, triEdgesRef[edg]):
-            outerEdges.add(edg)
-
+def getOuterEdges(triEdgesRef):
+    outerEdges = set([edg for edg, ref in triEdgesRef.items() if
+                      len(ref) == 1])
     return outerEdges
 
 
-def getPolygon(ptsCord, edges, matrix = True):
+def getPolygon(ptsCord, edges, triRefs, edgRefs):
+    h =[]
     pts = {}
     for edge in edges:
         for pt in edge:
             if pt not in pts:
-                if matrix:
-                    pts[pt] = Point(x=ptsCord[pt][0,0], y=ptsCord[pt][0,1], ind=pt, created=False, prev=None, next=None)
-                else:
-                    pts[pt] = Point(x = ptsCord[pt][0], y = ptsCord[pt][1], ind = pt, created = False, prev = None, next = None)
+                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 1], ind=pt, created=False, prev=None, next=None)
+                pts[pt] = npt
+
+    for edge in edges:
+        edgeList = list(edge)
+        ptLeft = pts[edgeList[0]]
+        ptRight = pts[edgeList[1]]
+        if (ptLeft.x, ptLeft.y) > (ptRight.x, ptRight.y):
+            ptLeft, ptRight = ptRight, ptLeft
+
+        tri = triRefs[edge][0]
+        for pt in tri:
+            if pt not in edge:
+                pt3 = pt
+
+        turn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0, 0], ptsCord[pt3][0, 1])
+
+        evtLeft = SweepEvent(ptLeft, ptRight, True, False, False, turn)
+        evtRight = SweepEvent(ptRight, ptLeft, False, False, False, -turn)
+
+        heapq.heappush(h, ((evtLeft.p.x, evtLeft.p.y), evtLeft))
+        heapq.heappush(h, ((evtRight.p.x, evtRight.p.y), evtRight))
+
+
+    t = []
+    ind = 0
+    while h:
+        event = heapq.heappop(h)
+        if event.left:
+            tri = triRefs[event.p.ind]
+            seg = Segment(ind, event.p, event.other, event.turn)
+            ind += 1
+
+
+
+
+
+    pts = {}
+    for edge in edges:
+        for pt in edge:
+            if pt not in pts:
+                pts[pt] = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 1], ind=pt, created=False, prev=None, next=None)
 
         edgeList = list(edge)
 
         pt0 = pts[edgeList[0]]
         pt1 = pts[edgeList[1]]
 
-        if (pt0.next is not None) & (pt1.next is None):
-            pt0, pt1 = pt1, pt0
-
-        if pt0.next is None:
-            if pt1.prev is not None:
-                #reverse the order of the list
-                pt = pt1
-                while pt is not None:
-                    pt.prev, pt.next = pt.next, pt.prev
-                    pt = pt.next
-
+        if pt0.next is not None:
+            pt1.next = pt0
+            pt0.prev = pt1
+        elif pt1.next is not None:
+            pt0.next = pt1
+            pt1.prev = pt0
         else:
-            # reverse the order of the list
-            pt = pt0
-            while pt is not None:
-                pt.prev, pt.next = pt.next, pt.prev
-                pt = pt.prev
+            tri = triRefs[edge]
+            for pt in tri:
+                if (pt != edgeList[0]) & (pt != edgeList[1]):
+                    pt3_ind = pt
+            if turn(pt0.x, pt0.y, pt1.x, pt1.y, ptsCord[pt3_ind][0, 0], ptsCord[pt3_ind][0, 1]) > 0:
+                pt0.next = pt0
+                pt1.prev = pt1
+            else:
+                pt1.next = pt0
+                pt0.prev = pt1
 
 
-        pt1.prev = pt0
-        pt0.next = pt1
+
+
+        #if (pt0.next is not None) & (pt1.next is None):
+        #     pt0, pt1 = pt1, pt0
+        #
+        # if pt0.next is None:
+        #     if pt1.prev is not None:
+        #         #reverse the order of the list
+        #         pt = pt1
+        #         while pt is not None:
+        #             pt.prev, pt.next = pt.next, pt.prev
+        #             pt = pt.next
+        #
+        # else:
+        #     # reverse the order of the list
+        #     pt = pt0
+        #     while pt is not None:
+        #         pt.prev, pt.next = pt.next, pt.prev
+        #         pt = pt.prev
+        # pt1.prev = pt0
+        # pt0.next = pt1
 
     poly = []
 
@@ -223,24 +339,19 @@ def signedArea(poly, firstDoubled= False):
     return sumArea/2
 
 
-def getRotationMatrix(alpha, beta, gamma, rad = True):
+
+def rotate(pts, rp, alpha, beta, gamma, rad = False):
     if not rad:
         alpha *= GRAD_TO_RAD
         beta *= GRAD_TO_RAD
         gamma *= GRAD_TO_RAD
-    return np.array([
+    rot = np.array([
                 [math.cos(beta)*math.cos(gamma), math.cos(beta)*math.sin(gamma), -math.sin(beta)],
                 [-math.cos(alpha)*math.sin(gamma)+math.sin(alpha)*math.sin(beta)*math.cos(gamma), math.cos(alpha)*math.cos(gamma)+math.sin(alpha)*math.sin(beta)*math.sin(gamma), math.sin(alpha)*math.cos(beta)],
                 [math.sin(alpha)*math.sin(gamma)+math.cos(alpha)*math.sin(beta)*math.cos(gamma), -math.sin(alpha)*math.cos(gamma)+math.cos(alpha)*math.sin(beta)*math.sin(gamma), math.cos(alpha)*math.cos(beta)]
-            ])
-
-def rotate(pts, rp, alpha, beta, gamma, rad = False):
-    rot = np.mat(getRotationMatrix(alpha= alpha, beta= beta, gamma=gamma, rad=rad)).transpose()
-    npts = []
+            ]).transpose()
     rp = np.array(rp)
-    for pt in pts:
-        npt = np.mat(pt - rp)*rot + rp
-        npts.append(npt)
+    npts = [np.mat(pt - rp)*rot + rp for pt in pts]
     return npts
 
 

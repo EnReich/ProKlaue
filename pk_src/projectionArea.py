@@ -77,12 +77,13 @@ class projectionArea(OpenMayaMPx.MPxCommand):
 
         triRefs = misc.getTriangleEdgesReferences(obj_tri_bc)
 
-        outerEdges = contourShape.getOuterEdges(obj_vtx, triRefs)
+        outerEdges = contourShape.getOuterEdges(triRefs)
 
         print obj_vtx_rotated
         print outerEdges
 
-        poly = contourShape.getPolygon(obj_vtx_rotated, outerEdges)
+        poly = contourShape.getPolygon(obj_vtx_rotated, outerEdges, triRefs)
+        print poly
 
         area = contourShape.signedArea(poly)
 
