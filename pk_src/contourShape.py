@@ -180,20 +180,86 @@ class Point:
 
 
 class Segment:
-    def __init__(self, ind, left, right, up):
-        self.ind = ind
-        self.left = left
-        self.right = right
-        self.turn = turn
+    def __init__(self, left, right, turn, lastCrossing = None, upper=None, lower=None):
+        self.left = left                    #left endpoint of segment
+        self.right = right                  #right endpoint of segment
+        self.turn = turn                    #turn of the segment (left -> right -> face)
+        self.lastCrossing = lastCrossing    #lastCrossingPoint
+        self.upper = upper                  #upper segment
+        self.lower = lower                  #lower segment
+
+    def getIntersection(self, other):
+        #check bounding box (only y, x is checked by sweep line)
+        if min(self.left.y, self.right.y) > max(other.left.y, other.right.y):
+            return None
+        if max(self.left.y, self.right.y) < min(other.left.y, other.right.y):
+            return None
+        #a bit more complicated intersection test
+        if not isIntersect(self.left, self.right, other.left, other.right):
+            return None
+        #calculation
+        return getIntersectionPoint(self.left, self.right, other.left, other.right)
+
+    def getYForX(self, x):
+        if self.right.x == self.left.x:
+            return self.left.y
+        else:
+            return ((x - self.left.x) / (self.right.x - self.left.x)) * (self.right.y - self.left.y) + self.left.y
+
+
 
 class SweepEvent:
-    def __init__(self, p, other, left, right, crossing, turn):
-        self.p = p                  #point of the event
-        self.other = other          #other point of the edge
-        self.left = left            #is this the left endpoint
-        self.right = right          #is this the right endpoint
-        self.crossing = crossing    #is this a crossing point
-        self.turn = turn            #the turn of the segment to this point (left -> (crossing) -> right)
+    def __init__(self, segment, type):
+        self.segment = segment      #segment for the event
+        self.type = type            #type of the event: 0 - left endpoint, 1 - right endpoint, 2 - crossing point
+
+
+class SegmentList:
+    def __init__(self, firstSegment):
+        self.first = firstSegment
+
+    def insert(self, segment):
+        if self.first is None:
+            self.first = segment
+        else:
+            actSeg = self.first
+            x = segment.left.x
+            y = segment.left.y
+            while (actSeg is not None) & (actSeg.getYForX(x)<y):
+                lastSeg = actSeg
+                actSeg = actSeg.upper
+
+
+            if actSeg is not None:
+                segment.upper = actSeg
+                segment.lower = actSeg.lower
+
+                if actSeg is self.first:
+                    self.first = segment
+                else:
+                    actSeg.lower.upper = segment
+
+                actSeg.lower = segment
+            else:
+                segment.upper = None
+                segment.lower = lastSeg
+                lastSeg.upper = segment
+
+    def delete(self, segment):
+        if self.first is segment:
+            self.first = segment.upper
+        else:
+            if segment.lower is not None:
+                segment.lower.upper = segment.upper
+            if segment.upper is not None:
+                segment.upper.lower = segment.lower
+
+    def switch(self, segment1, segment2):
+
+
+
+
+
 
 
 def turn(p1x, p1y, p2x, p2y, p3x,p3y):
@@ -203,15 +269,21 @@ def turn(p1x, p1y, p2x, p2y, p3x,p3y):
 
 
 def isIntersect(p1,p2,p3,p4):
-    return (turn(p1, p3, p4) != turn(p2, p3, p4)) & (turn(p1, p2, p3) != turn(p1, p2, p4))
+    return (turn(p1.x, p1.y, p3.x, p3.y, p4.x, p4.y) != turn(p2.x, p2.y, p3.x, p3.y, p4.x, p4.y)) & (turn(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y) != turn(p1.x, p1.y, p2.x, p2.y, p4.x, p4.y))
 
 
 def getIntersectionPoint(l1p1,l1p2,l2p1,l2p2):
-    u1 = ((float(l2p2[0])-l2p1[0])*(l1p1[1]-l2p1[1]) - (l2p2[1]-l2p1[1])*(l1p1[1]-l2p1[1])) / ((l2p2[1]-l2p1[1])*(l1p2[0]-l1p1[0]) - (l2p2[0]-l2p1[0])*(l1p2[1]-l1p1[1]))
-    if u1<0 | u1>1:
-        return None
+    div = ((l2p2.y-l2p1.y)*(l1p2.x-l1p1.x) - (l2p2.x-l2p1.x)*(l1p2.y-l1p1.y))
+    if div == 0:
+        return -1
     else:
-        return l1p1+u1*(l1p2-l1p1)
+        u1 = ((float(l2p2.x)-l2p1.x)*(l1p1.y-l2p1.y) - (l2p2.y-l2p1.y)*(l1p1.x-l2p1.x)) / div
+        if (u1 < 0) | (u1 > 1):
+            return None
+        else:
+            ipt = Point(l1p1.x+u1*(l1p2.x-l1p1.x), l1p1.y+u1*(l1p2.y-l1p1.y))
+            return ipt
+
 
 def getOuterEdges(triEdgesRef):
     outerEdges = set([edg for edg, ref in triEdgesRef.items() if
@@ -220,8 +292,10 @@ def getOuterEdges(triEdgesRef):
 
 
 def getPolygon(ptsCord, edges, triRefs, edgRefs):
-    h =[]
+    finalSegments = []
+    h =[] #priority queue for sweeping events
     pts = {}
+
     for edge in edges:
         for pt in edge:
             if pt not in pts:
@@ -240,23 +314,34 @@ def getPolygon(ptsCord, edges, triRefs, edgRefs):
             if pt not in edge:
                 pt3 = pt
 
-        turn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0, 0], ptsCord[pt3][0, 1])
+        edgTurn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0, 0], ptsCord[pt3][0, 1])
 
-        evtLeft = SweepEvent(ptLeft, ptRight, True, False, False, turn)
-        evtRight = SweepEvent(ptRight, ptLeft, False, False, False, -turn)
+        segment = Segment(left = ptLeft, right = ptRight, turn = edgTurn)
 
-        heapq.heappush(h, ((evtLeft.p.x, evtLeft.p.y), evtLeft))
-        heapq.heappush(h, ((evtRight.p.x, evtRight.p.y), evtRight))
+        evtLeft = SweepEvent(segment, 0)
+        evtRight = SweepEvent(segment, 1)
+
+        heapq.heappush(h, ((ptLeft.x, ptLeft.y, 1), evtLeft))
+        heapq.heappush(h, ((ptRight.x, ptRight.y, 0), evtRight))
 
 
-    t = []
+    firstSegment = None
     ind = 0
     while h:
         event = heapq.heappop(h)
-        if event.left:
-            tri = triRefs[event.p.ind]
-            seg = Segment(ind, event.p, event.other, event.turn)
-            ind += 1
+        if event.status == 0: #left endpoint
+            seg = event.segment
+            #TODO insertSegment(segment)
+            #TODO checkIntersections(segment)
+
+        elif event.status == 1: #right endpoint
+
+        elif event.status == 2: #crossing point
+
+
+
+
+
 
 
 
