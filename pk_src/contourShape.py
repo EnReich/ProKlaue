@@ -31,7 +31,6 @@ class SearchTreeNode:
     def __init__(self, key, val, parent, left, right):
         self.left = left #left Node
         self.right = right #right Node
-        self.up = up #polygon is up from segment
 
         self.key = key
         self.val = val
@@ -345,6 +344,35 @@ def isConnected(edges):
     #for edg in edgesList:
 
 
+def getSegments(ptsCord, edges, triRefs, tris):
+    pts = {}
+    segments = []
+
+    for edge in edges:
+        for pt in edge:
+            if pt not in pts:
+                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 1], ind=pt, created=False, prev=None, next=None)
+                pts[pt] = npt
+
+    for edge in edges:
+        edgeList = list(edge)
+        ptLeft = pts[edgeList[0]]
+        ptRight = pts[edgeList[1]]
+        if (ptLeft.x, ptLeft.y) > (ptRight.x, ptRight.y):
+            ptLeft, ptRight = ptRight, ptLeft
+
+        tri = tris[list(triRefs[edge])[0]]
+        for pt in tri:
+            if pt not in edge:
+                pt3 = pt
+
+        edgTurn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0, 0], ptsCord[pt3][0, 1])
+
+        segment = Segment(left=ptLeft, right=ptRight, turn=edgTurn)
+
+        segments.append(segment)
+
+    return segments
 
 
 
@@ -438,7 +466,7 @@ def getPolygon(ptsCord, edges, triRefs, edgRefs):
 
             t.delete(seg)
 
-        elif event.status == 2: #crossing point
+        #elif event.status == 2: #crossing point
 
 
 
@@ -513,19 +541,32 @@ def getPolygon(ptsCord, edges, triRefs, edgRefs):
     return poly
 
 
-def signedArea(poly, firstDoubled= False):
-    sumArea = 0
-    if firstDoubled:
-        indices = range(len(poly))
-    else:
-        indices = range(len(poly)+1)
-        indices[len(poly)] = 0
-    for i in range(len(indices)-1):
-        p1 = poly[indices[i]]
-        p2 = poly[indices[i+1]]
-        sumArea += p1.x*p2.y - p2.x*p1.y
-    return sumArea/2
+# def signedArea(poly, firstDoubled= False):
+#     sumArea = 0
+#     if firstDoubled:
+#         indices = range(len(poly))
+#     else:
+#         indices = range(len(poly)+1)
+#         indices[len(poly)] = 0
+#     for i in range(len(indices)-1):
+#         p1 = poly[indices[i]]
+#         p2 = poly[indices[i+1]]
+#         sumArea += p1.x*p2.y - p2.x*p1.y
+#     return sumArea/2
 
+def signedArea(segments):
+    sumArea = 0
+
+    for segment in segments:
+        if segment.turn == 1:
+            p1 = segment.left
+            p2 = segment.right
+        else:
+            p1 = segment.right
+            p2 = segment.left
+        sumArea += p1.x * p2.y - p2.x * p1.y
+
+    return sumArea / 2
 
 
 def rotate(pts, rp, alpha, beta, gamma, rad = False):

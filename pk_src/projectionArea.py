@@ -43,6 +43,9 @@ class projectionArea(OpenMayaMPx.MPxCommand):
                 obj_n, plane_n = plane_n, obj_n
 
             plane_n = plane_n[0]
+            plane_n = 1.0*np.array(plane_n)
+            plane_n = plane_n / math.sqrt(sum(plane_n*plane_n))
+
             # plane_centroid = map(operator.div, reduce(lambda x, y: map(operator.add, x, y), plane_vtx), [4.0] * 4)
         except:
             cmds.warning("No object selected!")
@@ -65,6 +68,9 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         # remove all triangles whose face normal points in same direction as plane normal (backface culling)
         obj_tri_bc = [obj_tri[i] for i, n in enumerate(obj_n) if dot(plane_n, n) < 0]
 
+        #remove all tringles that are further away than threshhold
+        #obj_tri_th = [tri for tri in obj_tri_bc if 0 <= np.dot(plane_n, (np.array(misc.centroidTriangle([obj_vtx[tri[i]] for i in range(3)]))-plane_vtx[0])) < threshold]
+
         #get rotate pivot point
         rp = cmds.xform(obj[1], q=1, rp=1, ws = 1)
 
@@ -75,21 +81,15 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         #rotate points around pivot point such that the object lies onto the x-y plane (z-coordinates of plane would be equal at evry point)
         obj_vtx_rotated = contourShape.rotate(obj_vtx, rp, r[0]-90, r[1], r[2], rad=False)
 
-        triRefs = misc.getTriangleEdgesReferences(obj_tri_bc)
+        triRefs = misc.getTriangleEdgesReferences(obj_tri_th)
 
         outerEdges = contourShape.getOuterEdges(triRefs)
 
-        print obj_vtx_rotated
-        print outerEdges
+        segments = contourShape.getSegments(obj_vtx_rotated, outerEdges, triRefs, obj_tri_th)
 
-        poly = contourShape.getPolygon(obj_vtx_rotated, outerEdges, triRefs)
-        print poly
-
-        area = contourShape.signedArea(poly)
+        area = contourShape.signedArea(segments)
 
         self.setResult(area)
-
-
 
 # creator function
 def projectionAreaCreator():
