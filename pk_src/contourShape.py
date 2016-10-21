@@ -22,6 +22,10 @@ cross = lambda x,y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y
 
 EPSILON = 2e-15
 GRAD_TO_RAD = math.pi/180
+LEFT_ENDPOINT = 0
+RIGHT_ENDPOINT = 1
+CROSS_POINT = 2
+REMOVED = 3
 
 class SearchTreeNode:
     def __init__(self, key, val, parent, left, right):
@@ -211,50 +215,92 @@ class Segment:
 class SweepEvent:
     def __init__(self, segment, type):
         self.segment = segment      #segment for the event
-        self.type = type            #type of the event: 0 - left endpoint, 1 - right endpoint, 2 - crossing point
+        self.type = type            #type of the event: 0 - left endpoint, 1 - right endpoint, 2 - crossing point, 3 - removed
 
 
 class SegmentList:
-    def __init__(self, firstSegment):
+    def __init__(self, firstSegment=None):
         self.first = firstSegment
 
     def insert(self, segment):
+        segment.lower = None
+        segment.upper = None
         if self.first is None:
             self.first = segment
         else:
             actSeg = self.first
             x = segment.left.x
             y = segment.left.y
-            while (actSeg is not None) & (actSeg.getYForX(x)<y):
+            while (actSeg is not None) and (y>actSeg.getYForX(x)):
                 lastSeg = actSeg
                 actSeg = actSeg.upper
 
 
-            if actSeg is not None:
-                segment.upper = actSeg
-                segment.lower = actSeg.lower
-
-                if actSeg is self.first:
-                    self.first = segment
-                else:
-                    actSeg.lower.upper = segment
-
-                actSeg.lower = segment
-            else:
+            if actSeg is self.first:
+                self.first.lower = segment
+                segment.upper = self.first
+                segment.lower = None
+                self.first = segment
+            elif actSeg is None:
                 segment.upper = None
                 segment.lower = lastSeg
                 lastSeg.upper = segment
+            else:
+                segment.upper = actSeg
+                segment.lower = actSeg.lower
+                actSeg.lower.upper = segment
+                actSeg.lower = segment
 
     def delete(self, segment):
         if self.first is segment:
             self.first = segment.upper
-        else:
-            if segment.lower is not None:
-                segment.lower.upper = segment.upper
-            if segment.upper is not None:
-                segment.upper.lower = segment.lower
+
+        if segment.lower is not None:
+            segment.lower.upper = segment.upper
+        if segment.upper is not None:
+            segment.upper.lower = segment.lower
 
     def switch(self, segment1, segment2):
+        if segment2.lower is segment1:
+            segment2.lower = segment1.lower
+            if segment2.lower is not None:
+                segment2.lower.upper = segment2
+
+            segment1.upper = segment2.upper
+            if segment1.upper is not None:
+                segment1.upper.lower = segment1
+
+            segment1.lower = segment2
+            segment2.upper = segment1
+
+        elif segment1.lower is segment2:
+            segment1.lower = segment2.lower
+            if segment1.lower is not None:
+                segment1.lower.upper = segment1
+
+            segment2.upper = segment1.upper
+            if segment2.upper is not None:
+                segment2.upper.lower = segment2
+
+            segment2.lower = segment1
+            segment1.upper = segment2
+
+        else:
+            segment1.upper, segment1.lower, segment2.upper, segment2.lower = segment2.upper, segment2.lower, segment1.upper, segment1.lower
+            if segment1.upper is not None:
+                segment1.upper.lower = segment1
+            if segment1.lower is not None:
+                segment1.lower.upper = segment1
+            if segment2.upper is not None:
+                segment2.upper.lower = segment2
+            if segment2.lower is not None:
+                segment2.lower.upper = segment2
+
+        if segment1 is self.first:
+            self.first = segment2
+        elif segment2 is self.first:
+            self.first = segment1
+
 
 
 
@@ -291,6 +337,17 @@ def getOuterEdges(triEdgesRef):
     return outerEdges
 
 
+def isConnected(edges):
+    edgesList = list(edges)
+    ptsParts = {}
+    edgParts = range(len(edgesList))
+
+    #for edg in edgesList:
+
+
+
+
+
 def getPolygon(ptsCord, edges, triRefs, edgRefs):
     finalSegments = []
     h =[] #priority queue for sweeping events
@@ -318,25 +375,71 @@ def getPolygon(ptsCord, edges, triRefs, edgRefs):
 
         segment = Segment(left = ptLeft, right = ptRight, turn = edgTurn)
 
-        evtLeft = SweepEvent(segment, 0)
-        evtRight = SweepEvent(segment, 1)
+        evtLeft = SweepEvent(segment, LEFT_ENDPOINT)
+        evtRight = SweepEvent(segment, RIGHT_ENDPOINT)
 
         heapq.heappush(h, ((ptLeft.x, ptLeft.y, 1), evtLeft))
         heapq.heappush(h, ((ptRight.x, ptRight.y, 0), evtRight))
 
 
-    firstSegment = None
-    ind = 0
+
+    t = SegmentList()
+    crossFinder = {} #to look up entries in the queue for deletion
     while h:
         event = heapq.heappop(h)
-        if event.status == 0: #left endpoint
+        if event.status == LEFT_ENDPOINT: #left endpoint
             seg = event.segment
-            #TODO insertSegment(segment)
-            #TODO checkIntersections(segment)
 
-        elif event.status == 1: #right endpoint
+            #insert segment
+            t.insert(seg)
+
+            #remove old intersection
+            if (seg.lower is not None) and (seg.upper is not None):
+                if frozenset([seg.upper, seg.lower]) in crossFinder:
+                    crossFinder[frozenset([seg.upper, seg.lower])].status = REMOVED
+
+            # check intersections
+            if seg.lower is not None:
+                if frozenset([seg, seg.lower]) in crossFinder:
+                    crossFinder[frozenset([seg, seg.lower])].status = CROSS_POINT
+                else:
+                    iptLow = seg.getIntersection(seg.lower)
+                    if iptLow is not None:
+                        iptEvent = SweepEvent([seg, seg.lower], CROSS_POINT)
+                        crossFinder[frozenset([seg, seg.lower])] = iptEvent
+                        heapq.heappush(h, ((iptLow.x, iptLow.y, -1), iptEvent))
+
+            if seg.upper is not None:
+                if frozenset([seg, seg.upper]) in crossFinder:
+                    crossFinder[frozenset([seg, seg.upper])].status = CROSS_POINT
+                else:
+                    iptUp = seg.getIntersection(seg.upper)
+                    if iptUp is not None:
+                        iptEvent = SweepEvent([seg, seg.upper], CROSS_POINT)
+                        crossFinder[frozenset([seg, seg.upper])] = iptEvent
+                        heapq.heappush(h, ((iptUp.x, iptUp.y, -1), iptEvent))
+
+        elif event.status == RIGHT_ENDPOINT: #right endpoint
+            seg = event.segment
+
+            lower = seg.lower
+            upper = seg.upper
+
+            #check intersection
+            if frozenset([lower, upper]) in crossFinder:
+                crossFinder[frozenset([lower, upper])].status = CROSS_POINT
+            else:
+                ipt = lower.getIntersection(upper)
+                if ipt is not None:
+                    iptEvent = SweepEvent([lower, upper], CROSS_POINT)
+                    crossFinder[frozenset([lower, upper])] = iptEvent
+                    heapq.heappush(h, ((ipt.x, ipt.y, -1), iptEvent))
+
+
+            t.delete(seg)
 
         elif event.status == 2: #crossing point
+
 
 
 
