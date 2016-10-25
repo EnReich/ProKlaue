@@ -16,12 +16,15 @@ dot = lambda x,y: sum(map(operator.mul, x, y))
 cross = lambda x,y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y[1], x[0]*y[2], x[1]*y[0]])
 """cross product as lambda function to speed up calculations"""
 
-EPSILON = 2e-15
+EPSILON = 1e-15
+EPSILON_COMP = 1e-15
 GRAD_TO_RAD = math.pi/180
 LEFT_ENDPOINT = 0
 RIGHT_ENDPOINT = 1
 CROSS_POINT = 2
 REMOVED = 3
+PRIORITY_LEFT = 1
+PRIORITY_RIGHT = 0
 
 class SearchTreeNode:
     def __init__(self, key, val, parent, left, right):
@@ -220,10 +223,11 @@ class Segment:
 
 
 class SweepEvent:
-    def __init__(self, segment, type, point):
+    def __init__(self, segment, type, point, other):
         self.point = point          #point for the event (insertion)
         self.segment = segment      #segment for the event
         self.type = type            #type of the event: 0 - left endpoint, 1 - right endpoint, 2 - crossing point, 3 - removed
+        self.other = other
 
 
 class SegmentList:
@@ -267,6 +271,7 @@ class SegmentList:
             segment.lower.upper = segment.upper
         if segment.upper is not None:
             segment.upper.lower = segment.lower
+
 
     def switch(self, segment1, segment2):
         if segment2.lower is segment1:
@@ -397,45 +402,101 @@ def getPolygon(segmentsInput):
     crossFinder = {} #to look up entries in the queue for deletion
 
     for segment in segmentsInput:
-        evtLeft = SweepEvent(segment, LEFT_ENDPOINT, segment.left)
-        evtRight = SweepEvent(segment, RIGHT_ENDPOINT, segment.right)
+        evtLeft = SweepEvent(segment, LEFT_ENDPOINT, segment.left, None)
+        evtRight = SweepEvent(segment, RIGHT_ENDPOINT, segment.right, evtLeft)
+        evtLeft.other = evtRight
+        segment.evtLeft = evtLeft
 
-        heapq.heappush(h, ((segment.left.x, segment.left.y, 1), evtLeft))
-        heapq.heappush(h, ((segment.right.x, segment.right.y, 0), evtRight))
+        heapq.heappush(h, ((segment.left.x, segment.left.y, PRIORITY_LEFT), evtLeft))
+        heapq.heappush(h, ((segment.right.x, segment.right.y, PRIORITY_RIGHT), evtRight))
 
+
+    last = None
+    segmentsToBeDeleted=[]
     while h:
         event = heapq.heappop(h)[1]
+        if last is not None:
+            if last.point.x != event.point.x:
+                for seg in segmentsToBeDeleted:
+                    t.delete(seg)
+                segmentsToBeDeleted = []
+
+        last = event
+
+
+        print event.segment
+        print event.type
+
+
         if event.type == LEFT_ENDPOINT: #left endpoint
+
             seg = event.segment
 
             #insert segment
             t.insert(seg)
 
             #remove old intersection
-            if (seg.lower is not None) and (seg.upper is not None):
-                if frozenset([seg.upper, seg.lower]) in crossFinder:
-                    crossFinder[frozenset([seg.upper, seg.lower])].status = REMOVED
+            # if (seg.lower is not None) and (seg.upper is not None):
+            #     if frozenset([seg.upper, seg.lower]) in crossFinder:
+            #         crossFinder[frozenset([seg.upper, seg.lower])].status = REMOVED
 
             # check intersections
-            if seg.lower is not None:
-                if frozenset([seg, seg.lower]) in crossFinder:
-                    crossFinder[frozenset([seg, seg.lower])].status = CROSS_POINT
-                else:
-                    iptLow = seg.getIntersection(seg.lower)
-                    if iptLow is not None:
-                        iptEvent = SweepEvent([seg.lower, seg], CROSS_POINT, iptLow)
-                        crossFinder[frozenset([seg, seg.lower])] = iptEvent
-                        heapq.heappush(h, ((iptLow.x, iptLow.y, -1), iptEvent))
+            # if seg.lower is not None:
+                # if frozenset([seg, seg.lower]) in crossFinder:
+                #     crossFinder[frozenset([seg, seg.lower])].status = CROSS_POINT
+                # else:
+                #     iptLow = seg.getIntersection(seg.lower)
+                #     if iptLow is not None:
+                #         iptEvent = SweepEvent([seg.lower, seg], CROSS_POINT, iptLow)
+                #         crossFinder[frozenset([seg, seg.lower])] = iptEvent
+                #         heapq.heappush(h, ((iptLow.x, iptLow.y, -1), iptEvent))
 
+            # if seg.upper is not None:
+            #     if frozenset([seg, seg.upper]) in crossFinder:
+            #         crossFinder[frozenset([seg, seg.upper])].status = CROSS_POINT
+            #     else:
+            #         iptUp = seg.getIntersection(seg.upper)
+            #         if iptUp is not None:
+            #             iptEvent = SweepEvent([seg, seg.upper], CROSS_POINT, iptUp)
+            #             crossFinder[frozenset([seg, seg.upper])] = iptEvent
+            #             heapq.heappush(h, ((iptUp.x, iptUp.y, -1), iptEvent))
+
+            iptLow = None
+            iptUp = None
+            if seg.lower is not None:
+                iptLow = seg.getIntersection(seg.lower)
             if seg.upper is not None:
-                if frozenset([seg, seg.upper]) in crossFinder:
-                    crossFinder[frozenset([seg, seg.upper])].status = CROSS_POINT
-                else:
-                    iptUp = seg.getIntersection(seg.upper)
-                    if iptUp is not None:
-                        iptEvent = SweepEvent([seg, seg.upper], CROSS_POINT, iptUp)
-                        crossFinder[frozenset([seg, seg.upper])] = iptEvent
-                        heapq.heappush(h, ((iptUp.x, iptUp.y, -1), iptEvent))
+                iptUp = seg.getIntersection(seg.upper)
+            ipt = None
+            contrarySeg = None
+            if iptLow is not None:
+                ipt = iptLow
+                contrarySeg = seg.lower
+            elif iptUp is not None:
+                ipt = iptUp
+                contrarySeg = seg.upper
+
+            if ipt is not None and (seg.left.x < ipt.x - EPSILON_COMP or contrarySeg.left.x < ipt.x-EPSILON_COMP) and (seg.right.x > ipt.x + EPSILON_COMP or contrarySeg.right.x > ipt.x + EPSILON_COMP):
+                segRight = seg.getPartOf(l=ipt, r=seg.right)
+                seg.right = ipt
+                eventCrossRight = SweepEvent(seg, RIGHT_ENDPOINT, ipt, event)
+                eventCrossLeft = SweepEvent(segRight, LEFT_ENDPOINT, ipt, event.other)
+                event.other.segment = segRight
+                event.other = eventCrossRight
+                segRight.evtLeft = eventCrossLeft
+
+                segOtherRight = contrarySeg.getPartOf(l=ipt, r=contrarySeg.right)
+                contrarySeg.right = ipt
+                eventCrossRightOther = SweepEvent(contrarySeg, RIGHT_ENDPOINT, ipt, contrarySeg.evtLeft)
+                eventCrossLeftOther = SweepEvent(segOtherRight, LEFT_ENDPOINT, ipt, contrarySeg.evtLeft.other)
+                contrarySeg.evtLeft.other.segment = segOtherRight
+                contrarySeg.evtLeft.other = eventCrossRightOther
+                segOtherRight.evtLeft = eventCrossLeftOther
+
+                heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRight))
+                heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeft))
+                heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRightOther))
+                heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeftOther))
 
         elif event.type == RIGHT_ENDPOINT: #right endpoint
             seg = event.segment
@@ -443,68 +504,96 @@ def getPolygon(segmentsInput):
             lower = seg.lower
             upper = seg.upper
 
-            #check intersection
             if lower is not None and upper is not None:
-                if frozenset([lower, upper]) in crossFinder:
-                    crossFinder[frozenset([lower, upper])].status = CROSS_POINT
-                else:
-                    ipt = lower.getIntersection(upper)
-                    if ipt is not None:
-                        iptEvent = SweepEvent([lower, upper], CROSS_POINT, ipt)
-                        crossFinder[frozenset([lower, upper])] = iptEvent
-                        heapq.heappush(h, ((ipt.x, ipt.y, -1), iptEvent))
+                ipt = lower.getIntersection(upper)
 
-            if t.isOuterSegment(seg) and ((event.point.x != seg.lastCrossing.x) or (event.point.y != seg.lastCrossing.y)):
-                finalSegments.append(seg.getPartOf())
+                if ipt is not None and (lower.left.x < ipt.x - EPSILON_COMP or upper.left.x < ipt.x - EPSILON_COMP) and (lower.right.x > ipt.x + EPSILON_COMP or upper.right.x > ipt.x + EPSILON_COMP):
+                    segRight = lower.getPartOf(l=ipt, r=lower.right)
+                    lower.right = ipt
+                    eventCrossRight = SweepEvent(lower, RIGHT_ENDPOINT, ipt, lower.evtLeft)
+                    eventCrossLeft = SweepEvent(segRight, LEFT_ENDPOINT, ipt, lower.evtLeft.other)
+                    lower.evtLeft.other.segment = segRight
+                    lower.evtLeft.other = eventCrossRight
+                    segRight.evtLeft = eventCrossLeft
 
-            t.delete(seg)
+                    segOtherRight = upper.getPartOf(l=ipt, r=upper.right)
+                    upper.right = ipt
+                    eventCrossRightOther = SweepEvent(upper, RIGHT_ENDPOINT, ipt, upper.evtLeft)
+                    eventCrossLeftOther = SweepEvent(segOtherRight, LEFT_ENDPOINT, ipt, upper.evtLeft.other)
+                    upper.evtLeft.other.segment = segOtherRight
+                    upper.evtLeft.other = eventCrossRightOther
+                    segOtherRight.evtLeft = eventCrossLeftOther
 
-        elif event.type == CROSS_POINT: #crossing point
-            seg0 = event.segment[0]
-            seg1 = event.segment[1]
+                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRight))
+                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeft))
+                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRightOther))
+                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeftOther))
 
-            if t.isOuterSegment(seg0) and (event.point != seg0.lastCrossing):
-                # print seg0.getPartOf(r=event.point)
-                finalSegments.append(seg0.getPartOf(r=event.point))
+            # #check intersection
+            # if lower is not None and upper is not None:
+            #     if frozenset([lower, upper]) in crossFinder:
+            #         crossFinder[frozenset([lower, upper])].status = CROSS_POINT
+            #     else:
+            #         ipt = lower.getIntersection(upper)
+            #         if ipt is not None:
+            #             iptEvent = SweepEvent([lower, upper], CROSS_POINT, ipt)
+            #             crossFinder[frozenset([lower, upper])] = iptEvent
+            #             heapq.heappush(h, ((ipt.x, ipt.y, -1), iptEvent))
+            #
+            # if t.isOuterSegment(seg) and ((event.point.x != seg.lastCrossing.x) or (event.point.y != seg.lastCrossing.y)):
+            #     finalSegments.append(seg.getPartOf())
 
-            if t.isOuterSegment(seg1) and (event.point != seg1.lastCrossing):
-                # print seg1.getPartOf(r=event.point)
-                finalSegments.append(seg1.getPartOf(r=event.point))
+            if t.isOuterSegment(seg):
+                finalSegments.append(seg)
 
-            seg0.lastCrossing = event.point
-            seg1.lastCrossing = event.point
+            segmentsToBeDeleted.append(seg)
 
-            t.switch(seg0, seg1)
-
-            # remove old intersection
-            if seg1.lower is not None:
-                if frozenset([seg0, seg1.lower]) in crossFinder:
-                    crossFinder[frozenset([seg0, seg1.lower])].status = REMOVED
-
-            if seg0.upper is not None:
-                if frozenset([seg1, seg0.upper]) in crossFinder:
-                    crossFinder[frozenset([seg1, seg0.upper])].status = REMOVED
-
-            # check intersections
-            if seg1.lower is not None:
-                if frozenset([seg1, seg1.lower]) in crossFinder:
-                    crossFinder[frozenset([seg1, seg1.lower])].status = CROSS_POINT
-                else:
-                    iptLow = seg1.getIntersection(seg1.lower)
-                    if iptLow is not None:
-                        iptEvent = SweepEvent([seg1, seg1.lower], CROSS_POINT, iptLow)
-                        crossFinder[frozenset([seg1, seg1.lower])] = iptEvent
-                        heapq.heappush(h, ((iptLow.x, iptLow.y, -1), iptEvent))
-
-            if seg0.upper is not None:
-                if frozenset([seg0, seg0.upper]) in crossFinder:
-                    crossFinder[frozenset([seg0, seg0.upper])].status = CROSS_POINT
-                else:
-                    iptUp = seg0.getIntersection(seg0.upper)
-                    if iptUp is not None:
-                        iptEvent = SweepEvent([seg0.upper, seg0], CROSS_POINT, iptUp)
-                        crossFinder[frozenset([seg0, seg0.upper])] = iptEvent
-                        heapq.heappush(h, ((iptUp.x, iptUp.y, -1), iptEvent))
+        # elif event.type == CROSS_POINT: #crossing point
+        #     seg0 = event.segment[0]
+        #     seg1 = event.segment[1]
+        #
+        #     if t.isOuterSegment(seg0) and (event.point != seg0.lastCrossing):
+        #         # print seg0.getPartOf(r=event.point)
+        #         finalSegments.append(seg0.getPartOf(r=event.point))
+        #
+        #     if t.isOuterSegment(seg1) and (event.point != seg1.lastCrossing):
+        #         # print seg1.getPartOf(r=event.point)
+        #         finalSegments.append(seg1.getPartOf(r=event.point))
+        #
+        #     seg0.lastCrossing = event.point
+        #     seg1.lastCrossing = event.point
+        #
+        #     t.switch(seg0, seg1)
+        #
+        #     # remove old intersection
+        #     if seg1.lower is not None:
+        #         if frozenset([seg0, seg1.lower]) in crossFinder:
+        #             crossFinder[frozenset([seg0, seg1.lower])].status = REMOVED
+        #
+        #     if seg0.upper is not None:
+        #         if frozenset([seg1, seg0.upper]) in crossFinder:
+        #             crossFinder[frozenset([seg1, seg0.upper])].status = REMOVED
+        #
+        #     # check intersections
+        #     if seg1.lower is not None:
+        #         if frozenset([seg1, seg1.lower]) in crossFinder:
+        #             crossFinder[frozenset([seg1, seg1.lower])].status = CROSS_POINT
+        #         else:
+        #             iptLow = seg1.getIntersection(seg1.lower)
+        #             if iptLow is not None:
+        #                 iptEvent = SweepEvent([seg1, seg1.lower], CROSS_POINT, iptLow)
+        #                 crossFinder[frozenset([seg1, seg1.lower])] = iptEvent
+        #                 heapq.heappush(h, ((iptLow.x, iptLow.y, -1), iptEvent))
+        #
+        #     if seg0.upper is not None:
+        #         if frozenset([seg0, seg0.upper]) in crossFinder:
+        #             crossFinder[frozenset([seg0, seg0.upper])].status = CROSS_POINT
+        #         else:
+        #             iptUp = seg0.getIntersection(seg0.upper)
+        #             if iptUp is not None:
+        #                 iptEvent = SweepEvent([seg0.upper, seg0], CROSS_POINT, iptUp)
+        #                 crossFinder[frozenset([seg0, seg0.upper])] = iptEvent
+        #                 heapq.heappush(h, ((iptUp.x, iptUp.y, -1), iptEvent))
 
     return finalSegments
 
