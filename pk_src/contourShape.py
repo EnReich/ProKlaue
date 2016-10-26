@@ -426,7 +426,7 @@ def getPolygon(segmentsInput):
     while h:
         event = heapq.heappop(h)[1]
         if last is not None:
-            if last.point.x != event.point.x or (last.type == RIGHT_ENDPOINT and event.type == LEFT_ENDPOINT):
+            if last.point.x < event.point.x or (last.point.x == event.point.x and last.type == RIGHT_ENDPOINT and event.type == LEFT_ENDPOINT):
                 for seg in segmentsToBeDeleted:
                     t.delete(seg)
                 segmentsToBeDeleted = []
@@ -745,10 +745,10 @@ def rotate(pts, rp, alpha, beta, gamma, rad = False):
 #
 #
 #
-# segs.append(Segment(left=Point(x=0, y=2), right=Point(x=0,y =3) , turn = -1))
-# segs.append(Segment(left=Point(x=0,y =3), right= Point(x=3, y=3), turn = -1))
-# segs.append(Segment(left=Point(x=0,y =2), right= Point(x=3, y=2), turn = 1))
-# segs.append(Segment(left=Point(x=3,y =2), right= Point(x=3, y=3), turn = 1))
+# segs.append(Segment(left=Point(x=0.5, y=2), right=Point(x=0.5,y =3) , turn = -1))
+# segs.append(Segment(left=Point(x=0.5,y =3), right= Point(x=2.5, y=3), turn = -1))
+# segs.append(Segment(left=Point(x=0.5,y =2), right= Point(x=2.5, y=2), turn = 1))
+# segs.append(Segment(left=Point(x=2.5,y =2), right= Point(x=2.5, y=3), turn = 1))
 #
 # segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =1) , turn = -1))
 # segs.append(Segment(left=Point(x=0,y =1), right= Point(x=3, y=1), turn = -1))
