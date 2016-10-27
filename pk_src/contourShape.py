@@ -231,9 +231,9 @@ class Segment:
             return float('inf')
 
     def getPartOf(self, l=None, r=None):
-        left = l if l is not None else self.lastCrossing
-        right = r if r is not None else self.right
-        return Segment(left= left,right=right,turn = self.turn, upper = self.upper, lower = self.lower)
+        leftPt = l if l is not None else self.left
+        rightPt = r if r is not None else self.right
+        return Segment(left= leftPt, right=rightPt, turn = self.turn, upper = self.upper, lower = self.lower)
 
     def __str__(self):
         return 'left: '+str((self.left.x, self.left.y))+ ' | right: '+ str((self.right.x, self.right.y))+ ' | turn: ' + str(self.turn)
@@ -298,6 +298,12 @@ class SegmentList:
         if segment.upper is not None:
             segment.upper.lower = segment.lower
 
+
+    def replace(self, segment, newSegment):
+        newSegment.upper = segment.upper
+        newSegment.lower = segment.lower
+        segment.upper.lower = newSegment
+        segment.lower.upper = newSegment
 
     def switch(self, segment1, segment2):
         if segment2.lower is segment1:
@@ -531,23 +537,30 @@ def getPolygon(segmentsInput):
 
             iptLow = None
             iptUp = None
-            if seg.lower is not None and seg.lower.left != seg.left:
-                iptLow = seg.getIntersection(seg.lower)
-            if seg.upper is not None and seg.upper.left != seg.left:
-                iptUp = seg.getIntersection(seg.upper)
+
+            if seg.lower is not None:
+                if seg.lower.left != seg.left:
+                    iptLow = seg.getIntersection(seg.lower)
+                elif seg.lower.getSlope() == seg.getSlope():
+                    iptLow = min(seg.lower.right, seg.right)
+
+            if seg.upper is not None:
+                if seg.upper.left != seg.left:
+                    iptUp = seg.getIntersection(seg.upper)
+                elif seg.upper.getSlope() == seg.getSlope():
+                    iptUp = min(seg.upper.right, seg.right)
             ipt = None
             contrarySeg = None
             if iptLow is not None:
                 ipt = iptLow
                 contrarySeg = seg.lower
-            elif iptUp is not None:
+            if iptUp is not None and (ipt is None or iptUp < ipt):
                 ipt = iptUp
                 contrarySeg = seg.upper
 
             # print 'ipt: ' + str(contrarySeg) if ipt is not None else 'no ipt'
 
-            if ipt is not None and ((seg.left.x < ipt.x - EPSILON_COMP and seg.right.x > ipt.x + EPSILON_COMP) or (contrarySeg.left.x < ipt.x-EPSILON_COMP and contrarySeg.right.x > ipt.x + EPSILON_COMP)):
-
+            if ipt is not None: # and ((seg.left.x < ipt.x - EPSILON_COMP and seg.right.x > ipt.x + EPSILON_COMP) or (contrarySeg.left.x < ipt.x-EPSILON_COMP and contrarySeg.right.x > ipt.x + EPSILON_COMP)):
                 if ipt != seg.right:
                     segRight = seg.getPartOf(l=ipt, r=seg.right)
                     seg.right = ipt
