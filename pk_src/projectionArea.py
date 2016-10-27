@@ -68,17 +68,17 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         # remove all triangles whose face normal points in same direction as plane normal (backface culling)
         obj_tri_bc = [obj_tri[i] for i, n in enumerate(obj_n) if dot(plane_n, n) < 0]
 
-        #remove all tringles that are further away than threshhold
-        #obj_tri_th = [tri for tri in obj_tri_bc if 0 <= np.dot(plane_n, (np.array(misc.centroidTriangle([obj_vtx[tri[i]] for i in range(3)]))-plane_vtx[0])) < threshold]
+        # remove all tringles that are further away than threshhold
+        obj_tri_th = [tri for tri in obj_tri_bc if 0 <= np.dot(plane_n, (np.array(misc.centroidTriangle([obj_vtx[tri[i]] for i in range(3)]))-plane_vtx[0])) < threshold]
+        # obj_tri_th = obj_tri_bc
 
-        #get rotate pivot point
+        # get rotate pivot point
         rp = cmds.xform(obj[1], q=1, rp=1, ws = 1)
 
-        #get rotation of plane
+        # get rotation of plane
         r = cmds.xform(obj[1], q=1, ro=1)
 
-
-        #rotate points around pivot point such that the object lies onto the x-y plane (z-coordinates of plane would be equal at evry point)
+        # rotate points around pivot point such that the object lies onto the x-y plane (z-coordinates of plane would be equal at evry point)
         obj_vtx_rotated = contourShape.rotate(obj_vtx, rp, r[0]-90, r[1], r[2], rad=False)
 
         triRefs = misc.getTriangleEdgesReferences(obj_tri_th)
@@ -87,9 +87,35 @@ class projectionArea(OpenMayaMPx.MPxCommand):
 
         segments = contourShape.getSegments(obj_vtx_rotated, outerEdges, triRefs, obj_tri_th)
 
-        area = contourShape.signedArea(segments)
+        # for seg in segments:
+        #     print seg
 
-        self.setResult(area)
+        print len(segments)
+        ind = set([])
+        for seg in segments:
+            # print seg.left.ind
+            # print seg.right.ind
+            ind.add(seg.left.ind)
+            ind.add(seg.right.ind)
+
+        for i in ind:
+            cmds.select(obj[0] + '.vtx['+str(i)+']',add = True)
+
+        print 'done'
+
+
+        # nSegments = contourShape.getPolygon(segments)
+
+        # print '------------------------------------------------------'
+        #
+        # for seg in nSegments:
+        #     print seg
+
+        # print len(nSegments)
+
+        # area = contourShape.signedArea(nSegments)
+
+        # self.setResult(area)
 
 # creator function
 def projectionAreaCreator():
