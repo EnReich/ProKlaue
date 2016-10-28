@@ -78,8 +78,8 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         # get rotation of plane
         r = cmds.xform(obj[1], q=1, ro=1)
 
-        # rotate points around pivot point such that the object lies onto the x-y plane (z-coordinates of plane would be equal at evry point)
-        obj_vtx_rotated = contourShape.rotate(obj_vtx, rp, r[0]-90, r[1], r[2], rad=False)
+        # rotate points around pivot point such that the object lies onto the x-z plane (y-coordinates of plane would be equal at evry point)
+        obj_vtx_rotated = contourShape.rotate(obj_vtx, rp, r[0], r[1], r[2], rad=False)
 
         triRefs = misc.getTriangleEdgesReferences(obj_tri_th)
 

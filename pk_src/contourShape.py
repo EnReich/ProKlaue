@@ -25,6 +25,8 @@ CROSS_POINT = 2
 REMOVED = 3
 PRIORITY_LEFT = 1
 PRIORITY_RIGHT = 0
+COUNTER_CLOCKWISE = 1
+CLOCKWISE = -1
 
 class SearchTreeNode:
     def __init__(self, key, val, parent, left, right):
@@ -205,6 +207,7 @@ class Segment:
         self.lastCrossing = lastCrossing if lastCrossing is not None else self.left    #lastCrossingPoint
         self.upper = upper                  #upper segment
         self.lower = lower                  #lower segment
+        self.evtLeft = None
 
     def getIntersection(self, other):
         #check bounding box (only y, x is checked by sweep line)
@@ -212,9 +215,20 @@ class Segment:
             return None
         if max(self.left.y, self.right.y) < min(other.left.y, other.right.y):
             return None
+
+        #overlapping segments
+        if self.getSlope() == other.getSlope() and other.getYForX(self.left.x) == self.left.y:
+            if self.left.x == other.left.x:
+                return other.left
+            elif self.left.x == other.left.x:
+                return min(self.right, other.right)
+            else:
+                return self.left
+
         #a bit more complicated intersection test
         if not isIntersect(self.left, self.right, other.left, other.right):
             return None
+
         #calculation
         return getIntersectionPoint(self.left, self.right, other.left, other.right)
 
@@ -254,6 +268,14 @@ class SweepEvent:
         self.type = type            #type of the event: 0 - left endpoint, 1 - right endpoint, 2 - crossing point, 3 - removed
         self.other = other
 
+    def getPrority(self):
+        p = self.segment.left if self.type == LEFT_ENDPOINT else self.segment.right
+        pr = PRIORITY_LEFT if self.type == LEFT_ENDPOINT else PRIORITY_RIGHT
+        sl = self.segment.getSlope() if self.type == RIGHT_ENDPOINT else -self.segment.getSlope()
+        ps = -1 if self.segment.turn == CLOCKWISE else 1
+        result = (p.x, p.y, pr, sl, ps)
+        return result
+
 
 class SegmentList:
     def __init__(self, firstSegment=None):
@@ -270,7 +292,7 @@ class SegmentList:
             y = segment.left.y
             slope = segment.getSlope()
 
-            while (actSeg is not None) and (y>actSeg.getYForX(x) or (y == actSeg.getYForX(x) and slope > actSeg.getSlope())):
+            while (actSeg is not None) and (y>actSeg.getYForX(x) or (y == actSeg.getYForX(x) and (slope > actSeg.getSlope() or (slope == actSeg.getSlope() and segment.turn == COUNTER_CLOCKWISE and actSeg.turn == CLOCKWISE)))):
                 lastSeg = actSeg
                 actSeg = actSeg.upper
 
@@ -284,74 +306,25 @@ class SegmentList:
                 segment.lower = lastSeg
                 lastSeg.upper = segment
             else:
+                lastSeg.upper = segment
+                segment.lower = lastSeg
                 segment.upper = actSeg
-                segment.lower = actSeg.lower
-                actSeg.lower.upper = segment
                 actSeg.lower = segment
 
     def delete(self, segment):
         if self.first is segment:
             self.first = segment.upper
-
         if segment.lower is not None:
             segment.lower.upper = segment.upper
         if segment.upper is not None:
             segment.upper.lower = segment.lower
-
-
-    def replace(self, segment, newSegment):
-        newSegment.upper = segment.upper
-        newSegment.lower = segment.lower
-        segment.upper.lower = newSegment
-        segment.lower.upper = newSegment
-
-    def switch(self, segment1, segment2):
-        if segment2.lower is segment1:
-            segment2.lower = segment1.lower
-            if segment2.lower is not None:
-                segment2.lower.upper = segment2
-
-            segment1.upper = segment2.upper
-            if segment1.upper is not None:
-                segment1.upper.lower = segment1
-
-            segment1.lower = segment2
-            segment2.upper = segment1
-
-        elif segment1.lower is segment2:
-            segment1.lower = segment2.lower
-            if segment1.lower is not None:
-                segment1.lower.upper = segment1
-
-            segment2.upper = segment1.upper
-            if segment2.upper is not None:
-                segment2.upper.lower = segment2
-
-            segment2.lower = segment1
-            segment1.upper = segment2
-
-        else:
-            segment1.upper, segment1.lower, segment2.upper, segment2.lower = segment2.upper, segment2.lower, segment1.upper, segment1.lower
-            if segment1.upper is not None:
-                segment1.upper.lower = segment1
-            if segment1.lower is not None:
-                segment1.lower.upper = segment1
-            if segment2.upper is not None:
-                segment2.upper.lower = segment2
-            if segment2.lower is not None:
-                segment2.lower.upper = segment2
-
-        if segment1 is self.first:
-            self.first = segment2
-        elif segment2 is self.first:
-            self.first = segment1
 
     def isOuterSegment(self, seg):
         actSeg = self.first
         sumTurn = 0
         while(actSeg is not seg):
             if actSeg is None:
-                print '--------FEHLER-----------'
+                print '--------ERROR SEGMENT NOT IN LIST-----------'
                 print seg           #that should not happen
                 return False
             sumTurn += actSeg.turn
@@ -360,7 +333,6 @@ class SegmentList:
             return True
         else:
             return False
-
 
 
 def turn(p1x, p1y, p2x, p2y, p3x,p3y):
@@ -376,7 +348,7 @@ def isIntersect(p1,p2,p3,p4):
 def getIntersectionPoint(l1p1,l1p2,l2p1,l2p2):
     div = ((l2p2.y-l2p1.y)*(l1p2.x-l1p1.x) - (l2p2.x-l2p1.x)*(l1p2.y-l1p1.y))
     if div == 0:
-        return -1
+        return ZeroDivisionError
     else:
         u1 = ((float(l2p2.x)-l2p1.x)*(l1p1.y-l2p1.y) - (l2p2.y-l2p1.y)*(l1p1.x-l2p1.x)) / div
         if (u1 < 0) | (u1 > 1):
@@ -394,12 +366,12 @@ def getOuterEdges(triEdgesRef):
 
 def getSegments(ptsCord, edges, triRefs, tris):
     pts = {}
-    segments = set([])
+    segments = []
 
     for edge in edges:
         for pt in edge:
             if pt not in pts:
-                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 1], ind=pt, created=False, prev=None, next=None)
+                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 2], ind=pt, created=False, prev=None, next=None)
                 pts[pt] = npt
 
     for edge in edges:
@@ -414,11 +386,11 @@ def getSegments(ptsCord, edges, triRefs, tris):
             if pt not in edge:
                 pt3 = pt
 
-        edgTurn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0, 0], ptsCord[pt3][0, 1])
+        edgTurn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0, 0], ptsCord[pt3][0, 2])
 
         segment = Segment(left=ptLeft, right=ptRight, turn=edgTurn)
 
-        segments.add(segment)
+        segments.append(segment)
 
     return segments
 
@@ -496,11 +468,28 @@ def getPolygon2(segmentsInput):
     return finalSegments
 
 
+def splitSegment(h, seg, p):
+    if p == seg.right or p == seg.left:
+        return
+    rightPart = seg.getPartOf(l=p, r = seg.right)
+    seg.right = p
+    evtRight = seg.evtLeft.other
+    evtCrossLeft = SweepEvent(segment=rightPart, point=p, other=evtRight, type= LEFT_ENDPOINT)
+    evtCrossRight = SweepEvent(segment=seg, point=p, other=seg.evtLeft, type= RIGHT_ENDPOINT)
+    evtRight.other = evtCrossLeft
+    seg.evtLeft.other = evtCrossRight
+    evtRight.segment = rightPart
+    rightPart.evtLeft = evtCrossLeft
+
+    heapq.heappush(h, (evtCrossLeft.getPrority(), evtCrossLeft))
+    heapq.heappush(h, (evtCrossRight.getPrority(), evtCrossRight))
+
+    return rightPart
+
 def getPolygon(segmentsInput):
     finalSegments = []
     h =[] #priority queue for sweeping events
     t = SegmentList()
-    crossFinder = {} #to look up entries in the queue for deletion
 
     for segment in segmentsInput:
         evtLeft = SweepEvent(segment, LEFT_ENDPOINT, segment.left, None)
@@ -508,8 +497,8 @@ def getPolygon(segmentsInput):
         evtLeft.other = evtRight
         segment.evtLeft = evtLeft
 
-        heapq.heappush(h, ((segment.left.x, segment.left.y, PRIORITY_LEFT), evtLeft))
-        heapq.heappush(h, ((segment.right.x, segment.right.y, PRIORITY_RIGHT), evtRight))
+        heapq.heappush(h, (evtLeft.getPrority(), evtLeft))
+        heapq.heappush(h, (evtRight.getPrority(), evtRight))
 
 
     last = None
@@ -529,7 +518,6 @@ def getPolygon(segmentsInput):
         # print 'left' if event.type == LEFT_ENDPOINT else 'right'
 
         if event.type == LEFT_ENDPOINT: #left endpoint
-
             seg = event.segment
 
             #insert segment
@@ -539,18 +527,13 @@ def getPolygon(segmentsInput):
             iptUp = None
 
             if seg.lower is not None:
-                if seg.lower.left != seg.left:
-                    iptLow = seg.getIntersection(seg.lower)
-                elif seg.lower.getSlope() == seg.getSlope():
-                    iptLow = min(seg.lower.right, seg.right)
-
+                iptLow = min(seg.lower.right, seg.right)
             if seg.upper is not None:
-                if seg.upper.left != seg.left:
-                    iptUp = seg.getIntersection(seg.upper)
-                elif seg.upper.getSlope() == seg.getSlope():
-                    iptUp = min(seg.upper.right, seg.right)
+                iptUp = seg.getIntersection(seg.upper)
             ipt = None
             contrarySeg = None
+            if iptUp is not None and iptLow is not None:
+                print "------FEHLER IPT-----"
             if iptLow is not None:
                 ipt = iptLow
                 contrarySeg = seg.lower
@@ -561,33 +544,14 @@ def getPolygon(segmentsInput):
             # print 'ipt: ' + str(contrarySeg) if ipt is not None else 'no ipt'
 
             if ipt is not None: # and ((seg.left.x < ipt.x - EPSILON_COMP and seg.right.x > ipt.x + EPSILON_COMP) or (contrarySeg.left.x < ipt.x-EPSILON_COMP and contrarySeg.right.x > ipt.x + EPSILON_COMP)):
-                if ipt != seg.right:
-                    segRight = seg.getPartOf(l=ipt, r=seg.right)
-                    seg.right = ipt
-                    eventCrossRight = SweepEvent(seg, RIGHT_ENDPOINT, ipt, event)
-                    eventCrossLeft = SweepEvent(segRight, LEFT_ENDPOINT, ipt, event.other)
-                    event.other.segment = segRight
-                    event.other = eventCrossRight
-                    segRight.evtLeft = eventCrossLeft
+                if ipt != seg.right and ipt != seg.left:
+                    splitSegment(h, seg, ipt)
 
-                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRight))
-                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeft))
-
-                if ipt != contrarySeg.right:
-                    segOtherRight = contrarySeg.getPartOf(l=ipt, r=contrarySeg.right)
-                    contrarySeg.right = ipt
-                    eventCrossRightOther = SweepEvent(contrarySeg, RIGHT_ENDPOINT, ipt, contrarySeg.evtLeft)
-                    eventCrossLeftOther = SweepEvent(segOtherRight, LEFT_ENDPOINT, ipt, contrarySeg.evtLeft.other)
-                    contrarySeg.evtLeft.other.segment = segOtherRight
-                    contrarySeg.evtLeft.other = eventCrossRightOther
-                    segOtherRight.evtLeft = eventCrossLeftOther
-
-                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRightOther))
-                    heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeftOther))
+                if ipt != contrarySeg.right and ipt != contrarySeg.left:
+                    splitSegment(h, contrarySeg, ipt)
 
         elif event.type == RIGHT_ENDPOINT: #right endpoint
             seg = event.segment
-
             lower = seg.lower
             upper = seg.upper
 
@@ -595,114 +559,17 @@ def getPolygon(segmentsInput):
                 ipt = lower.getIntersection(upper)
 
                 if ipt is not None and (lower.left.x < ipt.x - EPSILON_COMP or upper.left.x < ipt.x - EPSILON_COMP) and (lower.right.x > ipt.x + EPSILON_COMP or upper.right.x > ipt.x + EPSILON_COMP):
-                    if ipt != lower.right:
-                        segRight = lower.getPartOf(l=ipt, r=lower.right)
-                        lower.right = ipt
-                        eventCrossRight = SweepEvent(lower, RIGHT_ENDPOINT, ipt, lower.evtLeft)
-                        eventCrossLeft = SweepEvent(segRight, LEFT_ENDPOINT, ipt, lower.evtLeft.other)
-                        lower.evtLeft.other.segment = segRight
-                        lower.evtLeft.other = eventCrossRight
-                        segRight.evtLeft = eventCrossLeft
+                    if ipt != lower.right and ipt != lower.left:
+                        splitSegment(h, lower, ipt)
 
-                        heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRight))
-                        heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeft))
-
-                    if ipt != upper.right:
-                        segOtherRight = upper.getPartOf(l=ipt, r=upper.right)
-                        upper.right = ipt
-                        eventCrossRightOther = SweepEvent(upper, RIGHT_ENDPOINT, ipt, upper.evtLeft)
-                        eventCrossLeftOther = SweepEvent(segOtherRight, LEFT_ENDPOINT, ipt, upper.evtLeft.other)
-                        upper.evtLeft.other.segment = segOtherRight
-                        upper.evtLeft.other = eventCrossRightOther
-                        segOtherRight.evtLeft = eventCrossLeftOther
-
-                        heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_RIGHT), eventCrossRightOther))
-                        heapq.heappush(h, ((ipt.x, ipt.y, PRIORITY_LEFT), eventCrossLeftOther))
-
+                    if ipt != upper.right and ipt != upper.left:
+                        splitSegment(h, upper, ipt)
             if t.isOuterSegment(seg):
                 finalSegments.append(seg)
-
             segmentsToBeDeleted.append(seg)
-
 
     return finalSegments
 
-    #
-    # pts = {}
-    # for edge in edges:
-    #     for pt in edge:
-    #         if pt not in pts:
-    #             pts[pt] = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 1], ind=pt, created=False, prev=None, next=None)
-    #
-    #     edgeList = list(edge)
-    #
-    #     pt0 = pts[edgeList[0]]
-    #     pt1 = pts[edgeList[1]]
-    #
-    #     if pt0.next is not None:
-    #         pt1.next = pt0
-    #         pt0.prev = pt1
-    #     elif pt1.next is not None:
-    #         pt0.next = pt1
-    #         pt1.prev = pt0
-    #     else:
-    #         tri = triRefs[edge]
-    #         for pt in tri:
-    #             if (pt != edgeList[0]) & (pt != edgeList[1]):
-    #                 pt3_ind = pt
-    #         if turn(pt0.x, pt0.y, pt1.x, pt1.y, ptsCord[pt3_ind][0, 0], ptsCord[pt3_ind][0, 1]) > 0:
-    #             pt0.next = pt0
-    #             pt1.prev = pt1
-    #         else:
-    #             pt1.next = pt0
-    #             pt0.prev = pt1
-    #
-    #
-    #
-    #
-    #     #if (pt0.next is not None) & (pt1.next is None):
-    #     #     pt0, pt1 = pt1, pt0
-    #     #
-    #     # if pt0.next is None:
-    #     #     if pt1.prev is not None:
-    #     #         #reverse the order of the list
-    #     #         pt = pt1
-    #     #         while pt is not None:
-    #     #             pt.prev, pt.next = pt.next, pt.prev
-    #     #             pt = pt.next
-    #     #
-    #     # else:
-    #     #     # reverse the order of the list
-    #     #     pt = pt0
-    #     #     while pt is not None:
-    #     #         pt.prev, pt.next = pt.next, pt.prev
-    #     #         pt = pt.prev
-    #     # pt1.prev = pt0
-    #     # pt0.next = pt1
-    #
-    # poly = []
-    #
-    # pt =pt0
-    #
-    # while pt not in poly:
-    #     poly.append(pt)
-    #     pt = pt.next
-    #
-    # return poly
-
-
-# def signedArea(poly, firstDoubled= False):
-#     sumArea = 0
-#     if firstDoubled:
-#         indices = range(len(poly))
-#     else:
-#         indices = range(len(poly)+1)
-#         indices[len(poly)] = 0
-#     for i in range(len(indices)-1):
-#         p1 = poly[indices[i]]
-#         p2 = poly[indices[i+1]]
-#         sumArea += p1.x*p2.y - p2.x*p1.y
-#     return sumArea/2
 
 def signedArea(segments):
     sumArea = 0
@@ -735,7 +602,7 @@ def rotate(pts, rp, alpha, beta, gamma, rad = False):
 
 #tests
 #
-# segs = []
+segs = []
 #
 # segs.append(Segment(left=Point(x=0,y =2), right= Point(x=1, y=1), turn = 1))
 # segs.append(Segment(left=Point(x=1,y =1), right= Point(x=5, y=1.5), turn = 1))
@@ -755,25 +622,25 @@ def rotate(pts, rp, alpha, beta, gamma, rad = False):
 #
 #
 #
-# segs.append(Segment(left=Point(x=0.5, y=2), right=Point(x=0.5,y =3) , turn = -1))
-# segs.append(Segment(left=Point(x=0.5,y =3), right= Point(x=2.5, y=3), turn = -1))
-# segs.append(Segment(left=Point(x=0.5,y =2), right= Point(x=2.5, y=2), turn = 1))
-# segs.append(Segment(left=Point(x=2.5,y =2), right= Point(x=2.5, y=3), turn = 1))
-#
-# segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =1) , turn = -1))
-# segs.append(Segment(left=Point(x=0,y =1), right= Point(x=3, y=1), turn = -1))
-# segs.append(Segment(left=Point(x=0,y =0), right= Point(x=3, y=0), turn = 1))
-# segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=1), turn = 1))
-#
-# segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =3) , turn = -1))
-# segs.append(Segment(left=Point(x=0,y =3), right= Point(x=1, y=3), turn = -1))
-# segs.append(Segment(left=Point(x=0,y =0), right= Point(x=1, y=0), turn = 1))
-# segs.append(Segment(left=Point(x=1,y =0), right= Point(x=1, y=3), turn = 1))
-#
-# segs.append(Segment(left=Point(x=2, y=0), right=Point(x=2,y =3) , turn = -1))
-# segs.append(Segment(left=Point(x=2,y =3), right= Point(x=3, y=3), turn = -1))
-# segs.append(Segment(left=Point(x=2,y =0), right= Point(x=3, y=0), turn = 1))
-# segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=3), turn = 1))
+segs.append(Segment(left=Point(x=0.5, y=2), right=Point(x=0.5,y =3) , turn = -1))
+segs.append(Segment(left=Point(x=0.5,y =3), right= Point(x=2.5, y=3), turn = -1))
+segs.append(Segment(left=Point(x=0.5,y =2), right= Point(x=2.5, y=2), turn = 1))
+segs.append(Segment(left=Point(x=2.5,y =2), right= Point(x=2.5, y=3), turn = 1))
+
+segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =1) , turn = -1))
+segs.append(Segment(left=Point(x=0,y =1), right= Point(x=3, y=1), turn = -1))
+segs.append(Segment(left=Point(x=0,y =0), right= Point(x=3, y=0), turn = 1))
+segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=1), turn = 1))
+
+segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =3) , turn = -1))
+segs.append(Segment(left=Point(x=0,y =3), right= Point(x=1, y=3), turn = -1))
+segs.append(Segment(left=Point(x=0,y =0), right= Point(x=1, y=0), turn = 1))
+segs.append(Segment(left=Point(x=1,y =0), right= Point(x=1, y=3), turn = 1))
+
+segs.append(Segment(left=Point(x=2, y=0), right=Point(x=2,y =3) , turn = -1))
+segs.append(Segment(left=Point(x=2,y =3), right= Point(x=3, y=3), turn = -1))
+segs.append(Segment(left=Point(x=2,y =0), right= Point(x=3, y=0), turn = 1))
+segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=3), turn = 1))
 #
 #
 #
@@ -789,13 +656,13 @@ def rotate(pts, rp, alpha, beta, gamma, rad = False):
 # segs.append(Segment(left=Point(x=8-7,y =2-7), right= Point(x=8-7, y=10-7), turn = 1))
 # segs.append(Segment(left=Point(x=0-7,y =2-7), right= Point(x=8-7, y=2-7), turn = 1))
 #
-# print signedArea(segs)
-#
-#
-# segsN = getPolygon(segs)
-# for i, seg in enumerate(segsN):
-#     print '----------------------------------------------'
-#     print i
-#     print seg
-# print '--------------------------------------------------------------------------'
-# print signedArea(segsN)
+print signedArea(segs)
+
+
+segsN = getPolygon(segs)
+for i, seg in enumerate(segsN):
+    print '----------------------------------------------'
+    print i
+    print seg
+print '--------------------------------------------------------------------------'
+print signedArea(segsN)
