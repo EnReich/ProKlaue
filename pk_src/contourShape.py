@@ -28,6 +28,7 @@ PRIORITY_RIGHT = 0
 COUNTER_CLOCKWISE = 1
 CLOCKWISE = -1
 
+
 class SearchTreeNode:
     def __init__(self, key, val, parent, left, right):
         self.left = left #left Node
@@ -218,7 +219,7 @@ class Segment:
 
         #overlapping segments
         if self.getSlope() == other.getSlope() and other.getYForX(self.left.x) == self.left.y:
-            if self.left.x == other.left.x:
+            if self.left.x < other.left.x:
                 return other.left
             elif self.left.x == other.left.x:
                 return min(self.right, other.right)
@@ -247,7 +248,7 @@ class Segment:
     def getPartOf(self, l=None, r=None):
         leftPt = l if l is not None else self.left
         rightPt = r if r is not None else self.right
-        return Segment(left= leftPt, right=rightPt, turn = self.turn, upper = self.upper, lower = self.lower)
+        return Segment(left= leftPt, right=rightPt, turn = self.turn, upper = None, lower = None)
 
     def __str__(self):
         return 'left: '+str((self.left.x, self.left.y))+ ' | right: '+ str((self.right.x, self.right.y))+ ' | turn: ' + str(self.turn)
@@ -266,12 +267,12 @@ class SweepEvent:
         self.point = point          #point for the event (insertion)
         self.segment = segment      #segment for the event
         self.type = type            #type of the event: 0 - left endpoint, 1 - right endpoint, 2 - crossing point, 3 - removed
-        self.other = other
+        self.other = other          #other sweep event
 
-    def getPrority(self):
+    def getPriority(self):
         p = self.segment.left if self.type == LEFT_ENDPOINT else self.segment.right
         pr = PRIORITY_LEFT if self.type == LEFT_ENDPOINT else PRIORITY_RIGHT
-        sl = self.segment.getSlope() if self.type == RIGHT_ENDPOINT else -self.segment.getSlope()
+        sl = -self.segment.getSlope() if self.type == RIGHT_ENDPOINT else self.segment.getSlope()
         ps = -1 if self.segment.turn == CLOCKWISE else 1
         result = (p.x, p.y, pr, sl, ps)
         return result
@@ -292,7 +293,7 @@ class SegmentList:
             y = segment.left.y
             slope = segment.getSlope()
 
-            while (actSeg is not None) and (y>actSeg.getYForX(x) or (y == actSeg.getYForX(x) and (slope > actSeg.getSlope() or (slope == actSeg.getSlope() and segment.turn == COUNTER_CLOCKWISE and actSeg.turn == CLOCKWISE)))):
+            while (actSeg is not None) and (y, slope, segment.turn == COUNTER_CLOCKWISE) > (actSeg.getYForX(x), actSeg.getSlope(), actSeg.turn == COUNTER_CLOCKWISE):
                 lastSeg = actSeg
                 actSeg = actSeg.upper
 
@@ -313,11 +314,19 @@ class SegmentList:
 
     def delete(self, segment):
         if self.first is segment:
-            self.first = segment.upper
-        if segment.lower is not None:
-            segment.lower.upper = segment.upper
-        if segment.upper is not None:
-            segment.upper.lower = segment.lower
+            if segment.upper is not None:
+                self.first = segment.upper
+                self.first.lower = None
+            else:
+                self.first = None
+        else:
+            if segment.lower is not None:
+                segment.lower.upper = segment.upper
+            if segment.upper is not None:
+                segment.upper.lower = segment.lower
+
+        # segment.upper = None
+        # segment.lower = None
 
     def isOuterSegment(self, seg):
         actSeg = self.first
@@ -326,6 +335,10 @@ class SegmentList:
             if actSeg is None:
                 print '--------ERROR SEGMENT NOT IN LIST-----------'
                 print seg           #that should not happen
+                print seg.lower
+                print seg.upper
+                print seg.evtLeft.getPriority()
+                print seg.evtLeft.other.getPriority()
                 return False
             sumTurn += actSeg.turn
             actSeg = actSeg.upper
@@ -333,6 +346,12 @@ class SegmentList:
             return True
         else:
             return False
+
+def listWalker(root):
+    current = root
+    while current.upper is not None:
+        yield current.upper
+        current = current.upper
 
 
 def turn(p1x, p1y, p2x, p2y, p3x,p3y):
@@ -378,7 +397,7 @@ def getSegments(ptsCord, edges, triRefs, tris):
         edgeList = list(edge)
         ptLeft = pts[edgeList[0]]
         ptRight = pts[edgeList[1]]
-        if (ptLeft.x, ptLeft.y) > (ptRight.x, ptRight.y):
+        if ptLeft>ptRight:
             ptLeft, ptRight = ptRight, ptLeft
 
         tri = tris[list(triRefs[edge])[0]]
@@ -470,21 +489,25 @@ def getPolygon2(segmentsInput):
 
 def splitSegment(h, seg, p):
     if p == seg.right or p == seg.left:
-        return
-    rightPart = seg.getPartOf(l=p, r = seg.right)
-    seg.right = p
-    evtRight = seg.evtLeft.other
-    evtCrossLeft = SweepEvent(segment=rightPart, point=p, other=evtRight, type= LEFT_ENDPOINT)
-    evtCrossRight = SweepEvent(segment=seg, point=p, other=seg.evtLeft, type= RIGHT_ENDPOINT)
-    evtRight.other = evtCrossLeft
-    seg.evtLeft.other = evtCrossRight
-    evtRight.segment = rightPart
-    rightPart.evtLeft = evtCrossLeft
+        return None
+    if p > seg.right or p<seg.left:
+        # print '################# Error while splitting ###########'
+        return None
+    else:
+        rightPart = seg.getPartOf(l=p, r = seg.right)
+        seg.right = p
+        evtRight = seg.evtLeft.other
+        evtCrossLeft = SweepEvent(segment=rightPart, type= LEFT_ENDPOINT, point=p, other=evtRight)
+        evtCrossRight = SweepEvent(segment=seg, type= RIGHT_ENDPOINT, point=p, other=seg.evtLeft)
+        evtRight.other = evtCrossLeft
+        seg.evtLeft.other = evtCrossRight
+        evtRight.segment = rightPart
+        rightPart.evtLeft = evtCrossLeft
 
-    heapq.heappush(h, (evtCrossLeft.getPrority(), evtCrossLeft))
-    heapq.heappush(h, (evtCrossRight.getPrority(), evtCrossRight))
+        heapq.heappush(h, (evtCrossLeft.getPriority(), evtCrossLeft))
+        heapq.heappush(h, (evtCrossRight.getPriority(), evtCrossRight))
 
-    return rightPart
+        return rightPart
 
 def getPolygon(segmentsInput):
     finalSegments = []
@@ -492,13 +515,13 @@ def getPolygon(segmentsInput):
     t = SegmentList()
 
     for segment in segmentsInput:
-        evtLeft = SweepEvent(segment, LEFT_ENDPOINT, segment.left, None)
-        evtRight = SweepEvent(segment, RIGHT_ENDPOINT, segment.right, evtLeft)
+        evtLeft = SweepEvent(segment=segment, type=LEFT_ENDPOINT, point=segment.left, other=None)
+        evtRight = SweepEvent(segment=segment, type=RIGHT_ENDPOINT, point=segment.right, other=evtLeft)
         evtLeft.other = evtRight
         segment.evtLeft = evtLeft
 
-        heapq.heappush(h, (evtLeft.getPrority(), evtLeft))
-        heapq.heappush(h, (evtRight.getPrority(), evtRight))
+        heapq.heappush(h, (evtLeft.getPriority(), evtLeft))
+        heapq.heappush(h, (evtRight.getPriority(), evtRight))
 
 
     last = None
@@ -523,49 +546,72 @@ def getPolygon(segmentsInput):
             #insert segment
             t.insert(seg)
 
-            iptLow = None
-            iptUp = None
+            ipts = []
 
-            if seg.lower is not None:
-                iptLow = min(seg.lower.right, seg.right)
-            if seg.upper is not None:
-                iptUp = seg.getIntersection(seg.upper)
-            ipt = None
-            contrarySeg = None
-            if iptUp is not None and iptLow is not None:
-                print "------FEHLER IPT-----"
-            if iptLow is not None:
-                ipt = iptLow
-                contrarySeg = seg.lower
-            if iptUp is not None and (ipt is None or iptUp < ipt):
-                ipt = iptUp
-                contrarySeg = seg.upper
+            for s in listWalker(t.first):
+                if seg is not s:
+                    ipt = seg.getIntersection(s)
+                    if ipt is not None:
+                        ipts.append((ipt, s))
+
+            ipts.sort()
+            # for ipt in ipts:
+            #     print str(ipt[0].x) + ' | ' + str(ipt[0].y)
+            #     print ipt[1]
+
+            right_part = seg
+            for pt in ipts:
+                other_seg = pt[1]
+                p = pt[0]
+                splitSegment(h, other_seg, p)
+                n_right_part = splitSegment(h, right_part, p)
+                if n_right_part is not None:
+                    right_part = n_right_part
+
+            # iptLow = None
+            # iptUp = None
+            #
+            # if seg.lower is not None:
+            #     iptLow = seg.getIntersection(seg.lower)
+            # if seg.upper is not None:
+            #     iptUp = seg.getIntersection(seg.upper)
+            #
+            # # ipt = None
+            # # contrarySeg = None
+            # # if iptUp is not None and iptLow is not None and iptUp != iptLow:
+            # #     print "------FEHLER IPT-----"
+            #
+            # segRight=None
+            # if iptLow is not None:
+            #     splitSegment(h, seg.lower, iptLow)
+            #     segRight = splitSegment(h, seg, iptLow)
+            # if iptUp is not None:
+            #     splitSegment(h, seg.upper, iptUp)
+            #     if segRight is not None and iptLow < iptUp:
+            #         segRight = splitSegment(h, segRight, iptUp)
+            #     else:
+            #         splitSegment(h, seg, iptUp)
 
             # print 'ipt: ' + str(contrarySeg) if ipt is not None else 'no ipt'
 
-            if ipt is not None: # and ((seg.left.x < ipt.x - EPSILON_COMP and seg.right.x > ipt.x + EPSILON_COMP) or (contrarySeg.left.x < ipt.x-EPSILON_COMP and contrarySeg.right.x > ipt.x + EPSILON_COMP)):
-                if ipt != seg.right and ipt != seg.left:
-                    splitSegment(h, seg, ipt)
-
-                if ipt != contrarySeg.right and ipt != contrarySeg.left:
-                    splitSegment(h, contrarySeg, ipt)
+            # if ipt is not None: # and ((seg.left.x < ipt.x - EPSILON_COMP and seg.right.x > ipt.x + EPSILON_COMP) or (contrarySeg.left.x < ipt.x-EPSILON_COMP and contrarySeg.right.x > ipt.x + EPSILON_COMP)):
+            #     splitSegment(h, seg, ipt)
+            #     splitSegment(h, contrarySeg, ipt)
 
         elif event.type == RIGHT_ENDPOINT: #right endpoint
             seg = event.segment
-            lower = seg.lower
-            upper = seg.upper
+            # lower = seg.lower
+            # upper = seg.upper
+            #
+            # if lower is not None and upper is not None:
+            #     ipt = lower.getIntersection(upper)
+            #     if ipt is not None:# and (lower.left.x < ipt.x - EPSILON_COMP or upper.left.x < ipt.x - EPSILON_COMP) and (lower.right.x > ipt.x + EPSILON_COMP or upper.right.x > ipt.x + EPSILON_COMP):
+            #         splitSegment(h, lower, ipt)
+            #         splitSegment(h, upper, ipt)
 
-            if lower is not None and upper is not None:
-                ipt = lower.getIntersection(upper)
-
-                if ipt is not None and (lower.left.x < ipt.x - EPSILON_COMP or upper.left.x < ipt.x - EPSILON_COMP) and (lower.right.x > ipt.x + EPSILON_COMP or upper.right.x > ipt.x + EPSILON_COMP):
-                    if ipt != lower.right and ipt != lower.left:
-                        splitSegment(h, lower, ipt)
-
-                    if ipt != upper.right and ipt != upper.left:
-                        splitSegment(h, upper, ipt)
             if t.isOuterSegment(seg):
                 finalSegments.append(seg)
+
             segmentsToBeDeleted.append(seg)
 
     return finalSegments

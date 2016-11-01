@@ -72,7 +72,7 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         obj_tri_th = [tri for tri in obj_tri_bc if 0 <= np.dot(plane_n, (np.array(misc.centroidTriangle([obj_vtx[tri[i]] for i in range(3)]))-plane_vtx[0])) < threshold]
         # obj_tri_th = obj_tri_bc
 
-        # get rotate pivot point
+        # get rotation pivot point
         rp = cmds.xform(obj[1], q=1, rp=1, ws = 1)
 
         # get rotation of plane
@@ -91,31 +91,31 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         #     print seg
 
         print len(segments)
-        ind = set([])
-        for seg in segments:
-            # print seg.left.ind
-            # print seg.right.ind
-            ind.add(seg.left.ind)
-            ind.add(seg.right.ind)
+        # ind = set([])
+        # for seg in segments:
+        #     # print seg.left.ind
+        #     # print seg.right.ind
+        #     ind.add(seg.left.ind)
+        #     ind.add(seg.right.ind)
+        #
+        # for i in ind:
+        #     cmds.select(obj[0] + '.vtx['+str(i)+']',add = True)
+        #
+        # print 'done'
 
-        for i in ind:
-            cmds.select(obj[0] + '.vtx['+str(i)+']',add = True)
 
-        print 'done'
-
-
-        # nSegments = contourShape.getPolygon(segments)
+        nSegments = contourShape.getPolygon(segments)
 
         # print '------------------------------------------------------'
         #
         # for seg in nSegments:
         #     print seg
 
-        # print len(nSegments)
+        print len(nSegments)
 
-        # area = contourShape.signedArea(nSegments)
+        area = contourShape.signedArea(nSegments)
 
-        # self.setResult(area)
+        self.setResult(area)
 
 # creator function
 def projectionAreaCreator():
