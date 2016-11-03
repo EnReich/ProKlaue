@@ -19,169 +19,22 @@ cross = lambda x,y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y
 EPSILON = 1e-15
 EPSILON_COMP = 1e-15
 GRAD_TO_RAD = math.pi/180
-LEFT_ENDPOINT = 0
+LEFT_ENDPOINT = 0                           #code for type of a sweep event of a left endpoint
 RIGHT_ENDPOINT = 1
 CROSS_POINT = 2
 REMOVED = 3
-PRIORITY_LEFT = 1
+PRIORITY_LEFT = 1                           #priority for a sweep event of a left endpoint
 PRIORITY_RIGHT = 0
 COUNTER_CLOCKWISE = 1
 CLOCKWISE = -1
 
 
-class SearchTreeNode:
-    def __init__(self, key, val, parent, left, right):
-        self.left = left #left Node
-        self.right = right #right Node
-
-        self.key = key
-        self.val = val
-
-        self.parent = parent
-        self.left = left
-        self.right = right
-
-    def getKey(self, x):
-        if self.right.x == self.left.x:
-            return self.right.y
-        else:
-            return ((x-self.left.x)/(self.right.x-self.left.x))*(self.right.y-self.left.y)+self.left.y
-
-
-class SearchTree:
-    def search(self, key):
-        node = self.root
-        while node is not None:
-            if node.key == key:
-                return node
-            else:
-                if key < node.key:
-                    node = node.left
-                else:
-                    node = node.right
-        return None
-
-
-    def insertRec(self, lastNode, nodeToInsert):
-        if nodeToInsert.key > lastNode.key:
-            if lastNode.right is not None:
-                self.insertRec(lastNode.right, nodeToInsert)
-            else:
-                lastNode.right = nodeToInsert
-                nodeToInsert.parent = lastNode
-        else:
-            if lastNode.left is not None:
-                self.insertRec(lastNode.left, nodeToInsert)
-            else:
-                lastNode.left = nodeToInsert
-                nodeToInsert.parent = lastNode
-
-    def insert(self, nodeToInsert):
-        if self.root is not None:
-            self.insertRec(self.root, nodeToInsert)
-        else:
-            self.root = nodeToInsert
-
-    def delete(self, nodeToDelete):
-        #no children just delete
-        if (nodeToDelete.right is None) & (nodeToDelete.left is None):
-            if nodeToDelete.parent is not None:
-                if nodeToDelete.key < nodeToDelete.parent.key:
-                    nodeToDelete.parent.left = None
-                else:
-                    nodeToDelete.parent.right = None
-            if self.root is nodeToDelete:
-                self.root=None
-
-        #one children just give it to parent
-        elif nodeToDelete.right is None:
-            if nodeToDelete is not self.root:
-                if nodeToDelete.left.key < nodeToDelete.parent.key:
-                    nodeToDelete.parent.left = nodeToDelete.left
-                else:
-                    nodeToDelete.parent.right = nodeToDelete.left
-
-                nodeToDelete.left.parent = nodeToDelete.parent
-            else:
-                self.root = nodeToDelete.left
-                self.root.parent = None
-
-        elif nodeToDelete.left is None:
-            if nodeToDelete is not self.root:
-                if nodeToDelete.right.key < nodeToDelete.parent.key:
-                    nodeToDelete.parent.left = nodeToDelete.right
-                else:
-                    nodeToDelete.parent.right = nodeToDelete.right
-
-                nodeToDelete.right.parent = nodeToDelete.parent
-            else:
-                self.root = nodeToDelete.right
-                self.root = None
-
-        #two children
-        else:
-            #find most right child in left subtree
-            maxChild = self.findMaximum(nodeToDelete.left)
-            key = maxChild.key
-            val = maxChild.val
-            self.delete(maxChild)
-            nodeToDelete.key = key
-            nodeToDelete.val = val
-
-    def findMaximum(self, root):
-        if root.right is not None:
-            return self.findMaximum(root.right)
-        else:
-            return root
-
-    def findMinimum(self, root):
-        if root.left is not None:
-            return self.findMinimum(root.left)
-        else:
-            return root
-
-    def findNext(self, root):
-        if root.right is not None:
-            return self.findMinimum(root.right)
-        else:
-            last = root
-            actual = root.parent
-            while actual is not None:
-                if actual.left is last:
-                    return actual
-                else:
-                    last = actual
-                    actual = actual.parent
-            return None
-
-
-    def findPrev(self, root):
-        if root.left is not None:
-            return self.findMaximum(root.left)
-        else:
-            last = root
-            actual = root.parent
-            while actual is not None:
-                if actual.right is last:
-                    return actual
-                else:
-                    last = actual
-                    actual = actual.parent
-            return None
-
-    def __init__(self):
-        self.root = None
-
-
 class Point:
-    def __init__(self, x, y, ind=-1, created=True, prev=None, next=None, up=False):
+    def __init__(self, x, y, ind=-1, created=True):
         self.x = x                  #coordinates
         self.y = y
         self.ind = ind              #indice in the point field
         self.created = created      #was point created
-        self.prev = prev
-        self.next = next
-        self.up=up                  #polygon lies upwards to point
 
     def __eq__(self, other):
         return (other.x == self.x and other.y == self.y)
@@ -414,79 +267,6 @@ def getSegments(ptsCord, edges, triRefs, tris):
     return segments
 
 
-def getPolygon2(segmentsInput):
-    finalSegments = []
-    h =[] #priority queue for sweeping events
-    t = SegmentList()
-
-    segmentsInputCopy = list(segmentsInput)
-    segments = set([])
-
-    ipts = {}
-    for i in range(len(segmentsInputCopy)):
-        ipts[i]=set([])
-    for i, seg in enumerate(segmentsInputCopy):
-        for j in range(i):
-            seg2 = segmentsInputCopy[j]
-            ipt = seg.getIntersection(seg2)
-            if ipt is not None and ((ipt!=seg.left and ipt != seg.right) or (ipt!=seg2.left and ipt!= seg2.right)):
-                ipts[i].add(ipt)
-                ipts[j].add(ipt)
-
-    for i, seg in enumerate(segmentsInputCopy):
-        pts = ipts[i]
-        pts.add(seg.left)
-        pts.add(seg.right)
-        pts = list(pts)
-        pts.sort()
-        for j in range(1, len(pts)):
-            segments.add(seg.getPartOf(l=pts[j-1], r=pts[j]))
-
-
-    for segment in segments:
-        evtLeft = SweepEvent(segment, LEFT_ENDPOINT, segment.left, None)
-        evtRight = SweepEvent(segment, RIGHT_ENDPOINT, segment.right, evtLeft)
-        evtLeft.other = evtRight
-        segment.evtLeft = evtLeft
-
-        heapq.heappush(h, ((segment.left.x, segment.left.y, PRIORITY_LEFT), evtLeft))
-        heapq.heappush(h, ((segment.right.x, segment.right.y, PRIORITY_RIGHT), evtRight))
-
-    last = None
-    segmentsToBeDeleted=[]
-    while h:
-        event = heapq.heappop(h)[1]
-        if last is not None:
-            if last.point.x < event.point.x or (last.point.x == event.point.x and last.type == RIGHT_ENDPOINT and event.type == LEFT_ENDPOINT):
-                for seg in segmentsToBeDeleted:
-                    t.delete(seg)
-                segmentsToBeDeleted = []
-
-        last = event
-        #
-        # print ' --------------------------------- '
-        # print event.segment
-        # print 'left' if event.type == LEFT_ENDPOINT else 'right'
-
-        if event.type == LEFT_ENDPOINT: #left endpoint
-
-            seg = event.segment
-
-            #insert segment
-            t.insert(seg)
-
-
-        elif event.type == RIGHT_ENDPOINT: #right endpoint
-            seg = event.segment
-
-            if t.isOuterSegment(seg):
-                finalSegments.append(seg)
-
-            segmentsToBeDeleted.append(seg)
-
-    return finalSegments
-
-
 def splitSegment(h, seg, p):
     if p == seg.right or p == seg.left:
         return None
@@ -646,9 +426,9 @@ def rotate(pts, rp, alpha, beta, gamma, rad = False):
     npts = [np.mat(pt - rp)*rot + rp for pt in pts]
     return npts
 
-#tests
+# tests
 #
-segs = []
+# segs = []
 #
 # segs.append(Segment(left=Point(x=0,y =2), right= Point(x=1, y=1), turn = 1))
 # segs.append(Segment(left=Point(x=1,y =1), right= Point(x=5, y=1.5), turn = 1))
@@ -668,25 +448,25 @@ segs = []
 #
 #
 #
-segs.append(Segment(left=Point(x=0.5, y=2), right=Point(x=0.5,y =3) , turn = -1))
-segs.append(Segment(left=Point(x=0.5,y =3), right= Point(x=2.5, y=3), turn = -1))
-segs.append(Segment(left=Point(x=0.5,y =2), right= Point(x=2.5, y=2), turn = 1))
-segs.append(Segment(left=Point(x=2.5,y =2), right= Point(x=2.5, y=3), turn = 1))
-
-segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =1) , turn = -1))
-segs.append(Segment(left=Point(x=0,y =1), right= Point(x=3, y=1), turn = -1))
-segs.append(Segment(left=Point(x=0,y =0), right= Point(x=3, y=0), turn = 1))
-segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=1), turn = 1))
-
-segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =3) , turn = -1))
-segs.append(Segment(left=Point(x=0,y =3), right= Point(x=1, y=3), turn = -1))
-segs.append(Segment(left=Point(x=0,y =0), right= Point(x=1, y=0), turn = 1))
-segs.append(Segment(left=Point(x=1,y =0), right= Point(x=1, y=3), turn = 1))
-
-segs.append(Segment(left=Point(x=2, y=0), right=Point(x=2,y =3) , turn = -1))
-segs.append(Segment(left=Point(x=2,y =3), right= Point(x=3, y=3), turn = -1))
-segs.append(Segment(left=Point(x=2,y =0), right= Point(x=3, y=0), turn = 1))
-segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=3), turn = 1))
+# segs.append(Segment(left=Point(x=0.5, y=2), right=Point(x=0.5,y =3) , turn = -1))
+# segs.append(Segment(left=Point(x=0.5,y =3), right= Point(x=2.5, y=3), turn = -1))
+# segs.append(Segment(left=Point(x=0.5,y =2), right= Point(x=2.5, y=2), turn = 1))
+# segs.append(Segment(left=Point(x=2.5,y =2), right= Point(x=2.5, y=3), turn = 1))
+#
+# segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =1) , turn = -1))
+# segs.append(Segment(left=Point(x=0,y =1), right= Point(x=3, y=1), turn = -1))
+# segs.append(Segment(left=Point(x=0,y =0), right= Point(x=3, y=0), turn = 1))
+# segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=1), turn = 1))
+#
+# segs.append(Segment(left=Point(x=0, y=0), right=Point(x=0,y =3) , turn = -1))
+# segs.append(Segment(left=Point(x=0,y =3), right= Point(x=1, y=3), turn = -1))
+# segs.append(Segment(left=Point(x=0,y =0), right= Point(x=1, y=0), turn = 1))
+# segs.append(Segment(left=Point(x=1,y =0), right= Point(x=1, y=3), turn = 1))
+#
+# segs.append(Segment(left=Point(x=2, y=0), right=Point(x=2,y =3) , turn = -1))
+# segs.append(Segment(left=Point(x=2,y =3), right= Point(x=3, y=3), turn = -1))
+# segs.append(Segment(left=Point(x=2,y =0), right= Point(x=3, y=0), turn = 1))
+# segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=3), turn = 1))
 #
 #
 #
@@ -702,13 +482,12 @@ segs.append(Segment(left=Point(x=3,y =0), right= Point(x=3, y=3), turn = 1))
 # segs.append(Segment(left=Point(x=8-7,y =2-7), right= Point(x=8-7, y=10-7), turn = 1))
 # segs.append(Segment(left=Point(x=0-7,y =2-7), right= Point(x=8-7, y=2-7), turn = 1))
 #
-print signedArea(segs)
-
-
-segsN = getPolygon(segs)
-for i, seg in enumerate(segsN):
-    print '----------------------------------------------'
-    print i
-    print seg
-print '--------------------------------------------------------------------------'
-print signedArea(segsN)
+# print signedArea(segs)
+#
+# segsN = getPolygon(segs)
+# for i, seg in enumerate(segsN):
+#     print '----------------------------------------------'
+#     print i
+#     print seg
+# print '--------------------------------------------------------------------------'
+# print signedArea(segsN)
