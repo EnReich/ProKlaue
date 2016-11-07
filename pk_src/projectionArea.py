@@ -14,6 +14,7 @@ Points with a larger distance than a given threshold will be discarded.
     :file(f): path to save altitude map to ASCII-file; if string is empty, no data will be written
     :threshold(t): threshold of maximum distance from plane; all facets with larger distance will be discarded (default 10.0)
     :cosinusmax(c): cosinus of the angle threshhold between the plane and the faces that should be considered (default 0.0, for backface culling). Can be used to exclude/include steep/backwards oriented faces. Input any value >1 to include evry facet in the given threshold
+    :select(s): boolean (default False) indicating whether the outline points should be selected if present in the current object (created intersection points can and will not be selected)
 
 :returns: the area of the projection of the mesh onto the plane
 
@@ -101,6 +102,7 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         threshold = argData.flagArgumentDouble('threshold', 0) if (argData.isFlagSet('threshold')) else 10.0
         angle_culling = argData.flagArgumentDouble('radiant', 0) if (argData.isFlagSet('radiant')) else 0
         animation = argData.flagArgumentBool('anim', 0) if (argData.isFlagSet('anim')) else False
+        select = argData.flagArgumentBool('select', 0) if (argData.isFlagSet('select')) else False
 
         # get triangles of object model
         obj_tri = misc.getTriangles(obj[0])
@@ -139,18 +141,20 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         print 'count of outer segments:'
         print len(segments)
         nSegments = contourShape.getPolygon(segments)
-        ind = set([])
-        for seg in nSegments:
-            # print seg.left.ind
-            # print seg.right.ind
-            if not seg.left.created:
-                ind.add(seg.left.ind)
-            if not seg.right.created:
-                ind.add(seg.right.ind)
 
-        cmds.select(clear=True)
-        for i in ind:
-            cmds.select(obj[0] + '.vtx[' + str(i) + ']', add=True)
+        if select:
+            ind = set([])
+            for seg in nSegments:
+                # print seg.left.ind
+                # print seg.right.ind
+                if not seg.left.created:
+                    ind.add(seg.left.ind)
+                if not seg.right.created:
+                    ind.add(seg.right.ind)
+
+            cmds.select(clear=True)
+            for i in ind:
+                cmds.select(obj[0] + '.vtx[' + str(i) + ']', add=True)
 
         print 'count of segments in outline:'
         print len(nSegments)
@@ -170,6 +174,7 @@ def projectionAreaSyntaxCreator():
     syntax.addFlag("f", "file", om.MSyntax.kString)
     syntax.addFlag("t", "threshold", om.MSyntax.kDouble)
     syntax.addFlag("c", "cosinusmax", om.MSyntax.kDouble)
+    syntax.addFlag("s", "select", om.MSyntax.kBoolean)
     syntax.addFlag("a", "anim", om.MSyntax.kBoolean)
     return syntax
 

@@ -243,7 +243,7 @@ def getSegments(ptsCord, edges, triRefs, tris):
     for edge in edges:
         for pt in edge:
             if pt not in pts:
-                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 2], ind=pt, created=False, prev=None, next=None)
+                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 2], ind=pt, created=False)
                 pts[pt] = npt
 
     for edge in edges:
@@ -290,6 +290,25 @@ def splitSegment(h, seg, p):
         return rightPart
 
 def getPolygon(segmentsInput):
+    """Given segments of a number of polygons, this method calculates the boolean union of these polygons via
+    a simpler (probably not optimal) sweep line approach.
+
+    :param segmentsInput: segments of a number of polygons
+    the whole polygon turns counterclockwise (or clockwise for the outline of a hole)
+    :type segments: iterable container of contourShape.Segment
+    :returns: the signed area of the polygon described by the segments
+
+    **Example:**
+        .. code-block:: python
+
+            from pk_src import contourShape
+            s1 = contourShape.Segment(contourShape.Point(0,0), contourShape.Point(1,0), contourShape.COUNTER_CLOCKWISE)     #turns from left to right
+            s2 = contourShape.Segment(contourShape.Point(0,0), contourShape.Point(0,1), contourShape.CLOCKWISE)             #turns from right to left
+            s3 = contourShape.Segment(contourShape.Point(0,1), contourShape.Point(1,1), contourShape.CLOCKWISE)             #from right to left
+            s4 = contourShape.Segment(contourShape.Point(1,0), contourShape.Point(1,1), contourShape.COUNTER_CLOCKWISE)     #from left to right
+            contourShape.signedArea([s1,s2,s3,s4])
+            # Result: 1.0 #
+    """
     finalSegments = []
     h =[] #priority queue for sweeping events
     t = SegmentList()
@@ -398,21 +417,68 @@ def getPolygon(segmentsInput):
 
 
 def signedArea(segments):
+    """Calculates the signed area of the polygon specified by the given segments
+     (area for polygons turning counterclockwise is positive, area for polygons turning clockwise is negative.)
+     For polygons with holes, this method can be used by simply adding the segments of the hole with clockwise
+     turn into the container.
+
+    :param segments: segments of the polygon, turn for a single segment specified in such a way that
+    the whole polygon turns counterclockwise (or clockwise for the outline of a hole)
+    :type segments: iterable container of contourShape.Segment
+    :returns: the signed area of the polygon described by the segments
+
+    **Example:**
+        .. code-block:: python
+
+            from pk_src import contourShape
+            s1 = contourShape.Segment(contourShape.Point(0,0), contourShape.Point(1,0), contourShape.COUNTER_CLOCKWISE)     #turns from left to right
+            s2 = contourShape.Segment(contourShape.Point(0,0), contourShape.Point(0,1), contourShape.CLOCKWISE)             #turns from right to left
+            s3 = contourShape.Segment(contourShape.Point(0,1), contourShape.Point(1,1), contourShape.CLOCKWISE)             #from right to left
+            s4 = contourShape.Segment(contourShape.Point(1,0), contourShape.Point(1,1), contourShape.COUNTER_CLOCKWISE)     #from left to right
+            contourShape.signedArea([s1,s2,s3,s4])
+            # Result: 1.0 #
+    """
     sumArea = 0
-
     for segment in segments:
-        if segment.turn == 1:
-            p1 = segment.left
-            p2 = segment.right
+        areaSeg = (segment.right.x-segment.left.x)*(segment.right.y+segment.left.y)/float(2)
+        if segment.turn != COUNTER_CLOCKWISE:
+            sumArea += areaSeg
         else:
-            p1 = segment.right
-            p2 = segment.left
-        sumArea += p1.x * p2.y - p2.x * p1.y
+            sumArea -= areaSeg
 
-    return sumArea / 2
+    return sumArea
+
+
+    # for connected polygons
+    # for segment in segments:
+    #     if segment.turn == COUNTER_CLOCKWISE:
+    #         p1 = segment.left
+    #         p2 = segment.right
+    #     else:
+    #         p1 = segment.right
+    #         p2 = segment.left
+    #     sumArea += p1.x * p2.y - p2.x * p1.y
+    #
+    # return sumArea / float(2)
 
 
 def rotate(pts, rp, alpha, beta, gamma, rad = False):
+    """Rotates the given points around a given rotation pivot point for the given angles
+    (order is roation around z,y,x axis).
+        :param pts: points to be rotated
+        :type pts: Array of points in the form [x,y,z]
+        :param rp: rotation pivot
+        :type rp: [x,y,z]
+        :param alpha: angle for rotation around the x axis
+        :type alpha: float
+        :param beta: angle for rotation around the y axis
+        :type beta: float
+        :param gamma: angle for rotation around the z axis
+        :type gamma: float
+        :param rad: are the angles given in radians (default is degrees)
+        :type rad: bool
+        :returns: the rotated points
+    """
     if not rad:
         alpha *= GRAD_TO_RAD
         beta *= GRAD_TO_RAD
