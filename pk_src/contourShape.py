@@ -30,9 +30,10 @@ CLOCKWISE = -1
 
 
 class Point:
-    def __init__(self, x, y, ind=-1, created=True):
+    def __init__(self, x, y, z, ind=-1, created=True):
         self.x = x                  #coordinates
         self.y = y
+        self.z = z                  #coordinate irrelevant to position in the plane but for 3d data
         self.ind = ind              #indice in the point field
         self.created = created      #was point created
 
@@ -46,9 +47,9 @@ class Point:
         return hash((self.x, self.y))
 
     def __cmp__(self, other):
-        if (self.x, self.y)<(other.x, other.y):
+        if (self.x, self.y) < (other.x, other.y):
             return -1
-        if (self.x, self.y)>(other.x, other.y):
+        if (self.x, self.y) > (other.x, other.y):
             return 1
         return 0
 
@@ -207,17 +208,59 @@ def listWalker(root):
         current = current.upper
 
 
-def turn(p1x, p1y, p2x, p2y, p3x,p3y):
+def turn(p1x, p1y, p2x, p2y, p3x, p3y):
+    """Calculates the turn from p1 -> p2 -> p3
+        :param p1x: x-coordinate of p1
+        :type p1x: float
+        :param p1y: y-coordinate of p1
+        :type p1y: float
+        :param p2x: x-coordinate of p2
+        :type p2x: float
+        :param p2y: y-coordinate of p2
+        :type p2y: float
+        :param p3x: x-coordinate of p3
+        :type p3x: float
+        :param p3y: y-coordinate of p3
+        :type p3y: float
+        :return: :ref:`contourShape.COUNTER_CLOCKWISE` for counterclockwise turn, :ref:`contourShape.CLOCKWISE` for
+        clockwise turn, else 0
+        :rtype: int
+    """
     A = (p3y-p1y)*(p2x-p1x)
     B = (p2y-p1y)*(p3x-p1x)
-    return 1 if (A > B+EPSILON) else -1 if (A+EPSILON < B) else 0
+    return COUNTER_CLOCKWISE if (A > B+EPSILON) else CLOCKWISE if (A+EPSILON < B) else 0
 
 
-def isIntersect(p1,p2,p3,p4):
+def isIntersect(p1, p2, p3, p4):
+    """Intersection test for two lines.
+
+        :param p1: point1 of line1
+        :type p1: :ref:`contourShape.Point`
+        :param p2: point2 of line1
+        :type p2: :ref:`contourShape.Point`
+        :param p3: point1 of line2
+        :type p3: :ref:`contourShape.Point`
+        :param p4: point2 of line2
+        :type p4: :ref:`contourShape.Point`
+        :return: False, if the two line dont intersect, True, if there could be an intersection point
+    """
     return (turn(p1.x, p1.y, p3.x, p3.y, p4.x, p4.y) != turn(p2.x, p2.y, p3.x, p3.y, p4.x, p4.y)) & (turn(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y) != turn(p1.x, p1.y, p2.x, p2.y, p4.x, p4.y))
 
 
-def getIntersectionPoint(l1p1,l1p2,l2p1,l2p2):
+def getIntersectionPoint(l1p1, l1p2, l2p1, l2p2):
+    """Calculates the intersection point of two lines.
+
+    :param l1p1: point1 of line1
+    :type l1p1: :ref:`contourShape.Point`
+    :param l1p2: point2 of line1
+    :type l1p2: :ref:`contourShape.Point`
+    :param l2p1: point1 of line2
+    :type l2p1: :ref:`contourShape.Point`
+    :param l2p2: point2 of line2
+    :type l2p2: :ref:`contourShape.Point`
+    :return: the intersection point in the plane (with interpolated z-Coordinate), if there is one
+    :rtype: :ref:`contourShape.Point` if there is an intersection point, else None
+    """
     div = ((l2p2.y-l2p1.y)*(l1p2.x-l1p1.x) - (l2p2.x-l2p1.x)*(l1p2.y-l1p1.y))
     if div == 0:
         return ZeroDivisionError
@@ -226,24 +269,55 @@ def getIntersectionPoint(l1p1,l1p2,l2p1,l2p2):
         if (u1 < 0) | (u1 > 1):
             return None
         else:
-            ipt = Point(l1p1.x+u1*(l1p2.x-l1p1.x), l1p1.y+u1*(l1p2.y-l1p1.y))
+            nx = l1p1.x+u1*(l1p2.x-l1p1.x)
+            ny = l1p1.y+u1*(l1p2.y-l1p1.y)
+
+            nz1 = u1*(l1p2.z-l1p1.z) + l1p1.z
+            div2 = l2p2.x-l2p1.x
+            if div2 == 0:
+                u2 = (ny-l2p1.y)/(l2p2.y - l2p1.y)
+            else:
+                u2 = (nx-l2p1.x)/div2
+            nz2 = u2 * (l2p2.z-l2p1.z) + l2p1.z
+            nz = (nz1+nz2)/2
+
+            ipt = Point(x=nx, y=ny, z=nz)
             return ipt
 
 
 def getOuterEdges(triEdgesRef):
+    """Determine the Edges in the outline
+
+    :param triEdgesRef: the triangles where a given edge is part of
+    :type triEdgesRef: dict of edge -> triangle references for the edge
+    :return: the edges in the outline (the edges who are referenced by exactly one face)
+    :rtype: array of edge input type
+    """
     outerEdges = set([edg for edg, ref in triEdgesRef.items() if
                       len(ref) == 1])
     return outerEdges
 
 
 def getSegments(ptsCord, edges, triRefs, tris):
+    """Transform the input into an array of contourShape.Segment.
+
+    :param ptsCord: coordinates of the points
+    :type ptsCord: array of [x,y,z]
+    :param edges: edges each defined by the 2 indices from the point array
+    :type edges: array of [p1, p2]
+    :param triRefs: the triangles where a given edge is part of
+    :type triRefs: dict of frozenset([Index of p1, Index of p2]) -> container with triangle indices with p1 and p2
+    :param tris: the triangles each defined by 3 indices from the point array
+    :type tris: array of [Index of p1, Index of p2, Index of p3]
+    :returns: array of contourShape.Segment, with a segment for each given edge
+    """
     pts = {}
     segments = []
 
     for edge in edges:
         for pt in edge:
             if pt not in pts:
-                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 2], ind=pt, created=False)
+                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 2], z=ptsCord[pt][0, 1], ind=pt, created=False)
                 pts[pt] = npt
 
     for edge in edges:
@@ -268,6 +342,19 @@ def getSegments(ptsCord, edges, triRefs, tris):
 
 
 def splitSegment(h, seg, p):
+    """Given a priority queue, a segment and an intersection point, this method splits the segment at the intersection
+    point and inputs the new endpoints events (sweep line events) into the priority queue.
+
+    :param h: priority queue
+    :type h: heapq
+    :param seg: segment to split
+    :type seg: contourShape.Segment
+    :param p: intersection point
+    :type p: :ref:`contourShape.Point`
+    :returns: the new right part of the segment
+    :rtype: :ref:`contourShape.Segment`
+    """
+
     if p == seg.right or p == seg.left:
         return None
     if p > seg.right or p<seg.left:
@@ -289,6 +376,7 @@ def splitSegment(h, seg, p):
 
         return rightPart
 
+
 def getPolygon(segmentsInput):
     """Given segments of a number of polygons, this method calculates the boolean union of these polygons via
     a simpler (probably not optimal) sweep line approach.
@@ -297,6 +385,7 @@ def getPolygon(segmentsInput):
     the whole polygon turns counterclockwise (or clockwise for the outline of a hole)
     :type segments: iterable container of contourShape.Segment
     :returns: the signed area of the polygon described by the segments
+    :rtype: array of contourShape.Segment
 
     **Example:**
         .. code-block:: python
@@ -426,6 +515,7 @@ def signedArea(segments):
     the whole polygon turns counterclockwise (or clockwise for the outline of a hole)
     :type segments: iterable container of contourShape.Segment
     :returns: the signed area of the polygon described by the segments
+    :rtype: float
 
     **Example:**
         .. code-block:: python
@@ -478,6 +568,7 @@ def rotate(pts, rp, alpha, beta, gamma, rad = False):
         :param rad: are the angles given in radians (default is degrees)
         :type rad: bool
         :returns: the rotated points
+        :rtype: Array of points in the form [x,y,z]
     """
     if not rad:
         alpha *= GRAD_TO_RAD
