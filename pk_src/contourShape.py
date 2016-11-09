@@ -11,9 +11,9 @@ import math
 import heapq
 import bisect
 
-dot = lambda x,y: sum(map(operator.mul, x, y))
+dot = lambda x, y: sum(map(operator.mul, x, y))
 """dot product as lambda function to speed up calculations"""
-cross = lambda x,y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y[1], x[0]*y[2], x[1]*y[0]])
+cross = lambda x, y: map(operator.sub, [x[1]*y[2], x[2]*y[0], x[0]*y[1]], [x[2]*y[1], x[0]*y[2], x[1]*y[0]])
 """cross product as lambda function to speed up calculations"""
 
 EPSILON = 1e-15
@@ -30,6 +30,20 @@ CLOCKWISE = -1
 
 
 class Point:
+    """Class to represent a point.
+           :param x: x-coordinate
+           :type x: float
+           :param y: y-coordinate
+           :type y: float
+           :param z: z-coordinate, will be carried along for implications in 3d, though it wont be used in calculations for
+           intersection, etc.
+           :type z: float
+           :param ind: index in the input array of point coordinates
+           :type ind: int
+           :param created: is this point created or from the input point array
+           :type created: bool
+    """
+
     def __init__(self, x, y, z, ind=-1, created=True):
         self.x = x                  #coordinates
         self.y = y
@@ -55,16 +69,29 @@ class Point:
 
 
 class Segment:
-    def __init__(self, left, right, turn, lastCrossing = None, upper=None, lower=None):
+    """Class to represent a line segment in the plane, z-coordinate of points will be carried along for implications in 3d.
+           :param left: left point of the segment (left in the sense of lower x-coordinates)
+           :type left: :ref:`contourShape.Point`
+           :param right: right point of the segment
+           :type right: :ref:`contourShape.Point`
+           :param turn: turn of the segment, left -> right -> face
+           :type turn: int
+           :param upper: upper segment (w.r.t. y-coordinate) in the current segment list
+           :type: :ref:`contourShape.Segment`
+           :param lower: lower segment in the current segment list
+           :type: :ref:`contourShape.Segment`
+    """
+
+    def __init__(self, left, right, turn, upper=None, lower=None):
         self.left = left                    #left endpoint of segment
         self.right = right                  #right endpoint of segment
         self.turn = turn                    #turn of the segment (left -> right -> face)
-        self.lastCrossing = lastCrossing if lastCrossing is not None else self.left    #lastCrossingPoint
         self.upper = upper                  #upper segment
         self.lower = lower                  #lower segment
         self.evtLeft = None
 
     def getIntersection(self, other):
+
         #check bounding box (only y, x is checked by sweep line)
         if min(self.left.y, self.right.y) > max(other.left.y, other.right.y):
             return None
@@ -115,6 +142,7 @@ class Segment:
 
     def __hash__(self):
         return hash((self.left, self.right, self.turn))
+
 
 class SweepEvent:
     def __init__(self, segment, type, point, other):
@@ -200,6 +228,7 @@ class SegmentList:
             return True
         else:
             return False
+
 
 def listWalker(root):
     current = root
