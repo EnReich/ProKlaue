@@ -140,27 +140,45 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         # select remaining segments used for area calculation to give a visual feedback
         print 'count of outer segments:'
         print len(segments)
+
         nSegments = contourShape.getPolygon(segments)
+
+        print 'count of segments in outline:'
+        print len(nSegments)
+
+        if s_file != "":
+            o_file = open(s_file, 'w')
+            o_file.write("seg_ind,p0_ind,p0_x,p0_y,p0_z,p1_ind,p2_x,p2_y,p2_z,turn\n")
+            for i, seg in enumerate(nSegments):
+                o_file.write(",".join((str(i), str(seg.left.ind), str(seg.left.x), str(seg.left.y), str(seg.left.z),
+                                       str(seg.right.ind), str(seg.right.x), str(seg.right.y), str(seg.right.z),
+                                       str(seg.turn))))
+                o_file.write("\n")
+                o_file.flush()
+            o_file.close()
 
         if select:
             ind = set([])
+            # createdPoints = []
             for seg in nSegments:
                 # print seg.left.ind
                 # print seg.right.ind
                 if not seg.left.created:
                     ind.add(seg.left.ind)
+                # else:
+                #     createdPoints.append(seg.left)
                 if not seg.right.created:
                     ind.add(seg.right.ind)
+                    # else:
+                    #     createdPoints.append(seg.right)
 
             cmds.select(clear=True)
             for i in ind:
                 cmds.select(obj[0] + '.vtx[' + str(i) + ']', add=True)
 
-        print 'count of segments in outline:'
-        print len(nSegments)
-
         area = contourShape.signedArea(nSegments)
         self.setResult(area)
+
 
 # creator function
 def projectionAreaCreator():

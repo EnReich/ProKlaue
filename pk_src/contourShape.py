@@ -23,6 +23,7 @@ LEFT_ENDPOINT = 0                           #code for type of a sweep event of a
 RIGHT_ENDPOINT = 1
 CROSS_POINT = 2
 REMOVED = 3
+TEST_POINT = 4
 PRIORITY_LEFT = 1                           #priority for a sweep event of a left endpoint
 PRIORITY_RIGHT = 0
 COUNTER_CLOCKWISE = 1
