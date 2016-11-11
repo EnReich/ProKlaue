@@ -223,7 +223,8 @@ class SegmentList:
                 print seg.evtLeft.getPriority()
                 print seg.evtLeft.other.getPriority()
                 return False
-            sumTurn += actSeg.turn
+            if actSeg.right.x-actSeg.left.x > 0:
+                sumTurn += actSeg.turn
             actSeg = actSeg.upper
         if sumTurn == 0 or sumTurn + seg.turn == 0:
             return True
