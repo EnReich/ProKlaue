@@ -42,9 +42,9 @@ class findTubeFaces(OpenMayaMPx.MPxCommand):
         # get mesh object, its points, simplices and normals
         mfnObject = misc.getMesh(obj)
         # use numpy array instead of normal array to use index lists --> points[[1,2,3]] can be used
-        points = np.asarray([[p.x, p.y, p.z] for p in misc.getPoints(obj)])
+        points = np.asarray([[p.x, p.y, p.z] for p in misc.getPoints(obj, worldSpace = False)])
         simplices = misc.getTriangles(obj)
-        normals = misc.getFaceNormals(obj)
+        normals = misc.getFaceNormals(obj, worldSpace = False)
         # build acceleration structure
         accel = mfnObject.autoUniformGridParams()
         tubeCandidates = []
@@ -60,10 +60,12 @@ class findTubeFaces(OpenMayaMPx.MPxCommand):
             center = misc.centroidTriangle(points[simplices[i]])
             # set normal and origin
             try:
-                for index in range(3):
-                    normal[index] = normals[i][index]
+                normal = om2.MFloatVector(normals[i])
+                origin = om2.MFloatPoint(center) + 1e-5 * normal
+                #for index in range(3):
+                 #   normal[index] = normals[i][index]
                     # to avoid self intersection use a centroid point a little bit away from face (in normal direction)
-                    origin[index] = center[index] + 1e-5*normal[index]
+                  #  origin[index] = center[index] + 1e-5*normal[index]
             except:
                 print(i)
 

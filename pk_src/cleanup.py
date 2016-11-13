@@ -89,8 +89,8 @@ class cleanup(OpenMayaMPx.MPxCommand):
                 shell_indices.extend(s)
         # delete all faces in list
         if (len(shell_indices)):
-            #cmds.delete([ cleanup.obj + ".f[" + str(i) + "]" for i in shell_indices])
-            cmds.delete([ "%s.f[%d]" % (cleanup.obj, i) for i in shell_indices ])
+            #cmds.delete([ "%s.f[%d]" % (cleanup.obj, i) for i in shell_indices ])
+            cmds.delete(shell_indices)
         # clear selection and remove item from scrollList
         cmds.select(clear = True)
         cmds.textScrollList(SLlist, e = 1, removeAll = 1)
@@ -111,8 +111,8 @@ class cleanup(OpenMayaMPx.MPxCommand):
         #item = int(str.split(item)[0][5:])
         item = int(item.split()[0][5:])
         print("select Shell" + str(item))
-        #cmds.select([ cleanup.obj + ".f[" + str(i) + "]" for i in cleanup.shells[item]])
-        cmds.select(["%s.f[%d]" % (cleanup.obj, i) for i in cleanup.shells[item] ])
+        #cmds.select(["%s.f[%d]" % (cleanup.obj, i) for i in cleanup.shells[item] ])
+        cmds.select(cleanup.shells[item])
 
         self.__updateProgress(Tprogress, 3)
 
@@ -189,8 +189,8 @@ class cleanup(OpenMayaMPx.MPxCommand):
         cleanup.shells = []
         # get list of strings with shell indices and cast them to regular integer lists
         lShells = cmds.getShells(cleanup.obj, p = progress)
-        for s in lShells:
-            cleanup.shells.append(np.fromstring(s[1:len(s)-1], dtype = int, sep = ",").tolist())
+        for shell in lShells:
+            cleanup.shells.append([s.strip("u' ") for s in shell.strip("[]").split(',')])
 
 # creator function
 def cleanupCreator():

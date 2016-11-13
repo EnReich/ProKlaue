@@ -53,7 +53,8 @@ class getShells(OpenMayaMPx.MPxCommand):
                 break
 
             # append shell indices to nested list structure (to remember which indices belong to which shell)
-            shells.append(shell_indices)
+            #shells.append(shell_indices)
+            shells.append(cmds.polySelect(obj, ets = triInShell.index(False), noSelection = 1, ass = 1))
             # set indices in boolean list to True
             for s in shell_indices:
                 triInShell[s] = True
