@@ -9,6 +9,8 @@ import numpy as np
 import operator
 import math
 
+GRAD_TO_RAD = math.pi/180
+
 def getArgObj(syntax, argList):
     """
     Method to return list of objects from argument list (throws exception if no object is given or selected).
@@ -141,8 +143,39 @@ def getFaceNormals(obj, worldSpace = True):
         transform = transform.transpose()[:-1].transpose()
         # multiply normals with transform, discard 4th value and organize them as list of 3 floats each
         #normals = [(n * transform).tolist()[0] for n in normals]
-        normals = (normals * transform).tolist()
+        normals = (normals *transform).tolist()
     return (normals)
+
+def getFaceNormals2(obj, worldSpace = True):
+    """
+    Method to return all face normals. Uses the command `polyInfo <http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html>`_ to access the normal information as string and parse them to a numpy array
+
+    :param obj: name of object
+    :type obj: string
+
+    :returns: list of numpy arrays with the 3 float values for each normal
+
+    **Example:**
+        .. code-block:: python
+
+            from pk_src import misc
+            cmds.polyCube()
+            # Result: [u'pCube1', u'polyCube1'] #
+            misc.getFaceNormals("pCube1")
+            # Result: [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]] #
+    """
+    normalStrings = cmds.polyInfo(obj, fn = 1)
+    normals = [np.fromstring(str(s[20:(len(s)-1)]), dtype=float, sep=" ").tolist() for s in normalStrings]
+    # if normals should be in world space coordinates, one needs to apply the rotation of the object
+    if (worldSpace):
+        # get rotation matrix
+        rotation_angles = cmds.xform(obj, q=True, ro=True, ws=True)
+        rotation_order = cmds.xform(obj, q=True, roo=True, ws=True)
+        rot_mat = getRotationMatrix(alpha=rotation_angles[0], beta=rotation_angles[1], gamma=rotation_angles[2],
+                                    order=rotation_order, rad=False)[:-1, :-1]
+        # multiply normals with transform
+        normals = (normals * rot_mat.transpose()).tolist()
+    return normals
 
 def getTriangles(obj, mfnObject = None):
     """
@@ -399,3 +432,39 @@ def alignYAxis():
         cmds.xform(objList[0], ro = map(operator.mul, [a, 0, c], [180/math.pi]*3), ws = 1)
     else:
         cmds.warning("Select exactly two coordinate systems!")
+
+
+def getRotationMatrix(alpha, beta, gamma, order="xyz", rad=False):
+    if not rad:
+        alpha *= GRAD_TO_RAD
+        beta *= GRAD_TO_RAD
+        gamma *= GRAD_TO_RAD
+
+    rotx = np.matrix([[1, 0, 0, 0],
+                      [0, math.cos(alpha), -math.sin(alpha), 0],
+                      [0, math.sin(alpha), math.cos(alpha), 0],
+                      [0, 0, 0, 1]])
+    roty = np.matrix([[math.cos(beta), 0, math.sin(beta), 0],
+                      [0, 1, 0, 0],
+                      [-math.sin(beta), 0, math.cos(beta), 0],
+                      [0, 0, 0, 1]])
+    rotz = np.matrix([[math.cos(gamma), -math.sin(gamma), 0, 0],
+                      [math.sin(gamma), math.cos(gamma), 0, 0],
+                      [0, 0, 1, 0],
+                      [0, 0, 0, 1]])
+
+    rot = np.matrix([[1, 0, 0, 0],
+                     [0, 1, 0, 0],
+                     [0, 0, 1, 0],
+                     [0, 0, 0, 1]])
+
+    for axis in order:
+        if axis == "x":
+            rot = rotx * rot
+        elif axis == "y":
+            rot = roty * rot
+        elif axis == "z":
+            rot = rotz * rot
+
+    return rot
+

@@ -71,10 +71,10 @@ class projectionArea(OpenMayaMPx.MPxCommand):
             # get vertices and face normals of object and plane (in local space to use transformation matrices of each
             # frame and avoid overhead using the getPoints-method)
             # use 4D-Vectors for transformation of points
-            obj_vtx, plane_vtx = misc.getPointsAsList(obj[0], worldSpace=True), misc.getPointsAsList(obj[1],
-                                                                                                     worldSpace=True)
-            obj_n, plane_n = misc.getFaceNormals(obj[0], worldSpace=True), misc.getFaceNormals(obj[1],
-                                                                                               worldSpace=True)
+            obj_vtx, plane_vtx = misc.getPointsAsList(obj[0], worldSpace=True), \
+                misc.getPointsAsList(obj[1], worldSpace=True)
+            obj_n, plane_n = misc.getFaceNormals2(obj[0], worldSpace=True), \
+                misc.getFaceNormals2(obj[1], worldSpace=True)
             # check if one of the selected object has plane properties (4 vertices, 1 normal)
             if not ((len(obj_vtx) == 4 or len(plane_vtx) == 4) and (len(obj_n) == 1 or len(plane_n) == 1)):
                 cmds.warning("None of the objects is a plane (4 vtx, 1 normal)!")
@@ -125,11 +125,15 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         rp = cmds.xform(obj[1], q=1, rp=1, ws = 1)
 
         # get rotation of plane
-        r = cmds.xform(obj[1], q=1, ro=1)
+        # if not in xyz order, convert
+        roo = cmds.xform(obj[1], q=True, ws=True, roo=True)
+
+        r = cmds.xform(obj[1], q=True, ro=True, ws=True)
 
         # rotate points around pivot point such that the object lies onto the
         # x-z plane (y-coordinates of plane would be equal at evry point)
-        obj_vtx_rotated = contourShape.rotate(obj_vtx, rp, r[0], r[1], r[2], rad=False)
+        # rotate in reverse order around the rotation pivot with negative angles of the respective values for the plane
+        obj_vtx_rotated = contourShape.rotate(obj_vtx, rp, -r[0], -r[1], -r[2], order=roo[::-1], rad=False)
 
         triRefs = misc.getTriangleEdgesReferences(obj_tri_th)
 

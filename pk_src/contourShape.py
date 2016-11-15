@@ -10,6 +10,7 @@ import operator
 import math
 import heapq
 import bisect
+from pk_src import misc
 
 dot = lambda x, y: sum(map(operator.mul, x, y))
 """dot product as lambda function to speed up calculations"""
@@ -215,14 +216,14 @@ class SegmentList:
         actSeg = self.first
         sumTurn = 0
         while(actSeg is not seg):
-            if actSeg is None:
-                print '--------ERROR SEGMENT NOT IN LIST-----------'
-                print seg           #that should not happen
-                print seg.lower
-                print seg.upper
-                print seg.evtLeft.getPriority()
-                print seg.evtLeft.other.getPriority()
-                return False
+            # if actSeg is None:
+            #     print '--------ERROR SEGMENT NOT IN LIST-----------'
+            #     print seg           #that should not happen
+            #     print seg.lower
+            #     print seg.upper
+            #     print seg.evtLeft.getPriority()
+            #     print seg.evtLeft.other.getPriority()
+            #     return False
             if actSeg.right.x-actSeg.left.x > 0:
                 sumTurn += actSeg.turn
             actSeg = actSeg.upper
@@ -348,7 +349,7 @@ def getSegments(ptsCord, edges, triRefs, tris):
     for edge in edges:
         for pt in edge:
             if pt not in pts:
-                npt = Point(x=ptsCord[pt][0, 0], y=ptsCord[pt][0, 2], z=ptsCord[pt][0, 1], ind=pt, created=False)
+                npt = Point(x=ptsCord[pt][0], y=ptsCord[pt][2], z=ptsCord[pt][1], ind=pt, created=False)
                 pts[pt] = npt
 
     for edge in edges:
@@ -363,7 +364,7 @@ def getSegments(ptsCord, edges, triRefs, tris):
             if pt not in edge:
                 pt3 = pt
 
-        edgTurn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0, 0], ptsCord[pt3][0, 2])
+        edgTurn = turn(ptLeft.x, ptLeft.y, ptRight.x, ptRight.y, ptsCord[pt3][0], ptsCord[pt3][2])
 
         segment = Segment(left=ptLeft, right=ptRight, turn=edgTurn)
 
@@ -583,9 +584,8 @@ def signedArea(segments):
     # return sumArea / float(2)
 
 
-def rotate(pts, rp, alpha, beta, gamma, rad = False):
-    """Rotates the given points around a given rotation pivot point for the given angles
-    (order is roation around z,y,x axis).
+def rotate(pts, rp, alpha, beta, gamma, order="xyz", rad = False):
+    """Rotates the given points around a given rotation pivot point for the given angles.
         :param pts: points to be rotated
         :type pts: Array of points in the form [x,y,z]
         :param rp: rotation pivot
@@ -599,19 +599,15 @@ def rotate(pts, rp, alpha, beta, gamma, rad = False):
         :param rad: are the angles given in radians (default is degrees)
         :type rad: bool
         :returns: the rotated points
-        :rtype: Array of points in the form [x,y,z]
+        :rtype: Array of points in the form np.array([x,y,z])
     """
-    if not rad:
-        alpha *= GRAD_TO_RAD
-        beta *= GRAD_TO_RAD
-        gamma *= GRAD_TO_RAD
-    rot = np.array([
-                [math.cos(beta)*math.cos(gamma), math.cos(beta)*math.sin(gamma), -math.sin(beta)],
-                [-math.cos(alpha)*math.sin(gamma)+math.sin(alpha)*math.sin(beta)*math.cos(gamma), math.cos(alpha)*math.cos(gamma)+math.sin(alpha)*math.sin(beta)*math.sin(gamma), math.sin(alpha)*math.cos(beta)],
-                [math.sin(alpha)*math.sin(gamma)+math.cos(alpha)*math.sin(beta)*math.cos(gamma), -math.sin(alpha)*math.cos(gamma)+math.cos(alpha)*math.sin(beta)*math.sin(gamma), math.cos(alpha)*math.cos(beta)]
-            ]).transpose()
+    rot = misc.getRotationMatrix(alpha, beta, gamma, order, rad)[:-1, :-1]
     rp = np.array(rp)
-    npts = [np.mat(pt - rp)*rot + rp for pt in pts]
+    npts = [((pt - rp)*rot.transpose() + rp).A1 for pt in pts]
+
+    # rp = np.mat(rp).transpose()
+    # npts = [rot*(np.mat(pt).transpose() - rp) + rp for pt in pts]
+
     return npts
 
 # tests
