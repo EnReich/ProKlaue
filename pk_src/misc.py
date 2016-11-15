@@ -139,11 +139,10 @@ def getFaceNormals(obj, worldSpace = True):
     # if normals should be in world space coordinates, one needs to apply the transformation of the object
     if (worldSpace):
         # get transformation matrix and cut away 4th row/column
-        transform = np.matrix(cmds.xform(obj, q = 1, m = 1)).reshape(4,4)[:-1]
-        transform = transform.transpose()[:-1].transpose()
+        transform = np.matrix(cmds.xform(obj, q = 1, m = 1, ws =1)).reshape(4,4)[:-1, :-1]
         # multiply normals with transform, discard 4th value and organize them as list of 3 floats each
         #normals = [(n * transform).tolist()[0] for n in normals]
-        normals = (normals *transform).tolist()
+        normals = (normals * transform).tolist()
     return (normals)
 
 def getFaceNormals2(obj, worldSpace = True):

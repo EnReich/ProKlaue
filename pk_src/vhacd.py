@@ -40,6 +40,7 @@ from distutils.spawn import find_executable     # needed to check for executable
 import re
 import sys
 import misc
+import platform
 
 class vhacd(OpenMayaMPx.MPxCommand):
     mayaBin = ""
@@ -52,8 +53,12 @@ class vhacd(OpenMayaMPx.MPxCommand):
         Read arguments passed to command, set default values and check for plausibility (range constrictions). Returns a dictionary structure with the short names of each argument or 'None' in case of error.
         """
         # get maya binary directory (needed for format parser bin/wrl2ma)
-        vhacd.mayaBin = [p for p in os.environ['PATH'].split(':') if re.search('maya[^/]*/bin', p) or re.search('maya[^(\\)]*[(\\)]bin', p)]
-        if (len(vhacd.mayaBin) != 1):
+        if platform.system() == "Windows":
+            vhacd.mayaBin = [p for p in os.environ['PATH'].split(';') if re.search('maya/bin$', p) or re.search('Maya2014/bin$', p)]
+        else:
+            vhacd.mayaBin = [p for p in os.environ['PATH'].split(':') if re.search('maya[^/]*/bin', p) or re.search('maya[^(\\\\)]*[(\\\\)]bin', p)]
+        if (len(vhacd.mayaBin) < 1):
+            print vhacd.mayaBin
             cmds.error('maya/bin directory not found!')
             return
         else:
