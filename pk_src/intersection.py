@@ -98,7 +98,7 @@ class intersection(OpenMayaMPx.MPxCommand):
             cmds.warning("No objects selected or only one object given!")
             return
 
-        argData = om.MArgParser (self.syntax(), argList)
+        argData = om.MArgParser(self.syntax(), argList)
 
         # read all arguments and set default values
         keepCD = argData.flagArgumentBool('keepConvexDecomposition', 0) if (argData.isFlagSet('keepConvexDecomposition')) else True
@@ -116,20 +116,27 @@ class intersection(OpenMayaMPx.MPxCommand):
 
         # get convex decomposition (cd) and save results in list (names of each group)
         cd = cmds.vhacd(obj, **vhacd_par)
+        print obj
+        print "------------"
+        print cd
 
         # for each convex decomposition get the actual mesh nodes and triangulate them
         for i,o in enumerate(cd):
             # actual mesh objects are child nodes of child groups under the main group
             meshes = cmds.listRelatives(cmds.listRelatives(o))
-            # mesh itself has some corrupt triangle definition (only 1 triangle) --> recalculate convex hull to avoid problems (probable cause: Maya 2012 ma-parser bug)
-            meshes = [cmds.convexHull(mesh) for mesh in meshes]
+            if meshes is None:
+                #different result structure
+                meshes = [obj[i]]
+            else:
+                # mesh itself has some corrupt triangle definition (only 1 triangle) --> recalculate convex hull to avoid problems (probable cause: Maya 2012 ma-parser bug)
+                meshes = [cmds.convexHull(mesh) for mesh in meshes]
             # add all convex hulls of one object to list of hulls (list of lists where each sub list contains the names of the convex hull decomposition parts)
             convexHulls.append(meshes)
 
             # get delaunay triangulation of each convex sub part as list of tetrahedra (tmp holds all tetrahedra of ONE single object; all convex hulls are put together without further distinction between sub parts)
             tmp = []
             for ch in convexHulls[-1]:
-                tmp.extend ([np.fromstring(x, sep = ",").reshape(4,3) for x in cmds.delaunay(ch)])
+                tmp.extend([np.fromstring(x, sep = ",").reshape(4,3) for x in cmds.delaunay(ch)])
 
             # put all delaunay triangulations of each complete object together into list (list of objects where each object consists of a list of tetrahedra)
             delaunay.append(tmp)

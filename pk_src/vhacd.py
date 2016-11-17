@@ -54,7 +54,7 @@ class vhacd(OpenMayaMPx.MPxCommand):
         """
         # get maya binary directory (needed for format parser bin/wrl2ma)
         if platform.system() == "Windows":
-            vhacd.mayaBin = [p for p in os.environ['PATH'].split(';') if re.search('maya/bin$', p) or re.search('Maya2014/bin$', p)]
+            vhacd.mayaBin = [p for p in os.environ['PATH'].split(';') if re.search('/[m,M]aya\d*/bin$', p) or re.search('\\\\[m,M]aya\d*\\\\bin$', p)]
         else:
             vhacd.mayaBin = [p for p in os.environ['PATH'].split(':') if re.search('maya[^/]*/bin', p) or re.search('maya[^(\\\\)]*[(\\\\)]bin', p)]
         if (len(vhacd.mayaBin) < 1):
