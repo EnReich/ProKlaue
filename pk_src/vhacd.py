@@ -62,15 +62,18 @@ class vhacd(OpenMayaMPx.MPxCommand):
             cmds.error('maya/bin directory not found!')
             return
         else:
-            vhacd.mayaBin = vhacd.mayaBin[0]
+            vhacd.mayaBin = os.path.abspath(vhacd.mayaBin[0])
 
         # read all arguments and set default values
-        tmp = argData.flagArgumentString('temporaryDir', 0) if (argData.isFlagSet('directory')) else os.path.expanduser('~') + '/'
+        tmp = os.path.abspath(argData.flagArgumentString('temporaryDir', 0)) if (argData.isFlagSet('temporaryDir')) \
+            else os.path.abspath(os.path.expanduser('~') + '/')
+
         exe = ""
         if (argData.isFlagSet('executable')):
-            exe = argData.flagArgumentString('executable', 0)
+            exe = os.path.abspath(argData.flagArgumentString('executable', 0))
         else:
-            exe = vhacd.mayaBin + "/plug-ins/bin/testVHACD" if (sys.platform == "linux" or sys.platform == "linux2") else vhacd.mayaBin + "\\plug-ins\\bin\\testVHACD.exe"
+            exe = os.path.abspath(vhacd.mayaBin + "/plug-ins/bin/testVHACD.exe") if platform.system()=="Windows"\
+                else os.path.abspath(vhacd.mayaBin + "/plug-ins/bin/testVHACD")
 
         res = argData.flagArgumentInt('resolution', 0) if (argData.isFlagSet('resolution')) else 100000
         d = argData.flagArgumentInt('depth', 0) if (argData.isFlagSet('depth')) else 20
@@ -146,7 +149,7 @@ class vhacd(OpenMayaMPx.MPxCommand):
             return
 
         # read and check arguments
-        args = vhacd.readArgs(om.MArgParser (self.syntax(), argList))
+        args = vhacd.readArgs(om.MArgParser(self.syntax(), argList))
         if (args == None):
             cmds.error("V-HACD: one or more arguments are invalid!")
             return
@@ -158,11 +161,12 @@ class vhacd(OpenMayaMPx.MPxCommand):
         # loop over all objects: select, export and convex decomposition
         for i,obj in enumerate(selList):
             cmds.select(obj)
-            tmpFile = '{0}tmp{1}'.format(args['tmp'], i)
+            tmpFile = os.path.abspath('{0}/tmp{1}'.format(args['tmp'], i))
             # export current object as *.obj file format
             cmds.file(tmpFile + '.obj', es = 1, type = "OBJexport", f = 1)
             # system call to vhacd library with all parameters (use non-blocking subprocess)
-            p = subprocess.Popen([args['exe'],
+            exeDir, exeName = os.path.split(args['exe'])
+            p = subprocess.Popen([exeName,
                 '--input', tmpFile + '.obj',
                 '--output', tmpFile + '.wrl',
                 '--log', tmpFile + '.log',
@@ -178,31 +182,32 @@ class vhacd(OpenMayaMPx.MPxCommand):
                 '--mode', str(int(args['mode'])),
                 '--maxNumVerticesPerCH', str(args['vtx']),
                 '--minVolumePerCH', str(args['vol']),
-            ])
+            ], executable=args['exe'])
             # save process, current object and index
             processes.append((p, obj, i))
 
         # loop over all created processes, wait till each one is completed and import result into maya
-        for p,obj,i in processes:
+        for p, obj, i in processes:
             p.wait()
-            tmpFile = '{0}tmp{1}'.format(args['tmp'], i)
-            # call maya script "wrl2am" to parse file to maya format (blocking call)
-            subprocess.call([vhacd.mayaBin + '/wrl2ma',
+            tmpFile = os.path.abspath('{0}/tmp{1}'.format(args['tmp'], i))
+            # call maya script "wrl2ma" to parse file to maya format (blocking call)
+            wrl2ma_name = 'wrl2ma.exe' if platform.system()=='Windows' else 'wrl2ma'
+
+            subprocess.call([wrl2ma_name,
                 '-i', tmpFile + '.wrl',
-                '-o', tmpFile + '_out.ma',
-            ])
+                '-o', tmpFile + '_out.ma'], executable=os.path.abspath(vhacd.mayaBin+'/'+wrl2ma_name))
 
             # use eval and mel-exclusive command 'catchQuiet' to avoid error messages popping up during file import
             # cause of error messages: (ma-parser of Maya since version 2012)
-            mel.eval(' catchQuiet (` file -ra 1 -type "mayaAscii" -rpr "{0}_vhacd" -pmt 0 -i "{1}tmp{2}_out.ma" `) ' .format(obj, args['tmp'], i))
+            mel.eval(' catchQuiet (` file -ra 1 -type "mayaAscii" -rpr "{0}_vhacd" -pmt 0 -i "{1}_out.ma" `) '.format(obj, tmpFile))
             # rename created group for convenience
             objCD.append(cmds.rename(obj + '_vhacd_root', obj + '_vhacd'))
             # delete all temporarily created files
-            cmds.sysFile(tmpFile + '.mtl', delete = 1)
-            cmds.sysFile(tmpFile + '.obj', delete = 1)
-            cmds.sysFile(tmpFile + '.wrl', delete = 1)
-            cmds.sysFile(tmpFile + '.log', delete = 1)
-            cmds.sysFile(tmpFile + '_out.ma', delete = 1)
+            # cmds.sysFile(tmpFile + '.mtl', delete = 1)
+            # cmds.sysFile(tmpFile + '.obj', delete = 1)
+            # cmds.sysFile(tmpFile + '.wrl', delete = 1)
+            # cmds.sysFile(tmpFile + '.log', delete = 1)
+            # cmds.sysFile(tmpFile + '_out.ma', delete = 1)
 
         # set name of groups (which hold convex decomposition) as result of command
         for o in objCD:

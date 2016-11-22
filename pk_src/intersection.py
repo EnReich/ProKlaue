@@ -124,12 +124,12 @@ class intersection(OpenMayaMPx.MPxCommand):
         for i,o in enumerate(cd):
             # actual mesh objects are child nodes of child groups under the main group
             meshes = cmds.listRelatives(cmds.listRelatives(o))
-            if meshes is None:
-                #different result structure
-                meshes = [obj[i]]
-            else:
-                # mesh itself has some corrupt triangle definition (only 1 triangle) --> recalculate convex hull to avoid problems (probable cause: Maya 2012 ma-parser bug)
-                meshes = [cmds.convexHull(mesh) for mesh in meshes]
+            # if meshes is None:
+            #     #different result structure
+            #     meshes = [obj[i]]
+            # else:
+            # mesh itself has some corrupt triangle definition (only 1 triangle) --> recalculate convex hull to avoid problems (probable cause: Maya 2012 ma-parser bug)
+            meshes = [cmds.convexHull(mesh) for mesh in meshes]
             # add all convex hulls of one object to list of hulls (list of lists where each sub list contains the names of the convex hull decomposition parts)
             convexHulls.append(meshes)
 
