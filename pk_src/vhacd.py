@@ -168,7 +168,7 @@ class vhacd(OpenMayaMPx.MPxCommand):
             exeDir, exeName = os.path.split(args['exe'])
             p = subprocess.Popen([exeName,
                 '--input', tmpFile + '.obj',
-                '--output', tmpFile + '.wrl',
+                '--output', tmpFile + '_out.obj',
                 '--log', tmpFile + '.log',
                 '--resolution', str(args['res']),
                 '--depth', str(args['d']),
@@ -190,18 +190,15 @@ class vhacd(OpenMayaMPx.MPxCommand):
         for p, obj, i in processes:
             p.wait()
             tmpFile = os.path.abspath('{0}/tmp{1}'.format(args['tmp'], i))
-            # call maya script "wrl2ma" to parse file to maya format (blocking call)
-            wrl2ma_name = 'wrl2ma.exe' if platform.system()=='Windows' else 'wrl2ma'
+            #split up file cause maya can for whatever reason not deal with object sequences
+            splitObjSequence(tmpFile+'_out.obj', tmpFile+'_out')
 
-            subprocess.call([wrl2ma_name,
-                '-i', tmpFile + '.wrl',
-                '-o', tmpFile + '_out.ma'], executable=os.path.abspath(vhacd.mayaBin+'/'+wrl2ma_name))
 
             # use eval and mel-exclusive command 'catchQuiet' to avoid error messages popping up during file import
             # cause of error messages: (ma-parser of Maya since version 2012)
-            mel.eval(' catchQuiet (` file -ra 1 -type "mayaAscii" -rpr "{0}_vhacd" -pmt 0 -i "{1}_out.ma" `) '.format(obj, tmpFile))
+            # mel.eval(' catchQuiet (` file -ra 1 -type "mayaAscii" -rpr "{0}_vhacd" -pmt 0 -i "{1}_out.ma" `) '.format(obj, tmpFile))
             # rename created group for convenience
-            objCD.append(cmds.rename(obj + '_vhacd_root', obj + '_vhacd'))
+            # objCD.append(cmds.rename(obj + '_vhacd_root', obj + '_vhacd'))
             # delete all temporarily created files
             # cmds.sysFile(tmpFile + '.mtl', delete = 1)
             # cmds.sysFile(tmpFile + '.obj', delete = 1)
@@ -240,4 +237,30 @@ def vhacdSyntaxCreator():
 # create button for shelf
 def addButton(parentShelf):
     pass
+
+
+def splitObjSequence(input_file, ouput_file_prefix):
+    input = open(input_file, 'r')
+    i = 0
+    v_count = 0
+    v_ind_begin = 0
+    dest = None
+    for line in input:
+        if line[0:2] == 'o ':
+            if dest:
+                dest.close()
+            dest = open(ouput_file_prefix+'_'+str(i)+'.obj', 'w')
+            v_ind_begin += v_count
+            i += 1
+        if line[0:2] == 'v ':
+            #vertex line
+            v_count += 1
+        if line[0:2] == 'f ':
+            #extract vertex indices and decrement it (cause prev. vertices dont show up in the current file)
+            indices_str = [str(int(s)-v_ind_begin) for s in line[2:].split() if s.isdigit()]
+            nline = 'f ' + ' '.join(indices_str)+'\n'
+        else:
+            nline = line
+        dest.write(nline)
+    dest.close()
 
