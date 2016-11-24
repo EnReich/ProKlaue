@@ -190,15 +190,18 @@ class vhacd(OpenMayaMPx.MPxCommand):
         for p, obj, i in processes:
             p.wait()
             tmpFile = os.path.abspath('{0}/tmp{1}'.format(args['tmp'], i))
-            #split up file cause maya can for whatever reason not deal with object sequences
-            splitObjSequence(tmpFile+'_out.obj', tmpFile+'_out')
-
+            #import OBJ
+            rnn = cmds.file(tmpFile+'_out.obj', type='OBJ', i=True, rnn=True, ns = obj+'_vhacd')
+            cmds.polySeparate(rnn[0], ch=False)
 
             # use eval and mel-exclusive command 'catchQuiet' to avoid error messages popping up during file import
             # cause of error messages: (ma-parser of Maya since version 2012)
             # mel.eval(' catchQuiet (` file -ra 1 -type "mayaAscii" -rpr "{0}_vhacd" -pmt 0 -i "{1}_out.ma" `) '.format(obj, tmpFile))
             # rename created group for convenience
             # objCD.append(cmds.rename(obj + '_vhacd_root', obj + '_vhacd'))
+
+            objCD.append(rnn[0])
+
             # delete all temporarily created files
             # cmds.sysFile(tmpFile + '.mtl', delete = 1)
             # cmds.sysFile(tmpFile + '.obj', delete = 1)

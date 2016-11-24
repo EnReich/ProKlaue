@@ -116,26 +116,23 @@ class intersection(OpenMayaMPx.MPxCommand):
 
         # get convex decomposition (cd) and save results in list (names of each group)
         cd = cmds.vhacd(obj, **vhacd_par)
-        print obj
-        print "------------"
-        print cd
 
         # for each convex decomposition get the actual mesh nodes and triangulate them
-        for i,o in enumerate(cd):
+        for i, o in enumerate(cd):
             # actual mesh objects are child nodes of child groups under the main group
-            meshes = cmds.listRelatives(cmds.listRelatives(o))
-            # if meshes is None:
-            #     #different result structure
-            #     meshes = [obj[i]]
-            # else:
+            # meshes = cmds.listRelatives(cmds.listRelatives(o))
+
+            # meshes are child nodes
+            meshes = cmds.listRelatives(o, c=True)
+
             # mesh itself has some corrupt triangle definition (only 1 triangle) --> recalculate convex hull to avoid problems (probable cause: Maya 2012 ma-parser bug)
-            meshes = [cmds.convexHull(mesh) for mesh in meshes]
+            # meshes = [cmds.convexHull(mesh) for mesh in meshes]
             # add all convex hulls of one object to list of hulls (list of lists where each sub list contains the names of the convex hull decomposition parts)
             convexHulls.append(meshes)
 
             # get delaunay triangulation of each convex sub part as list of tetrahedra (tmp holds all tetrahedra of ONE single object; all convex hulls are put together without further distinction between sub parts)
             tmp = []
-            for ch in convexHulls[-1]:
+            for ch in meshes:
                 tmp.extend([np.fromstring(x, sep = ",").reshape(4,3) for x in cmds.delaunay(ch)])
 
             # put all delaunay triangulations of each complete object together into list (list of objects where each object consists of a list of tetrahedra)
@@ -152,8 +149,10 @@ class intersection(OpenMayaMPx.MPxCommand):
 
         # iterate over all pairwise object combinations and save volumes in nxn-table
         volumes = np.zeros((len(delaunay), len(delaunay)))
+
         # class object for collision test
         colTest = collision_tet_tet.Collision_tet_tet()
+
         # class object for intersection
         inter = intersection_tet_tet.intersection_tet_tet()
 
@@ -163,8 +162,10 @@ class intersection(OpenMayaMPx.MPxCommand):
                 # if i equals j then just calculate volume of current object and volume of convex hull
                 if (i == j):
                     vol = cmds.getVolume(obj[i])
+
                     # calc. volumes of each convex hull part and add up all values
-                    volumes[i,j] = reduce(lambda x,y: x+y, [cmds.getVolume(ch) for ch in convexHulls[i]])
+                    volumes[i, j] = reduce(lambda x,y: x+y, [cmds.getVolume(ch) for ch in convexHulls[i]])
+
                     # check volume against convex hull --> indicates hole inside convex hull approximation
                     if (vol > volumes[i,j]):
                         cmds.error("Volume Error: volume of object '{0}' is bigger than volume of convex decomposition! This indicates holes inside vhacd-result. Please check decomposition and adjust parameter for vhacd (e.g. smaller depth parameter)".format(obj[i]))
