@@ -12,11 +12,12 @@ The parameter arguments are the same as for the command :ref:`vhacd` and will be
 
 **see also:** :ref:`collision_tet_tet`, :ref:`intersection_tet_tet`, :ref:`getVolume`, :ref:`vhacd`
 
-**command:** cmds.intersection([obj], kcd = True)
+**command:** cmds.intersection([obj], kcd = True, mlo=False)
 
 **Args:**
     :obj: string with object's name inside maya
     :keepConvexDecomposition(kcd): should the convex decompositions (intermediate data) be kept (True, default) or deleted (False)
+    :matlabOutput(mlo): format the output string in a matlab style format, meaning, rows are separated by ';', values in one row are separated by ','
     :tmp(temporaryDir): directory to save temporary created files (needs read and write access). If no path is given the temporary files will be written into the user home directory
     :executable(exe): absolute path to the executable V-HACD file. If no path is given maya/bin/plug-ins/bin/testVHACD is used.
     :resolution(res): maximum number of voxels generated during the voxelization stage (10.000 - 64.000.000, default: 100.000)
@@ -67,6 +68,7 @@ import numpy as np
 import operator
 import misc
 import sys
+import decimal
 import re
 import copy
 from pk_src import collision_tet_tet
@@ -102,6 +104,8 @@ class intersection(OpenMayaMPx.MPxCommand):
 
         # read all arguments and set default values
         keepCD = argData.flagArgumentBool('keepConvexDecomposition', 0) if (argData.isFlagSet('keepConvexDecomposition')) else True
+        mlo = argData.flagArgumentBool('matlabOutput', 0) if (
+            argData.isFlagSet('matlabOutput')) else False
         # get all flags for vhacd over static parsing method
         vhacd_par = vhacd.vhacd.readArgs(argData)
         if (vhacd_par is None):
@@ -208,7 +212,13 @@ class intersection(OpenMayaMPx.MPxCommand):
         # delete convex decomposition structures (original vhacd output)
         cmds.delete(cd)
 
-        self.setResult(str(volumes))
+        #get a formated output string
+        if mlo:
+            output_str = ';'.join(np.apply_along_axis(lambda x: ','.join(map(lambda val: str(decimal.Decimal(val)), x)), axis=1, arr=volumes))
+        else:
+            output_str = str(volumes)
+
+        self.setResult(output_str)
 
 # creator function
 def intersectionCreator():
@@ -219,6 +229,7 @@ def intersectionSyntaxCreator():
     syntax = om.MSyntax()
     syntax.setObjectType(om.MSyntax.kStringObjects)
     syntax.addFlag("kcd", "keepConvexDecomposition", om.MSyntax.kBoolean)
+    syntax.addFlag("mlo", "matlabOutput", om.MSyntax.kBoolean)
     # flags for vhacd
     syntax.addFlag("tmp", "temporaryDir", om.MSyntax.kString)
     syntax.addFlag("exe", "executable", om.MSyntax.kString)
