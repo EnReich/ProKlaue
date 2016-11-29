@@ -15,6 +15,7 @@ down to the command invocation.
     :obj: string with object's name inside maya
     :norm(nrm): norm the volume of the objects (default True)
     :normVolume(nvl): scale the objects so that they have a normed volume of the given value, only applies if norm Flag is set True (default 100)
+    :saveFile(sf): save the statistics in a file at the given path
     :keepConvexDecomposition(kcd): should the convex decompositions (intermediate data) be kept (True, default) or deleted (False)
     :tmp(temporaryDir): directory to save temporary created files (needs read and write access). If no path is given the temporary files will be written into the user home directory
     :executable(exe): absolute path to the executable V-HACD file. If no path is given maya/bin/plug-ins/bin/testVHACD is used.
@@ -31,31 +32,9 @@ down to the command invocation.
     :maxNumVerticesPerCH(vtx): controls the maximum number of triangles per convex-hull (4 - 1024, default: 64)
     :minVolumePerCH(vol): controls the adaptive sampling of the generated convex-hulls (0.0 - 0.01, default: 0.0001)
 
-:returns: n*(n-1) statistic measures for the pairwise intersection volumes.
+:returns: statistic measures for the pairwise intersection volumes in a upper triangle matrix.
 
 :raises RunTimeError: if volume of convex decomposition is smaller than volume of given object. Indicates that there are holes inside convex decomposition which obviously leads to incorrect results for the intersection volume. Solution is to choose smaller depth paramter
-
-**Example:**
-    .. code-block:: python
-
-        cmds.polyTorus()
-        # Result: [u'pTorus1', u'polyTorus1'] #
-        cmds.polyTorus()
-        # Result: [u'pTorus2', u'polyTorus2'] #
-        cmds.xform(ro = [90,0,0])
-        cmds.makeIdentity(a = 1, r = 1)
-        cmds.polyTorus()
-        # Result: [u'pTorus3', u'polyTorus3'] #
-        cmds.xform(ro = [0,0,90])
-        cmds.makeIdentity(a = 1, r = 1)
-        select -r pTorus3 pTorus2 pTorus1 ;
-        cmds.intersection(kcd = 0)
-        volume 0: 4.77458035128
-        volume 1: 4.77458035128
-        volume 2: 4.77458035128
-        # Result: [[ 5.97810349  1.91942589  1.92072237]
-         [ 0.          5.97378722  1.91621988]
-         [ 0.          0.          5.97281007]] #
 """
 
 import maya.OpenMayaMPx as OpenMayaMPx
@@ -63,6 +42,7 @@ import maya.OpenMaya as om
 import maya.cmds as cmds
 import misc
 import numpy as np
+import os
 import sys
 from pk_src import vhacd
 
@@ -97,6 +77,12 @@ class overlapStatistic(OpenMayaMPx.MPxCommand):
             argData.isFlagSet('normVolume')) else 100
         norm = argData.flagArgumentBool('norm', 0) if (
             argData.isFlagSet('norm')) else True
+        s_file = os.path.abspath(argData.flagArgumentString('saveFile', 0)) if (argData.isFlagSet('saveFile')) else ""
+        save = False
+        if s_file != "":
+            o_file = open(s_file, 'w')
+            o_file.write("i0, i1, name0, name1, its_volume, dice\n")
+            save = True
 
         # get all flags for vhacd over static parsing method
         vhacd_par = vhacd.vhacd.readArgs(argData)
@@ -113,12 +99,21 @@ class overlapStatistic(OpenMayaMPx.MPxCommand):
                 cmds.makeIdentity(o, apply=True)
 
         intersection_matrix = np.matrix(str(cmds.intersection(obj, kcd=keepCD, matlabOutput=True, **vhacd_par)))
+        dice_matrix = np.matrix(intersection_matrix)
 
         for i in range(0, intersection_matrix.shape[0]):
-            for j in range(i+1, intersection_matrix.shape[1]):
-                intersection_matrix[i, j] *= 2/(intersection_matrix[i, i]+intersection_matrix[j, j])
+            for j in range(i, intersection_matrix.shape[1]):
+                its_volume = intersection_matrix[i, j]
+                dice_matrix[i, j] = (its_volume*2)/(intersection_matrix[i, i]+intersection_matrix[j, j])
+                if save:
+                    o_file.write(",".join((str(i), str(j), obj[i], obj[j], str(its_volume), str(dice_matrix[i, j]))))
+                    o_file.write("\n")
+                    o_file.flush()
 
-        self.setResult(str(intersection_matrix))
+        if save:
+            o_file.close()
+
+        self.setResult(str(dice_matrix))
 
 
 
@@ -134,6 +129,7 @@ def overlapStatisticSyntaxCreator():
     syntax.addFlag("kcd", "keepConvexDecomposition", om.MSyntax.kBoolean)
     syntax.addFlag("nrm", "norm", om.MSyntax.kBoolean)
     syntax.addFlag("nvl", "normVolume", om.MSyntax.kDouble)
+    syntax.addFlag("sf", "saveFile", om.MSyntax.kString)
 
     # flags for vhacd
     syntax.addFlag("tmp", "temporaryDir", om.MSyntax.kString)

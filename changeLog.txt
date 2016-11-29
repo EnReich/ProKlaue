@@ -2,8 +2,14 @@ Known Issues/TODO:
    - No Shelf tab/buttons in Maya 2016
    - Rework UI (show currently selected object(s), progress, info-messages, remove deprecated elements, etc.)
 
+Update 0.3.3:
+    - new commands: cmds.projectionArea, cmds.overlapStatistic
+    - vhacd: use new build which exports results in a obj sequence, for the moment does not delete the temporary result files
+    - intersection: add an option to give the result in a matlab formatted string which can be easier reimported using np.matrix(res)
+    - vhacd/intersection: use os.path.abspath to get a path in a windows/linux style format, use executable option of Popen for platform stability     
+
 Update 0.3.2:
-    -fixed a bug: normalize AxisPlane when executing altitudeMap
+    - fixed a bug: normalize AxisPlane when executing altitudeMap
 
 Update 0.3.1:
    - new command: cmds.coordinateSystem

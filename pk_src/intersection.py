@@ -212,7 +212,7 @@ class intersection(OpenMayaMPx.MPxCommand):
         # delete convex decomposition structures (original vhacd output)
         cmds.delete(cd)
 
-        #get a formated output string
+        # get a matlab style formated output string (rows are separated by ";", values in a row are separated by ","
         if mlo:
             output_str = ';'.join(np.apply_along_axis(lambda x: ','.join(map(lambda val: str(decimal.Decimal(val)), x)), axis=1, arr=volumes))
         else:

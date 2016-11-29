@@ -17,24 +17,6 @@ Points with a larger distance than a given threshold will be discarded.
     :select(s): boolean (default False) indicating whether the outline points should be selected if present in the current object (created intersection points can and will not be selected)
 
 :returns: the area of the projection of the mesh onto the plane
-
-**Example:**
-    .. code-block:: python
-
-        cmds.polyCube()
-        # Result: [u'pCube1', u'polyCube1'] #
-        cmds.xform(ro = [10, 20, 30])
-        cmds.axisParallelPlane(p = 'xz', pos = 'min')
-        # Result: [u'pCube1_app', u'polyPlane1'] #
-        cmds.polyTriangulate("pCube1")
-        # Result: [u'polyTriangulate1'] #
-        cmds.altitudeMap('pCube1', 'pCube1_app')
-        # Result: [[4, -0.3983890351647723, 0.0597721458595899, -0.3785089467837944, 0.7449914933365491],
-        # [5, 0.019866728794979728, -0.07780045709588722, -0.5469076316145288, 0.607418890381072],
-        # [6, 0.021764807311746848, -0.5225944965679014, -0.1788206947620432, 0.16262485090905787],
-        # [7, 0.4192048032181355, -0.3599696226914842, 0.01564478359550836, 0.32524972478547504],
-        # [10, -0.3964909566480051, -0.3850218936124242, -0.010422009931308688, 0.300197453864535],
-        # [11, -0.4173067247013684, -0.08482441678052995, 0.35244215325697736, 0.6003949306964292]] #
 """
 
 
@@ -101,7 +83,7 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         s_file = argData.flagArgumentString('file', 0) if (argData.isFlagSet('file')) else ""
         threshold = argData.flagArgumentDouble('threshold', 0) if (argData.isFlagSet('threshold')) else 10.0
         angle_culling = argData.flagArgumentDouble('radiant', 0) if (argData.isFlagSet('radiant')) else 0
-        animation = argData.flagArgumentBool('anim', 0) if (argData.isFlagSet('anim')) else False
+        # animation = argData.flagArgumentBool('anim', 0) if (argData.isFlagSet('anim')) else False
         select = argData.flagArgumentBool('select', 0) if (argData.isFlagSet('select')) else False
 
         # get triangles of object model
@@ -152,7 +134,7 @@ class projectionArea(OpenMayaMPx.MPxCommand):
 
         if s_file != "":
             o_file = open(s_file, 'w')
-            o_file.write("seg_ind,p0_ind,p0_x,p0_y,p0_z,p1_ind,p2_x,p2_y,p2_z,turn\n")
+            o_file.write("seg_ind,p0_ind,p0_x,p0_y,p0_z,p1_ind,p1_x,p1_y,p1_z,turn\n")
             for i, seg in enumerate(nSegments):
                 o_file.write(",".join((str(i), str(seg.left.ind), str(seg.left.x), str(seg.left.y), str(seg.left.z),
                                        str(seg.right.ind), str(seg.right.x), str(seg.right.y), str(seg.right.z),
