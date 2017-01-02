@@ -11,7 +11,6 @@ Points with a larger distance than a given threshold will be discarded.
 **command:** cmds.altitudeMap(obj, plane, threshold = 10.0, cosinusmax = 0.0)
 
 **Args:**
-    :file(f): path to save altitude map to ASCII-file; if string is empty, no data will be written
     :threshold(t): threshold of maximum distance from plane; all facets with larger distance will be discarded (default 10.0)
     :cosinusmax(c): cosinus of the angle threshhold between the plane and the faces that should be considered (default 0.0, for backface culling). Can be used to exclude/include steep/backwards oriented faces. Input any value >1 to include evry facet in the given threshold
     :select(s): boolean (default False) indicating whether the outline points should be selected if present in the current object (created intersection points can and will not be selected)

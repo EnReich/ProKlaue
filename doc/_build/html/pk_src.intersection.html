@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>intersection &#8212; ProKlaue 0.3.1 documentation</title>
+    <title>intersection &#8212; ProKlaue 0.3.3 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.1',
+        VERSION:     '0.3.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="ProKlaue 0.3.1 documentation" href="index.html" />
-    <link rel="up" title="&lt;no title&gt;" href="pk_src.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="normalize" href="pk_src.normalize.html" />
     <link rel="prev" title="getVolume" href="pk_src.getVolume.html" />
    
@@ -52,7 +53,7 @@ An Interval Tree approach was tested and did not lead to performance improvement
 <p>Command only accepts &#8216;transform&#8217; nodes and multiple objects can be selected. The output will be a matrix with the volume of the convex hulls for each object in the main diagonal and in the upper triangular matrix are the pairwise intersections between each combination of objects. Additionally the volumes of the objects itself (not their convex decompositions) will be printed during runtime.</p>
 <p>The parameter arguments are the same as for the command <a class="reference internal" href="pk_src.vhacd.html#vhacd"><span class="std std-ref">vhacd</span></a> and will be simply handed down to the vhacd command invocation.</p>
 <p><strong>see also:</strong> <a class="reference internal" href="pk_src.collision_tet_tet.html#collision-tet-tet"><span class="std std-ref">collision_tet_tet</span></a>, <a class="reference internal" href="pk_src.intersection_tet_tet.html#intersection-tet-tet"><span class="std std-ref">intersection_tet_tet</span></a>, <a class="reference internal" href="pk_src.getVolume.html#getvolume"><span class="std std-ref">getVolume</span></a>, <a class="reference internal" href="pk_src.vhacd.html#vhacd"><span class="std std-ref">vhacd</span></a></p>
-<p><strong>command:</strong> cmds.intersection([obj], kcd = True)</p>
+<p><strong>command:</strong> cmds.intersection([obj], kcd = True, mlo=False)</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
 <dd><table class="first last docutils field-list" frame="void" rules="none">
@@ -64,41 +65,44 @@ An Interval Tree approach was tested and did not lead to performance improvement
 <tr class="field-even field"><th class="field-name" colspan="2">keepConvexDecomposition(kcd):</th></tr>
 <tr class="field-even field"><td>&nbsp;</td><td class="field-body">should the convex decompositions (intermediate data) be kept (True, default) or deleted (False)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name" colspan="2">tmp(temporaryDir):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">directory to save temporary created files (needs read and write access). If no path is given the temporary files will be written into the user home directory</td>
+<tr class="field-odd field"><th class="field-name" colspan="2">matlabOutput(mlo):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">format the output string in a matlab style format, meaning, rows are separated by &#8216;;&#8217;, values in one row are separated by &#8216;,&#8217;</td>
 </tr>
-<tr class="field-even field"><th class="field-name" colspan="2">executable(exe):</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body">absolute path to the executable V-HACD file. If no path is given maya/bin/plug-ins/bin/testVHACD is used.</td>
+<tr class="field-even field"><th class="field-name" colspan="2">tmp(temporaryDir):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">directory to save temporary created files (needs read and write access). If no path is given the temporary files will be written into the user home directory</td>
 </tr>
-<tr class="field-odd field"><th class="field-name" colspan="2">resolution(res):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">maximum number of voxels generated during the voxelization stage (10.000 - 64.000.000, default: 100.000)</td>
+<tr class="field-odd field"><th class="field-name" colspan="2">executable(exe):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">absolute path to the executable V-HACD file. If no path is given maya/bin/plug-ins/bin/testVHACD is used.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">depth(d):</th><td class="field-body">maximum number of clipping stages. During each split stage, all the model parts (with a concavity higher than the user defined threshold) are clipped according the &#8220;best&#8221; clipping plane (1 - 32, default: 20)</td>
+<tr class="field-even field"><th class="field-name" colspan="2">resolution(res):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">maximum number of voxels generated during the voxelization stage (10.000 - 64.000.000, default: 100.000)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">concavity(con):</th><td class="field-body">maximum concavity (0.0 - 1.0, default: 0.001)</td>
+<tr class="field-odd field"><th class="field-name">depth(d):</th><td class="field-body">maximum number of clipping stages. During each split stage, all the model parts (with a concavity higher than the user defined threshold) are clipped according the &#8220;best&#8221; clipping plane (1 - 32, default: 20)</td>
 </tr>
-<tr class="field-even field"><th class="field-name" colspan="2">planeDownsampling(pd):</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body">controls the granularity of the search for the &#8220;best&#8221; clipping plane (1 - 16, default: 4)</td>
+<tr class="field-even field"><th class="field-name">concavity(con):</th><td class="field-body">maximum concavity (0.0 - 1.0, default: 0.001)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name" colspan="2">convexHullDownsampling(chd):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">controls the precision of the convex-hull generation process during the clipping plane selection stage (1 - 16, default: 4)</td>
+<tr class="field-odd field"><th class="field-name" colspan="2">planeDownsampling(pd):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">controls the granularity of the search for the &#8220;best&#8221; clipping plane (1 - 16, default: 4)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">alpha(a):</th><td class="field-body">controls the bias toward clipping along symmetry planes (0.0 - 1.0, default: 0.05)</td>
+<tr class="field-even field"><th class="field-name" colspan="2">convexHullDownsampling(chd):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">controls the precision of the convex-hull generation process during the clipping plane selection stage (1 - 16, default: 4)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">beta(b):</th><td class="field-body">controls the bias toward clipping along revolution axes (0.0 - 1.0, default: 0.05)</td>
+<tr class="field-odd field"><th class="field-name">alpha(a):</th><td class="field-body">controls the bias toward clipping along symmetry planes (0.0 - 1.0, default: 0.05)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">gamma(g):</th><td class="field-body">maximum allowed concavity during the merge stage (0.0 - 1.0, default: 0.0005)</td>
+<tr class="field-even field"><th class="field-name">beta(b):</th><td class="field-body">controls the bias toward clipping along revolution axes (0.0 - 1.0, default: 0.05)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name" colspan="2">normalizeMesh(pca):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">enable/disable normalizing the mesh before applying the convex decomposition (True/False, default: False)</td>
+<tr class="field-odd field"><th class="field-name">gamma(g):</th><td class="field-body">maximum allowed concavity during the merge stage (0.0 - 1.0, default: 0.0005)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">mode(m):</th><td class="field-body">voxel-based approximate convex decomposition (0, default) or tetrahedron-based approximate convex decomposition (1)</td>
+<tr class="field-even field"><th class="field-name" colspan="2">normalizeMesh(pca):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">enable/disable normalizing the mesh before applying the convex decomposition (True/False, default: False)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name" colspan="2">maxNumVerticesPerCH(vtx):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">controls the maximum number of triangles per convex-hull (4 - 1024, default: 64)</td>
+<tr class="field-odd field"><th class="field-name">mode(m):</th><td class="field-body">voxel-based approximate convex decomposition (0, default) or tetrahedron-based approximate convex decomposition (1)</td>
 </tr>
-<tr class="field-even field"><th class="field-name" colspan="2">minVolumePerCH(vol):</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body">controls the adaptive sampling of the generated convex-hulls (0.0 - 0.01, default: 0.0001)</td>
+<tr class="field-even field"><th class="field-name" colspan="2">maxNumVerticesPerCH(vtx):</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">controls the maximum number of triangles per convex-hull (4 - 1024, default: 64)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">minVolumePerCH(vol):</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">controls the adaptive sampling of the generated convex-hulls (0.0 - 0.01, default: 0.0001)</td>
 </tr>
 </tbody>
 </table>
@@ -160,7 +164,7 @@ An Interval Tree approach was tested and did not lead to performance improvement
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/pk_src.intersection.txt"
+      <li><a href="_sources/pk_src.intersection.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -182,11 +186,11 @@ An Interval Tree approach was tested and did not lead to performance improvement
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
-      <a href="_sources/pk_src.intersection.txt"
+      <a href="_sources/pk_src.intersection.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

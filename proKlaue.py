@@ -54,7 +54,7 @@ import sys
 import re
 
 # list with all commands (command names must have the same name as their class AND module to be loaded without errors)
-kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "alignObj", "exportData", "rangeObj", "convexHull", "getShells", "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection", "adjustAxisDirection", "vhacd", "axisParallelPlane", "altitudeMap", "coordinateSystem", "projectionArea", "overlapStatistic"]
+kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "alignObj", "exportData", "rangeObj", "convexHull", "getShells", "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection", "adjustAxisDirection", "vhacd", "axisParallelPlane", "altitudeMap", "coordinateSystem", "projectionArea", "overlapStatistic", "findIsolatedFaces"]
 
 # current plugin version
 pk_version = "0.3.1"

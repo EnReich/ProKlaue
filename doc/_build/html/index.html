@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to ProKlaue’s documentation! &#8212; ProKlaue 0.3.1 documentation</title>
+    <title>Welcome to ProKlaue’s documentation! &#8212; ProKlaue 0.3.3 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,16 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.1',
+        VERSION:     '0.3.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="ProKlaue 0.3.1 documentation" href="#" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="&lt;no title&gt;" href="pk_src.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -91,6 +93,7 @@
 <li class="toctree-l1"><a class="reference internal" href="pk_src.adjustAxisDirection.html">adjustAxisDirection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.axisParallelPlane.html">axisParallelPlane</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.altitudeMap.html">altitudeMap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.projectionArea.html">projectionArea</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.alignObj.html">alignObj</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.centerPoint.html">centerPoint</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.centroidPoint.html">centroidPoint</a></li>
@@ -104,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="pk_src.getShells.html">getShells</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.getVolume.html">getVolume</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.intersection.html">intersection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pk_src.overlapStatistic.html">overlapStatistic</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.normalize.html">normalize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.rangeObj.html">rangeObj</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pk_src.vhacd.html">vhacd</a></li>
@@ -127,7 +131,7 @@
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">kPluginCmdName</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;centerPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;centroidPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;normalize&quot;</span><span class="p">,</span> <span class="s2">&quot;eigenvector&quot;</span><span class="p">,</span>
    <span class="s2">&quot;alignObj&quot;</span><span class="p">,</span> <span class="s2">&quot;exportData&quot;</span><span class="p">,</span> <span class="s2">&quot;rangeObj&quot;</span><span class="p">,</span> <span class="s2">&quot;convexHull&quot;</span><span class="p">,</span> <span class="s2">&quot;getShells&quot;</span><span class="p">,</span>
    <span class="s2">&quot;findTubeFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;cleanup&quot;</span><span class="p">,</span> <span class="s2">&quot;getVolume&quot;</span><span class="p">,</span> <span class="s2">&quot;delaunay&quot;</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span>
-   <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">,</span> <span class="s2">&quot;foo&quot;</span><span class="p">]</span>
+   <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">,</span> <span class="s2">&quot;overlapStatistic&quot;</span><span class="p">,</span> <span class="s2">&quot;projectionArea&quot;</span><span class="p">,</span> <span class="s2">&quot;foo&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>The necessary parts of a new command need to be defined in a source file <em>foo.py</em>:</p>
@@ -231,7 +235,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/index.txt"
+      <li><a href="_sources/index.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -253,11 +257,11 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
       |
-      <a href="_sources/index.txt"
+      <a href="_sources/index.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

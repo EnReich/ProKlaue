@@ -172,7 +172,7 @@ class intersection(OpenMayaMPx.MPxCommand):
 
                     # check volume against convex hull --> indicates hole inside convex hull approximation
                     if (vol > volumes[i,j]):
-                        cmds.error("Volume Error: volume of object '{0}' is bigger than volume of convex decomposition! This indicates holes inside vhacd-result. Please check decomposition and adjust parameter for vhacd (e.g. smaller depth parameter)".format(obj[i]))
+                        cmds.warning("Volume Error: volume of object '{0}' is bigger than volume of convex decomposition! This indicates holes inside vhacd-result. Please check decomposition and adjust parameter for vhacd (e.g. smaller depth parameter)".format(obj[i]))
 
                     print("volume {}: {}".format(i, vol))
                     continue

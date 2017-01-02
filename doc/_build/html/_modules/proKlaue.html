@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>proKlaue &#8212; ProKlaue 0.3.1 documentation</title>
+    <title>proKlaue &#8212; ProKlaue 0.3.3 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.1',
+        VERSION:     '0.3.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="ProKlaue 0.3.1 documentation" href="../index.html" />
-    <link rel="up" title="Module code" href="index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -97,7 +98,7 @@
 <span class="kn">import</span> <span class="nn">re</span>
 
 <span class="c1"># list with all commands (command names must have the same name as their class AND module to be loaded without errors)</span>
-<span class="n">kPluginCmdName</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;centerPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;centroidPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;normalize&quot;</span><span class="p">,</span> <span class="s2">&quot;eigenvector&quot;</span><span class="p">,</span> <span class="s2">&quot;alignObj&quot;</span><span class="p">,</span> <span class="s2">&quot;exportData&quot;</span><span class="p">,</span> <span class="s2">&quot;rangeObj&quot;</span><span class="p">,</span> <span class="s2">&quot;convexHull&quot;</span><span class="p">,</span> <span class="s2">&quot;getShells&quot;</span><span class="p">,</span> <span class="s2">&quot;findTubeFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;cleanup&quot;</span><span class="p">,</span> <span class="s2">&quot;getVolume&quot;</span><span class="p">,</span> <span class="s2">&quot;delaunay&quot;</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span> <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">,</span> <span class="s2">&quot;axisParallelPlane&quot;</span><span class="p">,</span> <span class="s2">&quot;altitudeMap&quot;</span><span class="p">,</span> <span class="s2">&quot;coordinateSystem&quot;</span><span class="p">]</span>
+<span class="n">kPluginCmdName</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;centerPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;centroidPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;normalize&quot;</span><span class="p">,</span> <span class="s2">&quot;eigenvector&quot;</span><span class="p">,</span> <span class="s2">&quot;alignObj&quot;</span><span class="p">,</span> <span class="s2">&quot;exportData&quot;</span><span class="p">,</span> <span class="s2">&quot;rangeObj&quot;</span><span class="p">,</span> <span class="s2">&quot;convexHull&quot;</span><span class="p">,</span> <span class="s2">&quot;getShells&quot;</span><span class="p">,</span> <span class="s2">&quot;findTubeFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;cleanup&quot;</span><span class="p">,</span> <span class="s2">&quot;getVolume&quot;</span><span class="p">,</span> <span class="s2">&quot;delaunay&quot;</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span> <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">,</span> <span class="s2">&quot;axisParallelPlane&quot;</span><span class="p">,</span> <span class="s2">&quot;altitudeMap&quot;</span><span class="p">,</span> <span class="s2">&quot;coordinateSystem&quot;</span><span class="p">,</span> <span class="s2">&quot;projectionArea&quot;</span><span class="p">,</span> <span class="s2">&quot;overlapStatistic&quot;</span><span class="p">]</span>
 
 <span class="c1"># current plugin version</span>
 <span class="n">pk_version</span> <span class="o">=</span> <span class="s2">&quot;0.3.1&quot;</span>
@@ -194,7 +195,7 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
       
     </div>

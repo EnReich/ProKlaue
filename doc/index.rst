@@ -43,7 +43,7 @@ To add a new command *cmds.foo* implemented in the source file *foo.py* to the p
    kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector",
       "alignObj", "exportData", "rangeObj", "convexHull", "getShells",
       "findTubeFaces", "cleanup", "getVolume", "delaunay", "intersection",
-      "adjustAxisDirection", "vhacd", "foo"]
+      "adjustAxisDirection", "vhacd", "overlapStatistic", "projectionArea", "foo"]
 
 The necessary parts of a new command need to be defined in a source file *foo.py*:
 

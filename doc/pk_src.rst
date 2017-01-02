@@ -3,6 +3,7 @@
    adjustAxisDirection <pk_src.adjustAxisDirection>
    axisParallelPlane <pk_src.axisParallelPlane>
    altitudeMap <pk_src.altitudeMap>
+   projectionArea <pk_src.projectionArea>
    alignObj <pk_src.alignObj>
    centerPoint <pk_src.centerPoint>
    centroidPoint <pk_src.centroidPoint>
@@ -16,6 +17,7 @@
    getShells <pk_src.getShells>
    getVolume <pk_src.getVolume>
    intersection <pk_src.intersection>
+   overlapStatistic <pk_src.overlapStatistic>
    normalize <pk_src.normalize>
    rangeObj <pk_src.rangeObj>
    vhacd <pk_src.vhacd>
