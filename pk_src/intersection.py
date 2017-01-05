@@ -35,7 +35,7 @@ The parameter arguments are the same as for the command :ref:`vhacd` and will be
 
 :returns: string containing a nxn matrix (n: number of objects) with intersection volumes.
 
-:raises RunTimeError: if volume of convex decomposition is smaller than volume of given object. Indicates that there are holes inside convex decomposition which obviously leads to incorrect results for the intersection volume. Solution is to choose smaller depth paramter
+:raises VolumeErrorWarning: if volume of convex decomposition is smaller than volume of given object. Indicates that there are holes inside convex decomposition which obviously leads to incorrect results for the intersection volume. Solution is to choose smaller depth paramter
 
 **Example:**
     .. code-block:: python

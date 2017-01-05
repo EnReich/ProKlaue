@@ -7,20 +7,16 @@ Find exactly the faces who share no edge with any other face of the mesh. Works 
        :select(s): boolean (default True) indicating whether the faces should be selected
        :cleanup(c): perform a cleanup (delete isolated faces, default False)
 
-:returns: a list of face indices
+       :returns: a list of face indices, which are isolated
 """
 
 
 import maya.OpenMayaMPx as OpenMayaMPx
 import maya.OpenMaya as om
-import maya.api.OpenMaya as om2
 import maya.cmds as cmds
 import operator
 import misc
 import math
-import string
-import numpy as np
-import contourShape
 
 dot = lambda x, y: sum(map(operator.mul, x, y))
 """dot product as lambda function to speed up calculation"""
@@ -58,7 +54,7 @@ class findIsolatedFaces(OpenMayaMPx.MPxCommand):
             tris = misc.getTriangles(obj)
             triRefs = misc.getTriangleEdgesReferences(tris)
             #coreTris = [i for i, tri in enumerate(tris) if ((len(triRefs[frozenset([tri[0], tri[1]])])>1) and (len(triRefs[frozenset([tri[0], tri[2]])])>1) and (len(triRefs[frozenset([tri[1], tri[2]])])>1))]
-            isolatedTris = [i for i, tri in enumerate(tris) if ((len(triRefs[frozenset([tri[0], tri[1]])])<2) + (len(triRefs[frozenset([tri[0], tri[2]])])<2) + (len(triRefs[frozenset([tri[1], tri[2]])])<2)) >1]
+            isolatedTris = [i for i, tri in enumerate(tris) if ((len(triRefs[frozenset([tri[0], tri[1]])])<2) + (len(triRefs[frozenset([tri[0], tri[2]])])<2) + (len(triRefs[frozenset([tri[1], tri[2]])])<2)) >2]
             all_isolated_tris.append(isolatedTris)
             cmd_obj.extend(["{0}.f[{1}]".format(obj, i) for i in isolatedTris])
 

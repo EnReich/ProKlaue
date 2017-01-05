@@ -1,19 +1,24 @@
 """
 Given a plane (4 vertices, 1 facet) and an triangulated mesh to calculte the projected Area
 onto the plane (projection in the inverse direction of the face normal of the plane).
-The distance for the threshold is measured from the vertice is measures from the plane to the centroid of each face.
-A ray is constructed from each of the faces to the plane and only those faces without any other intersection than
-the plane (only faces directly visible from the plane) are considered part of the altitude map.
-Points with a larger distance than a given threshold will be discarded.
+The distance for the threshold is measured from the plane to the centroid of the triangle.
+Triangles in negative direction from the plane are not considered (I.r.t. the plane normal).
+Triangles with a larger distance than a given threshold will be discarded.
 
 **see also:** :ref:`axisParallelPlane`
 
 **command:** cmds.altitudeMap(obj, plane, threshold = 10.0, cosinusmax = 0.0)
 
 **Args:**
-    :threshold(t): threshold of maximum distance from plane; all facets with larger distance will be discarded (default 10.0)
-    :cosinusmax(c): cosinus of the angle threshhold between the plane and the faces that should be considered (default 0.0, for backface culling). Can be used to exclude/include steep/backwards oriented faces. Input any value >1 to include evry facet in the given threshold
-    :select(s): boolean (default False) indicating whether the outline points should be selected if present in the current object (created intersection points can and will not be selected)
+    :threshold(t): threshold of maximum distance from plane; all facets with larger distance will be discarded
+        (default 10.0)
+    :cosinusmax(c): cosinus of the angle threshhold between the plane and the faces that should be considered
+        (default 0.0, for backface culling). Can be used to exclude/include steep/backwards oriented faces.
+        Input any value >1 to include every facet in the given threshold, but values > 0 are problematic, since outlines
+        of the polygon wont always be outlines of the projection.
+    :select(s): boolean (default False) indicating whether the outline points should be selected if present in the
+        current object (created intersection points can and will not be selected)
+    :f(file): save the calculated outline segments to the given file path
 
 :returns: the area of the projection of the mesh onto the plane
 """
@@ -26,7 +31,6 @@ import maya.cmds as cmds
 import operator
 import misc
 import math
-import string
 import numpy as np
 import contourShape
 
@@ -178,7 +182,6 @@ def projectionAreaSyntaxCreator():
     syntax.addFlag("t", "threshold", om.MSyntax.kDouble)
     syntax.addFlag("c", "cosinusmax", om.MSyntax.kDouble)
     syntax.addFlag("s", "select", om.MSyntax.kBoolean)
-    syntax.addFlag("a", "anim", om.MSyntax.kBoolean)
     return syntax
 
 

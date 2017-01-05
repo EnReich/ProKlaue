@@ -3,7 +3,7 @@ Uses the V-HACD library (https://github.com/kmammou/v-hacd) to calculate an appr
 
 The available properties and settings of V-HACD are taken directly from the `description page <http://kmamou.blogspot.de/2014/12/v-hacd-20-parameters-description.html>`_.
 
-Script makes use of the *wrl2ma*-command under *maya/bin* to parse to and from different formats. Apparently there are some old parser-inconsistencies which may produce warning or error messages, which (as far as observed) have no visible effect on the produces mesh. Also the path to the directories *maya/bin* for *wrl2ma* and *plug-ins/bin* for V-HACD is guessed through the environment path variable of the operating system.
+(Outdated, but maybe used again: Script makes use of the *wrl2ma*-command under *maya/bin* to parse to and from different formats. Apparently there are some old parser-inconsistencies which may produce warning or error messages, which (as far as observed) have no visible effect on the produces mesh. Also the path to the directories *maya/bin* for *wrl2ma* and *plug-ins/bin* for V-HACD is guessed through the environment path variable of the operating system.)
 
 **NOTE:** There are observed cases where V-HACD was not able to create a real solid geometry for a given mesh (without any topological holes) but rather creates a convex decomposition where the summed volume of the convex parts is smaller than the volume of the original mesh, i.e. the decomposition creates a topologically different model where the inner area is hollow. Therefore one should always verify the output mesh and in case of a faulty decomposition choose different parameter settings (a smaller *depth*-value usually avoids this problem).
 

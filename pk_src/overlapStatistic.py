@@ -34,7 +34,7 @@ down to the command invocation.
 
 :returns: statistic measures for the pairwise intersection volumes in a upper triangle matrix.
 
-:raises RunTimeError: if volume of convex decomposition is smaller than volume of given object. Indicates that there are holes inside convex decomposition which obviously leads to incorrect results for the intersection volume. Solution is to choose smaller depth paramter
+:raises VolumeErrorWarning: if volume of convex decomposition is smaller than volume of given object. Indicates that there are holes inside convex decomposition which obviously leads to incorrect results for the intersection volume. Solution is to choose smaller depth paramter
 """
 
 import maya.OpenMayaMPx as OpenMayaMPx
