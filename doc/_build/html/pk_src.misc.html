@@ -163,7 +163,11 @@
 <dl class="function">
 <dt id="pk_src.misc.getFaceNormals2">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getFaceNormals2</code><span class="sig-paren">(</span><em>obj</em>, <em>worldSpace=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getFaceNormals2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getFaceNormals2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return all face normals. Uses the command <a class="reference external" href="http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html">polyInfo</a> to access the normal information as string and parse them to a numpy array</p>
+<dd><p>Method to return all face normals. Uses the command
+<a class="reference external" href="http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html">polyInfo</a>
+to access the normal information as string and parse them to a numpy array.
+Instead of a transformation matrix this method uses a calculated rotation matrix, and by that does not scale
+the normals.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -179,7 +183,7 @@
 <dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
 <span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
 <span class="c1"># Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
-<span class="n">misc</span><span class="o">.</span><span class="n">getFaceNormals</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getFaceNormals2</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">)</span>
 <span class="c1"># Result: [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]] #</span>
 </pre></div>
 </div>
@@ -244,18 +248,18 @@
 <dl class="function">
 <dt id="pk_src.misc.getPointsAsList">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getPointsAsList</code><span class="sig-paren">(</span><em>obj</em>, <em>worldSpace=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getPointsAsList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getPointsAsList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return MPointArray with points of object&#8217;s mesh.</p>
+<dd><p>Method to return the points of an object&#8217;s mesh in a list of lists with coordinates.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>obj</strong> (<em>string</em>) &#8211; name of object</li>
-<li><strong>worldSpace</strong> (<em>Boolean</em>) &#8211; should coordinates be in world space (with transform) or in local space (without transform); default True</li>
+<li><strong>obj</strong> (<em>str</em>) &#8211; name of object</li>
+<li><strong>worldSpace</strong> (<em>bool</em>) &#8211; should coordinates be in world space (with transform) or in local space (without transform); default True</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array of coordinates of points</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of lists of coordinates (length 3) of the points of the objects mesh</p>
 </td>
 </tr>
 </tbody>
@@ -264,7 +268,10 @@
 <dt><strong>Example:</strong></dt>
 <dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
 <span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
-<span class="n">misc</span><span class="o">.</span><span class="n">getPointsAsArray</span><span class="p">(</span><span class="s1">&#39;pCube1&#39;</span><span class="p">)</span>
+<span class="n">cmds</span><span class="o">.</span><span class="n">xform</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getPointsAsList</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">,</span> <span class="n">worldSpace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="c1"># Result: [(0.5, -0.5, 0.5), (1.5, -0.5, 0.5), (0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 0.5, -0.5), (1.5, 0.5, -0.5), (0.5, -0.5, -0.5), (1.5, -0.5, -0.5)] #</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getPointsAsList</span><span class="p">(</span><span class="s2">&quot;pCube1&quot;</span><span class="p">,</span> <span class="n">worldSpace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 <span class="c1"># Result: [(-0.5, -0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (-0.5, 0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5)] #</span>
 </pre></div>
 </div>
@@ -275,7 +282,40 @@
 <dl class="function">
 <dt id="pk_src.misc.getRotationMatrix">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getRotationMatrix</code><span class="sig-paren">(</span><em>alpha</em>, <em>beta</em>, <em>gamma</em>, <em>order='xyz'</em>, <em>rad=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getRotationMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getRotationMatrix" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate a Rotation Matrix for given euler angles
+:param alpha: angle for rotation around x-axis
+:type alpha: float
+:param beta: angle for rotation around y-axis
+:type beta: float
+:param gamma: angle for rotation around z-axis
+:type gamma: float
+:param order: rotation order
+:type order: str
+:param rad: set true for angles given in radians
+:type rad: bool
+:returns: rotation matrix for the rotations in the given order</p>
+<dl class="docutils">
+<dt><strong>Example:</strong></dt>
+<dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pk_src</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getRotationMatrix</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;xzy&quot;</span><span class="p">)</span>
+<span class="c1"># Result: matrix([[ 0.49240388,  0.55097853,  0.67376634,  0.        ],</span>
+<span class="p">[</span> <span class="mf">0.17364818</span><span class="p">,</span>  <span class="mf">0.69636424</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.69636424</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+<span class="p">[</span><span class="o">-</span><span class="mf">0.85286853</span><span class="p">,</span>  <span class="mf">0.45989075</span><span class="p">,</span>  <span class="mf">0.24721603</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+<span class="p">[</span> <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">1.</span>        <span class="p">]])</span> <span class="c1">#</span>
+<span class="n">misc</span><span class="o">.</span><span class="n">getRotationMatrix</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;xyz&quot;</span><span class="p">)</span>
+<span class="c1"># Result: matrix([[  6.12323400e-17,   0.00000000e+00,   1.00000000e+00,</span>
+   <span class="mf">0.00000000e+00</span><span class="p">],</span>
+<span class="p">[</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">1.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>
+   <span class="mf">0.00000000e+00</span><span class="p">],</span>
+<span class="p">[</span> <span class="o">-</span><span class="mf">1.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">6.12323400e-17</span><span class="p">,</span>
+   <span class="mf">0.00000000e+00</span><span class="p">],</span>
+<span class="p">[</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>
+   <span class="mf">1.00000000e+00</span><span class="p">]])</span> <span class="c1">#</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="pk_src.misc.getTriangleEdges">

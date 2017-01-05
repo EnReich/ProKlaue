@@ -139,20 +139,23 @@
 
 <div class="viewcode-block" id="getPointsAsList"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getPointsAsList">[docs]</a><span class="k">def</span> <span class="nf">getPointsAsList</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">worldSpace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Method to return MPointArray with points of object&#39;s mesh.</span>
+<span class="sd">    Method to return the points of an object&#39;s mesh in a list of lists with coordinates.</span>
 
 <span class="sd">    :param obj: name of object</span>
-<span class="sd">    :type obj: string</span>
+<span class="sd">    :type obj: str</span>
 <span class="sd">    :param worldSpace: should coordinates be in world space (with transform) or in local space (without transform); default True</span>
-<span class="sd">    :type worldSpace: Boolean</span>
-<span class="sd">    :returns: array of coordinates of points</span>
+<span class="sd">    :type worldSpace: bool</span>
+<span class="sd">    :returns: list of lists of coordinates (length 3) of the points of the objects mesh</span>
 
 <span class="sd">    **Example:**</span>
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from pk_src import misc</span>
 <span class="sd">            cmds.polyCube()</span>
-<span class="sd">            misc.getPointsAsArray(&#39;pCube1&#39;)</span>
+<span class="sd">            cmds.xform(&quot;pCube1&quot;, t=[1,0,0])</span>
+<span class="sd">            misc.getPointsAsList(&quot;pCube1&quot;, worldSpace=True)</span>
+<span class="sd">            # Result: [(0.5, -0.5, 0.5), (1.5, -0.5, 0.5), (0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 0.5, -0.5), (1.5, 0.5, -0.5), (0.5, -0.5, -0.5), (1.5, -0.5, -0.5)] #</span>
+<span class="sd">            misc.getPointsAsList(&quot;pCube1&quot;, worldSpace=False)</span>
 <span class="sd">            # Result: [(-0.5, -0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (-0.5, 0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5)] #</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -191,7 +194,11 @@
 
 <div class="viewcode-block" id="getFaceNormals2"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getFaceNormals2">[docs]</a><span class="k">def</span> <span class="nf">getFaceNormals2</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">worldSpace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Method to return all face normals. Uses the command `polyInfo &lt;http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html&gt;`_ to access the normal information as string and parse them to a numpy array</span>
+<span class="sd">    Method to return all face normals. Uses the command</span>
+<span class="sd">    `polyInfo &lt;http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html&gt;`_</span>
+<span class="sd">    to access the normal information as string and parse them to a numpy array.</span>
+<span class="sd">    Instead of a transformation matrix this method uses a calculated rotation matrix, and by that does not scale</span>
+<span class="sd">    the normals.</span>
 
 <span class="sd">    :param obj: name of object</span>
 <span class="sd">    :type obj: string</span>
@@ -204,7 +211,7 @@
 <span class="sd">            from pk_src import misc</span>
 <span class="sd">            cmds.polyCube()</span>
 <span class="sd">            # Result: [u&#39;pCube1&#39;, u&#39;polyCube1&#39;] #</span>
-<span class="sd">            misc.getFaceNormals(&quot;pCube1&quot;)</span>
+<span class="sd">            misc.getFaceNormals2(&quot;pCube1&quot;)</span>
 <span class="sd">            # Result: [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]] #</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalStrings</span> <span class="o">=</span> <span class="n">cmds</span><span class="o">.</span><span class="n">polyInfo</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fn</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
@@ -478,6 +485,38 @@
 
 
 <div class="viewcode-block" id="getRotationMatrix"><a class="viewcode-back" href="../../pk_src.misc.html#pk_src.misc.getRotationMatrix">[docs]</a><span class="k">def</span> <span class="nf">getRotationMatrix</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;xyz&quot;</span><span class="p">,</span> <span class="n">rad</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate a Rotation Matrix for given euler angles</span>
+<span class="sd">    :param alpha: angle for rotation around x-axis</span>
+<span class="sd">    :type alpha: float</span>
+<span class="sd">    :param beta: angle for rotation around y-axis</span>
+<span class="sd">    :type beta: float</span>
+<span class="sd">    :param gamma: angle for rotation around z-axis</span>
+<span class="sd">    :type gamma: float</span>
+<span class="sd">    :param order: rotation order</span>
+<span class="sd">    :type order: str</span>
+<span class="sd">    :param rad: set true for angles given in radians</span>
+<span class="sd">    :type rad: bool</span>
+<span class="sd">    :returns: rotation matrix for the rotations in the given order</span>
+
+<span class="sd">    **Example:**</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pk_src import misc</span>
+<span class="sd">            misc.getRotationMatrix(alpha=45, beta=60, gamma=10, order=&quot;xzy&quot;)</span>
+<span class="sd">            # Result: matrix([[ 0.49240388,  0.55097853,  0.67376634,  0.        ],</span>
+<span class="sd">            [ 0.17364818,  0.69636424, -0.69636424,  0.        ],</span>
+<span class="sd">            [-0.85286853,  0.45989075,  0.24721603,  0.        ],</span>
+<span class="sd">            [ 0.        ,  0.        ,  0.        ,  1.        ]]) #</span>
+<span class="sd">            misc.getRotationMatrix(alpha=0, beta=90, gamma=0, order=&quot;xyz&quot;)</span>
+<span class="sd">            # Result: matrix([[  6.12323400e-17,   0.00000000e+00,   1.00000000e+00,</span>
+<span class="sd">               0.00000000e+00],</span>
+<span class="sd">            [  0.00000000e+00,   1.00000000e+00,   0.00000000e+00,</span>
+<span class="sd">               0.00000000e+00],</span>
+<span class="sd">            [ -1.00000000e+00,   0.00000000e+00,   6.12323400e-17,</span>
+<span class="sd">               0.00000000e+00],</span>
+<span class="sd">            [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,</span>
+<span class="sd">               1.00000000e+00]]) #</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rad</span><span class="p">:</span>
         <span class="n">alpha</span> <span class="o">*=</span> <span class="n">GRAD_TO_RAD</span>
         <span class="n">beta</span> <span class="o">*=</span> <span class="n">GRAD_TO_RAD</span>

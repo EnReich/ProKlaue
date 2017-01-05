@@ -95,20 +95,23 @@ def getPoints(obj, mfnObject = None, worldSpace = True):
 
 def getPointsAsList(obj, worldSpace = True):
     """
-    Method to return MPointArray with points of object's mesh.
+    Method to return the points of an object's mesh in a list of lists with coordinates.
 
     :param obj: name of object
-    :type obj: string
+    :type obj: str
     :param worldSpace: should coordinates be in world space (with transform) or in local space (without transform); default True
-    :type worldSpace: Boolean
-    :returns: array of coordinates of points
+    :type worldSpace: bool
+    :returns: list of lists of coordinates (length 3) of the points of the objects mesh
 
     **Example:**
         .. code-block:: python
 
             from pk_src import misc
             cmds.polyCube()
-            misc.getPointsAsArray('pCube1')
+            cmds.xform("pCube1", t=[1,0,0])
+            misc.getPointsAsList("pCube1", worldSpace=True)
+            # Result: [(0.5, -0.5, 0.5), (1.5, -0.5, 0.5), (0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 0.5, -0.5), (1.5, 0.5, -0.5), (0.5, -0.5, -0.5), (1.5, -0.5, -0.5)] #
+            misc.getPointsAsList("pCube1", worldSpace=False)
             # Result: [(-0.5, -0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (-0.5, 0.5, -0.5), (0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5)] #
     """
 
@@ -147,7 +150,11 @@ def getFaceNormals(obj, worldSpace = True):
 
 def getFaceNormals2(obj, worldSpace = True):
     """
-    Method to return all face normals. Uses the command `polyInfo <http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html>`_ to access the normal information as string and parse them to a numpy array
+    Method to return all face normals. Uses the command
+    `polyInfo <http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html>`_
+    to access the normal information as string and parse them to a numpy array.
+    Instead of a transformation matrix this method uses a calculated rotation matrix, and by that does not scale
+    the normals.
 
     :param obj: name of object
     :type obj: string
@@ -160,7 +167,7 @@ def getFaceNormals2(obj, worldSpace = True):
             from pk_src import misc
             cmds.polyCube()
             # Result: [u'pCube1', u'polyCube1'] #
-            misc.getFaceNormals("pCube1")
+            misc.getFaceNormals2("pCube1")
             # Result: [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]] #
     """
     normalStrings = cmds.polyInfo(obj, fn = 1)
@@ -434,6 +441,38 @@ def alignYAxis():
 
 
 def getRotationMatrix(alpha, beta, gamma, order="xyz", rad=False):
+    """Calculate a Rotation Matrix for given euler angles
+    :param alpha: angle for rotation around x-axis
+    :type alpha: float
+    :param beta: angle for rotation around y-axis
+    :type beta: float
+    :param gamma: angle for rotation around z-axis
+    :type gamma: float
+    :param order: rotation order
+    :type order: str
+    :param rad: set true for angles given in radians
+    :type rad: bool
+    :returns: rotation matrix for the rotations in the given order
+
+    **Example:**
+        .. code-block:: python
+
+            from pk_src import misc
+            misc.getRotationMatrix(alpha=45, beta=60, gamma=10, order="xzy")
+            # Result: matrix([[ 0.49240388,  0.55097853,  0.67376634,  0.        ],
+            [ 0.17364818,  0.69636424, -0.69636424,  0.        ],
+            [-0.85286853,  0.45989075,  0.24721603,  0.        ],
+            [ 0.        ,  0.        ,  0.        ,  1.        ]]) #
+            misc.getRotationMatrix(alpha=0, beta=90, gamma=0, order="xyz")
+            # Result: matrix([[  6.12323400e-17,   0.00000000e+00,   1.00000000e+00,
+               0.00000000e+00],
+            [  0.00000000e+00,   1.00000000e+00,   0.00000000e+00,
+               0.00000000e+00],
+            [ -1.00000000e+00,   0.00000000e+00,   6.12323400e-17,
+               0.00000000e+00],
+            [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
+               1.00000000e+00]]) #
+    """
     if not rad:
         alpha *= GRAD_TO_RAD
         beta *= GRAD_TO_RAD
