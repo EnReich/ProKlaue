@@ -73,8 +73,8 @@ class overlapStatistic(OpenMayaMPx.MPxCommand):
 
         # read all arguments and set default values
         keepCD = argData.flagArgumentBool('keepConvexDecomposition', 0) if (argData.isFlagSet('keepConvexDecomposition')) else True
-        nvol = argData.flagArgumentBool('normVolume', 0) if (
-            argData.isFlagSet('normVolume')) else 100
+        nvol = argData.flagArgumentDouble('normVolume', 0) if (
+            argData.isFlagSet('normVolume')) else 100.0
         norm = argData.flagArgumentBool('norm', 0) if (
             argData.isFlagSet('norm')) else True
         s_file = os.path.abspath(argData.flagArgumentString('saveFile', 0)) if (argData.isFlagSet('saveFile')) else ""
