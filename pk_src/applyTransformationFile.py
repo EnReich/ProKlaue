@@ -28,9 +28,12 @@ class applyTransformationFile(OpenMayaMPx.MPxCommand):
 
         # read all arguments and set default values
         path = argData.flagArgumentString('file', 0) if (argData.isFlagSet('file')) else "./transformation.csv"
+        inverse = argData.flagArgumentBool('inverse', 0) if (argData.isFlagSet('inverse')) else False
         file = open(os.path.abspath(path), 'rb')
         reader = csv.reader(file, delimiter=',', quotechar='"')
         header = reader.next()
+        if inverse:
+            reader = reversed(list(reader))
 
         for row in reader:
             type = row[0]
@@ -49,11 +52,19 @@ class applyTransformationFile(OpenMayaMPx.MPxCommand):
             ws = bool(row[7])
 
             if type == 'translation':
-                cmds.move(x, y, z, objs, r=r, ws=ws)
+                if not inverse:
+                    cmds.move(x, y, z, objs, r=r, ws=ws)
+                else:
+                    cmds.move(-x, -y, -z, objs, r=r, ws=ws)
 
             if type == 'rotation':
-                cmds.xform(objs, p=1, roo=order)
-                cmds.rotate(x, y, z, objs, r=r, ws=ws, p=p)
+                if not inverse:
+                    cmds.xform(objs, p=1, roo=order)
+                    cmds.rotate(x, y, z, objs, r=r, ws=ws, p=p)
+                else:
+                    cmds.xform(objs, p=1, roo = order[::-1])
+                    cmds.rotate(-x,-y,-z, objs, r=r, ws=ws, p=p)
+
 
         file.close()
 
@@ -69,6 +80,7 @@ def applyTransformationFileSyntaxCreator():
     syntax = om.MSyntax()
     syntax.setObjectType(om.MSyntax.kStringObjects)
     syntax.addFlag("f", "file", om.MSyntax.kString)
+    syntax.addFlag("i", "inverse", om.MSyntax.kBoolean)
     return syntax
 
 

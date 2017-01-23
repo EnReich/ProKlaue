@@ -16,6 +16,10 @@ and aligned (objects have to be identical in the relative position of their vert
     :saveTransformations(st): has only an effect in reposition mode, saves the transformations for repositioning
         in the given directory.
     :vertexIndices(vid): has only an effect in export mode, sets the indices of the vertices where to align the objects.
+    :singleFiles(sf): save one single file for each transform node selected (default false).
+        Has no effect in reposition mode.
+    :dontApplyTransformations(da): transformations are calculated and saved but not applied (default false).
+        Has no effect in export mode.
 """
 
 import maya.OpenMayaMPx as OpenMayaMPx
@@ -60,6 +64,8 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
         # read all arguments and set default values
         s_file = argData.flagArgumentString('file', 0) if (argData.isFlagSet('file')) else "./reposition_data.csv"
         export = argData.flagArgumentBool('exportMode', 0)
+        singleFiles = argData.flagArgumentBool('singleFiles', 0) if (argData.isFlagSet('singleFiles')) else False
+        dontApplyTransformations = argData.flagArgumentBool('dontApplyTransformations', 0) if (argData.isFlagSet('dontApplyTransformations')) else False
 
         if argData.isFlagSet('vertexIndices'):
             sampleVertices = False
@@ -75,8 +81,12 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
 
         if export:
             s_file = os.path.abspath(s_file)
-            o_file = open(s_file, 'w')
-            o_file.write("index, name, center, rotation, p0, p1, p2, p0_idx, p1_idx, p2_idx\n")
+            if not singleFiles:
+                o_file = open(s_file, 'w')
+                o_file.write("index, name, center, rotation, p0, p1, p2, p0_idx, p1_idx, p2_idx\n")
+            else:
+                if not os.path.isdir(s_file):
+                    os.makedirs(s_file)
             i = 0
 
             if not sampleVertices:
@@ -85,6 +95,12 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
             for obj in objs:
                 if sampleVertices:
                     idx = random.sample(range(cmds.polyEvaluate(obj, v=1)), 3)
+
+                if singleFiles:
+                    # print formatObjString(obj)
+                    path = os.path.abspath("{}/{}.csv".format(s_file, formatObjString(obj)))
+                    o_file = open(path, 'w')
+                    o_file.write("index, name, center, rotation, p0, p1, p2, p0_idx, p1_idx, p2_idx\n")
 
                 center = cmds.centerPoint(obj)
                 rotation = cmds.alignObj(obj)
@@ -95,8 +111,14 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
                     '{},"{}","{}","{}","{}","{}","{}","{}","{}","{}"\n'.format(i, obj, center, rotation, p0, p1, p2,
                                                                                idx[0], idx[1], idx[2]))
                 o_file.flush()
+
+                if singleFiles:
+                    o_file.close();
+
                 i += 1
-            o_file.close()
+
+            if not singleFiles:
+                o_file.close()
 
         else:
             csvfile = open(os.path.abspath(s_file), 'rb')
@@ -104,12 +126,20 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
             header = reader.next()
 
             i = 0
+            if saveTransformations:
+                if not os.path.isdir(trans_file):
+                    os.makedirs(trans_file)
+                trans_file_paths = []
+
             for row in reader:
                 obj_neu = objs[i]
 
                 if saveTransformations:
-                    t_file = open(os.path.abspath("{}/tf_{}.csv".format(trans_file, obj_neu.replace(":", "_"))), 'w')
+                    trans_file_path = os.path.abspath("{}/tf_{}.csv".format(trans_file, formatObjString(obj_neu)))
+                    trans_file_paths.append(trans_file_path)
+                    t_file = open(trans_file_path, 'w')
                     t_file.write("type,X,Y,Z,pivot,order,r,ws\n")
+
 
                 p0 = np.matrix(row[4]).reshape(3, 1)
                 p1 = np.matrix(row[5]).reshape(3, 1)
@@ -138,18 +168,22 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
                 R2 = getRotationFromAToB(r02_neu_lot, r02_lot)
 
                 angles = getEulerAnglesToMatrix(R2 * R1)
-                cmds.xform(obj_neu, roo="xyz", p=1)
-                cmds.rotate(angles[0], angles[1], angles[2], obj_neu, worldSpace=1, r=1, pivot=p0_neu.A1)
+                if not dontApplyTransformations:
+                    cmds.xform(obj_neu, roo="xyz", p=1)
+                    cmds.rotate(angles[0], angles[1], angles[2], obj_neu, worldSpace=1, r=1, pivot=p0_neu.A1)
 
                 if saveTransformations:
                     t_file.write('rotation,"{}","{}","{}","{}","xyz","{}","{}"\n'.format(angles[0], angles[1],
                                                                                         angles[2], p0_neu.A1, 1, 1))
                 t = p0 - p0_neu
-                cmds.move(t.A1[0], t.A1[1], t.A1[2], obj_neu, worldSpace=1, r=1)
+
+                if not dontApplyTransformations:
+                    cmds.move(t.A1[0], t.A1[1], t.A1[2], obj_neu, worldSpace=1, r=1)
 
                 if saveTransformations:
                     t_file.write('translation,"{}","{}","{}","{}","0","{}","{}"\n'.format(t.A1[0], t.A1[1],
                                                                                            t.A1[2], 0, 1, 1))
+
                 i += 1
 
                 if saveTransformations:
@@ -157,6 +191,9 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
                     t_file.close()
 
             csvfile.close()
+
+            if saveTransformations:
+                self.setResult(trans_file_paths)
 
 
 # creator function
@@ -172,6 +209,8 @@ def repositionVerticesSyntaxCreator():
     syntax.addFlag("vid", "vertexIndices", om.MSyntax.kLong)
     syntax.addFlag("f", "file", om.MSyntax.kString)
     syntax.addFlag("st", "saveTransformations", om.MSyntax.kString)
+    syntax.addFlag("sf", "singleFiles", om.MSyntax.kBoolean)
+    syntax.addFlag("da", "dontApplyTransformations", om.MSyntax.kBoolean)
     return syntax
 
 
@@ -238,3 +277,7 @@ def getEulerAnglesToMatrix(m):
                       math.sqrt(math.pow(m[2, 1], 2) + math.pow(m[2, 2], 2))) * RAD_TO_DEG
     gamma = math.atan2(m[1, 0], m[0, 0]) * RAD_TO_DEG
     return [alpha, beta, gamma]
+
+
+def formatObjString(name):
+    return name.replace(":", "_")
