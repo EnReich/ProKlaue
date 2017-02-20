@@ -95,7 +95,8 @@ class overlapStatistic(OpenMayaMPx.MPxCommand):
             for o in obj:
                 v = cmds.getVolume(o)
                 scale_factor = (nvol/ v) ** (1./3)
-                cmds.xform(o, scale=[scale_factor, scale_factor, scale_factor])
+                # cmds.xform(o, scale=[scale_factor, scale_factor, scale_factor])
+                cmds.scale(scale_factor, scale_factor, scale_factor, o, relative=True)
                 cmds.makeIdentity(o, apply=True)
 
         intersection_matrix = np.matrix(str(cmds.intersection(obj, kcd=keepCD, matlabOutput=True, **vhacd_par)))

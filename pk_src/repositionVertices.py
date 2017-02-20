@@ -17,9 +17,9 @@ and aligned (objects have to be identical in the relative position of their vert
         in the given directory.
     :vertexIndices(vid): has only an effect in export mode, sets the indices of the vertices where to align the objects.
     :singleFiles(sf): save one single file for each transform node selected (default false).
-        Has no effect in reposition mode.
+        Has only effect in export mode.
     :dontApplyTransformations(da): transformations are calculated and saved but not applied (default false).
-        Has no effect in export mode.
+        Has only effect in reposition mode.
 """
 
 import maya.OpenMayaMPx as OpenMayaMPx
@@ -52,7 +52,7 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
                     cmds.error("Object is not of type transform!")
                     return
         except:
-            cmds.warning("Not suitable object(s) selected!")
+            cmds.warning("Wrong Argument!")
             return
 
         argData = om.MArgParser(self.syntax(), argList)
@@ -80,10 +80,12 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
             saveTransformations = False
 
         if export:
+            rep_file_paths = []
             s_file = os.path.abspath(s_file)
             if not singleFiles:
                 o_file = open(s_file, 'w')
                 o_file.write("index, name, center, rotation, p0, p1, p2, p0_idx, p1_idx, p2_idx\n")
+                rep_file_paths = [s_file]
             else:
                 if not os.path.isdir(s_file):
                     os.makedirs(s_file)
@@ -101,6 +103,7 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
                     path = os.path.abspath("{}/{}.csv".format(s_file, formatObjString(obj)))
                     o_file = open(path, 'w')
                     o_file.write("index, name, center, rotation, p0, p1, p2, p0_idx, p1_idx, p2_idx\n")
+                    rep_file_paths.append(path)
 
                 center = cmds.centerPoint(obj)
                 rotation = cmds.alignObj(obj)
@@ -119,6 +122,8 @@ class repositionVertices(OpenMayaMPx.MPxCommand):
 
             if not singleFiles:
                 o_file.close()
+
+            self.setResult(rep_file_paths)
 
         else:
             csvfile = open(os.path.abspath(s_file), 'rb')

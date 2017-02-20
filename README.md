@@ -1,4 +1,4 @@
-# ProKlaue Version 0.3.1
+# ProKlaue Version 0.3.3
 ### A Python-Plugin for Maya Autodesk to support biomechanic research
 
 ProKlaue is a biomechanic research project at the Faculty of Veterinary Medicine of the University of Leipzig (Saxony, Germany). The primary goal is to be able to align bone models in a repeatable and deterministic way, as well as to export comparable measures of each bone model over a whole animation for further analysis.
@@ -14,4 +14,4 @@ To support the necessary work and to provide some useful routines inside the 3D-
    * Calculation of minimal/maximal axis parallel plane of an object over a whole animation
    * Using axis parallel planes to measure perpendicular distances to object (relief map data)
 
-The full Plugin documentation (Sphinx) can be found under doc/_build/html/index.html ([preview](https://htmlpreview.github.io/?https://github.com/EnReich/ProKlaue/blob/master/doc/_build/html/index.html)).
+The full Plugin documentation (Sphinx) can be found under doc/_build/html/index.html.

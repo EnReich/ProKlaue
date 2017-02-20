@@ -83,6 +83,7 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
         # parse arguments
         argData = om.MArgParser (self.syntax(), argList)
         s_file = argData.flagArgumentString('file', 0) if (argData.isFlagSet('file')) else ""
+        s_file_plane = argData.flagArgumentString('filePlane', 0) if (argData.isFlagSet('filePlane')) else ""
         threshold = argData.flagArgumentDouble('threshold', 0) if (argData.isFlagSet('threshold')) else 10.0
         animation = argData.flagArgumentBool('anim', 0) if (argData.isFlagSet('anim')) else False
         # get keyframes of object and export data for whole animation if flag is set
@@ -101,6 +102,12 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
         if (len(obj_n) != len(obj_tri)):
             cmds.warning("Number of face normals and number of triangles are not equal! Please triangulate mesh and retry!")
             return
+
+        # open file stream for plane
+        if (s_file_plane != ""):
+            o_file_plane = open(s_file_plane, 'w')
+            o_file_plane.write("Frame\tN\tTx\tTy\tTz\n")
+
 
         # open file stream
         if (s_file != ""):
@@ -156,8 +163,8 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
             for c in obj_centroid:
                 # move origin a little bit away from centroid to avoid self intersection
                 origin = om2.MFloatPoint(c[1:]) + EPSILON*ray_dir
-                print c
-                print plane_centroid_ws
+                # print c
+                # print plane_centroid_ws
                 # method returns list ([hitPoint], hitParam, hitFace, hitTriangle, hitBary2, hitBary2)
                 # value hitFace equals -1 iff no intersection was found
                 hitResult = mfnObject.closestIntersection(origin, ray_dir, om2.MSpace.kWorld, threshold, False, accelParams = accel)
@@ -165,7 +172,7 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
                 if (hitResult[3] == -1):
                     # distance from centroid to plane is the length of the projection v (centroid plane to centroid triangle) onto unit normal vector of plane
                     d = dot(map(operator.sub, c[1:], plane_centroid_ws), plane_n_ws)
-                    print d
+                    # print d
                     # add centroid as 3D point and distance to plane to altitude map
                     if (d <= threshold):
                         altitudeMap.append ( [key] + c + [d] )
@@ -177,6 +184,12 @@ class altitudeMap(OpenMayaMPx.MPxCommand):
                 for item in altitudeMap:
                     #o_file.write("%s\n" % string.replace(string.replace(string.strip(str(item), '[]'), ',', ''), ' ', '\t'))
                     o_file.write("%s\n" % reduce(lambda a, kv: a.replace(*kv), repl, str(item)))
+
+            if s_file_plane != "":
+                plane_vtx_now = [cmds.xform("{}.vtx[{}]".format(obj[1], i), q=1, t=1, ws=1) for i in range(4)]
+                for i in range(4):
+                    o_file_plane.write("{}\t{}\t{}\t{}\t{}\n".format(key, i, plane_vtx_now[i][0], plane_vtx_now[i][1], plane_vtx_now[i][2]))
+
 
         # if animation flag is False, return altitudeMap
         if (s_file != ""):
@@ -193,6 +206,7 @@ def altitudeMapSyntaxCreator():
     syntax = om.MSyntax()
     syntax.setObjectType(om.MSyntax.kStringObjects)
     syntax.addFlag("f", "file", om.MSyntax.kString)
+    syntax.addFlag("fp", "filePlane", om.MSyntax.kString)
     syntax.addFlag("t", "threshold", om.MSyntax.kDouble)
     syntax.addFlag("a", "anim", om.MSyntax.kBoolean)
     return syntax
