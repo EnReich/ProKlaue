@@ -9,7 +9,14 @@ import numpy as np
 import operator
 import math
 
+RAD_TO_DEG = 180/math.pi
+DEG_TO_RAD = math.pi/180
 GRAD_TO_RAD = math.pi/180
+
+I = np.matrix([[1,0,0],
+              [0,1,0],
+              [0,0,1]])
+
 
 def getArgObj(syntax, argList):
     """
@@ -506,3 +513,46 @@ def getRotationMatrix(alpha, beta, gamma, order="xyz", rad=False):
 
     return rot
 
+
+def getSkew(v):
+    return np.matrix([[0, -v[2], v[1]],
+                      [v[2], 0, -v[0]],
+                      [-v[1], v[0], 0]])
+
+def getRotationFromAToB(a, b):
+    """Calculate a rotation matrix to rotate the first vector in the place of the second vector. (In case of normed
+        vectors, the vectors will overlap after rotating a with the rotation matrix).
+        :param a: first vector, to be rotated
+        :type a: np.matrix, shape (3,1)
+        :param b: second vector, determines the position to achieve
+        :type b: np.matrix, shape (3,1)
+        :returns: rotation matrix for a rotation from a to b, as a np.matrix shape (3,3)
+    """
+    a_norm = (a / np.linalg.norm(a))
+    b_norm = (b / np.linalg.norm(b))
+    v = np.matrix(np.cross(a_norm.transpose(), b_norm.transpose())).reshape(3, 1)
+    s = np.linalg.norm(v)
+    c = np.dot(a_norm.A1, b_norm.A1)
+    if c != -1:
+        R = I + getSkew(v.A1) + getSkew(v.A1) * getSkew(v.A1) * (1 / (1 + c))
+    else:
+        v_norm = v / s
+        R = np.matrix(
+            [[2 * v_norm.A1[0] ** 2 - 1, v_norm.A1[0] * v_norm.A1[1] * 2, v_norm.A1[0] * v_norm.A1[2] * 2],
+             [v_norm.A1[1] * v_norm.A1[0] * 2, 2 * v_norm.A1[1] ** 2 - 1, v_norm.A1[1] * v_norm.A1[2] * 2],
+             [v_norm.A1[2] * v_norm.A1[0] * 2, v_norm.A1[2] * v_norm.A1[1] * 2, 2 * v_norm.A1[2] ** 2 - 1]])
+
+    return R
+
+
+def getEulerAnglesToMatrix(m):
+    """Calculate the Euler Angles for a given rotation matrix
+        :param m: rotation matrix
+        :type m: np.matrix, shape (3,3)
+        :returns: [alpha, beta, gamma] for rotation around global X, Y, Z axis in that order
+    """
+    alpha = math.atan2(m[2, 1], m[2, 2]) * RAD_TO_DEG
+    beta = math.atan2(-m[2, 0],
+                      math.sqrt(math.pow(m[2, 1], 2) + math.pow(m[2, 2], 2))) * RAD_TO_DEG
+    gamma = math.atan2(m[1, 0], m[0, 0]) * RAD_TO_DEG
+    return [alpha, beta, gamma]

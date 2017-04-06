@@ -14,7 +14,7 @@ scene_ct = "Berta_Beton_cs.mb"
 base_dir = os.path.abspath(base_dir)        # nothing to do here
 scene_animated = os.path.abspath("{}/{}".format(base_dir, scene_animated))
 scene_ct = os.path.abspath("{}/{}".format(base_dir, scene_ct))
-scene_animated_new = os.path.abspath("{}.mb".format(".".join(scene_animated.split(".")[:-1])))
+scene_animated_new = os.path.abspath("{}_cs.mb".format(".".join(scene_animated.split(".")[:-1])))
 bones_animated = [u'Hornkapsel_links:Mesh', u'Klauenbein_links:Mesh', u'Kronbein_links:Mesh', u'Fesselbein_links:Mesh',
                   u'Hornkapsel_rechts:Mesh', u'Klauenbein_rechts:Mesh', u'Kronbein_rechts:Mesh', u'Fesselbein_rechts:Mesh']     # bones in the animated scene
 bones_ct = [u'Hornkapsel_links:Mesh', u'Klauenbein_links:Mesh', u'Kronbein_links:Mesh', u'Fesselbein_links:Mesh',
@@ -71,5 +71,7 @@ for idx_bone_animated, bone_animated in enumerate(bones_animated):
         # cmds.parent(imported_axis, world=True)
         cmds.parent(imported_axis, bone_animated)
 
-
+# save under new name
+cmds.file(rename=scene_animated_new)
+cmds.file(save=True)
 

@@ -16,11 +16,14 @@ scene_ct = "Alma_clean_Ursprung_rescaliert.mb"
 base_dir = os.path.abspath(base_dir)        # nothing to do here
 scene_animated = os.path.abspath("{}/{}".format(base_dir, scene_animated))
 scene_ct = os.path.abspath("{}/{}".format(base_dir, scene_ct))
-scene_ct_new = os.path.abspath("{}.mb".format(".".join(scene_ct.split(".")[:-1])))
-bones_animated = ["Fesselbein_links:Mesh"]     # bones in the animated scene
-bones_ct = ["Fesselbein_links:Mesh"]           # in the ct scene
-axes = [["ha2_Fesselbein_links1_copy_long_axis_shape"]]             # corresponding axes
-frames = [[490]]           # frames
+scene_ct_new = os.path.abspath("{}_cs.mb".format(".".join(scene_ct.split(".")[:-1])))
+bones_animated = [u'Kronbein_links:Mesh', u'Fesselbein_links:Mesh',
+                  u'Kronbein_rechts:Mesh', u'Fesselbein_rechts:Mesh']     # bones in the animated scene
+bones_ct = [u'Kronbein_links:Mesh', u'Fesselbein_links:Mesh',
+            u'Kronbein_rechts:Mesh', u'Fesselbein_rechts:Mesh']           # in the ct scene
+axes = [["ha1_Kronbein_links1_copy_long_axis_shape"], ["ha2_Fesselbein_links1_copy_long_axis_shape"],
+        ["ha3_Kronbein_rechts1_copy_long_axis_shape"], ["ha4_Fesselbein_rechts1_copy_long_axis_shape"]]             # corresponding axes
+frames = [[491], [490], [491], [491]]           # frames
 
 
 # more variables, nothing necessarily to specify here
