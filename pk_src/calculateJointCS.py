@@ -15,7 +15,9 @@ from sklearn.pipeline import Pipeline
 # from mpl_toolkits.mplot3d import Axes3D
 # import matplotlib.pyplot as plt
 import sympy
+from timeit import default_timer as timer
 
+start = timer()
 
 # calculate the principal curvature for a given bivariate polynomial spline,
 # surface is x(u,v)=x, y(u,v)=v, z(u,v)=P(u,v),
@@ -195,174 +197,241 @@ def surfature(X,Y,Z):
     return Pmax,Pmin
 
 
+threshold = 0.4
 order = 5
-radius = 0.3
-radius_outer = 2*radius
+radius = 1
+radius_outer = 1.2*radius
 interpolation_order = 3
 interpolation_stepsize = 0.05
 
+print "Time: {}".format(timer()-start)
 print "Finding close point pairs"
 
 # get point to the 2 bones who are selected, build kd trees
 objs = cmds.ls(sl=1)
 p0 = np.array(misc.getPointsAsList(objs[0], worldSpace=True))
 p1 = np.array(misc.getPointsAsList(objs[1], worldSpace=True))
-t0 = scipy.spatial.KDTree(p0)
-t1 = scipy.spatial.KDTree(p1)
+p = [p0, p1]
+t0 = scipy.spatial.KDTree(p[0])
+t1 = scipy.spatial.KDTree(p[1])
+t = [t0, t1]
 
 # find pairs of points who are not further away than a given threshold
-rIntersection = t0.query_ball_tree(other=t1, r=0.4)
+rIntersection = t[0].query_ball_tree(other=t[1], r=threshold)
 idx0 = [i for i in range(len(p0)) if rIntersection[i]]
 idx1 = np.array(list(set(np.uint32(np.concatenate(rIntersection)))))
+idx = [idx0, idx1]
 
 # # visual indication by selection
 # cmds.select(clear=True)
 # for i in idx0: cmds.select("{}.vtx[{}]".format(objs[0], i), add=True)
 # for i in idx1: cmds.select("{}.vtx[{}]".format(objs[1], i), add=True)
 
+print "Time: {}".format(timer()-start)
+
 print "Transform coordinates"
 
 # pca on the data points to transform the coordinates
-all_points = np.concatenate((p0[idx0], p1[idx1]), axis=0)
-pca = decomposition.PCA(n_components=3)
-pca.fit(all_points)
-p0_pca = pca.transform(p0[idx0])
-p1_pca = pca.transform(p1[idx1])
 
-print "Fit polynomial"
 
-model = Pipeline([('poly', PolynomialFeatures(degree=order)),
-                  ('linear', LinearRegression(fit_intercept=False))])
+p0_scope = p[0][idx[0]]
+p1_scope = p[1][idx[1]]
+p_scope = [p0_scope, p1_scope]
 
-# z as a response to x, y (coords in pca, z-3rd component)
-model = model.fit(p0_pca[:,:2], p0_pca[:, 2])
+pca0 = decomposition.PCA(n_components=3)
+pca0.fit(p0_scope)
+pca1 = decomposition.PCA(n_components=3)
+pca1.fit(p1_scope)
 
-# coefficients of the polynomial
-C = model.named_steps['linear'].coef_
+pca = [pca0, pca1]
 
-print "Coefficients: "
-print C
-print "Sum of Residuals:"
-print model.named_steps['linear'].residues_
-print model.named_steps['linear'].residues_/len(p0_pca)
+# all_points = np.concatenate((p0[idx0], p1[idx1]), axis=0)
+# pca = decomposition.PCA(n_components=3)
+# pca.fit(all_points)
+# pca = [pca, pca]
 
-print "Find a critical point"
+p0_pca = pca[0].transform(p0_scope)
+t0_pca = scipy.spatial.KDTree(p0_pca)
+p1_pca = pca[1].transform(p1_scope)
+t1_pca = scipy.spatial.KDTree(p1_pca)
 
-# axis = 0 is x and axis = 1 is y (powers of y rise within a row, powers of x rise within a coloumn
-C_as_matrix = np.array([[C[i+j*(j+1)/2] if j<=order else 0 for j in range(i, order+i+1)] for i in range(order+1)]).transpose()
+p_pca = [p0_pca, p1_pca]
+t_pca = [t0_pca, t1_pca]
 
-# gradient
-C_dx_matrix = np.polynomial.polynomial.polyder(C_as_matrix, axis = 0)
-C_dy_matrix = np.polynomial.polynomial.polyder(C_as_matrix, axis = 1)
+for objIndex in [0, 1]:
+    print "Time: {}".format(timer()-start)
+    print "Fit polynomial"
 
-def grad(x):
-    return [np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_matrix),
-            np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_matrix)]
+    model = Pipeline([('poly', PolynomialFeatures(degree=order)),
+                      ('linear', LinearRegression(fit_intercept=False))])
 
-# hessian = jacobian of the gradient
-C_dx_dx_matrix = np.polynomial.polynomial.polyder(C_dx_matrix, axis = 0)
-C_dx_dy_matrix = np.polynomial.polynomial.polyder(C_dx_matrix, axis = 1)
-C_dy_dx_matrix = np.polynomial.polynomial.polyder(C_dy_matrix, axis = 0)
-C_dy_dy_matrix = np.polynomial.polynomial.polyder(C_dy_matrix, axis = 1)
+    # z as a response to x, y (coords in pca, z-3rd component)
+    model = model.fit(p_pca[objIndex][:,:2], p_pca[objIndex][:, 2])
 
-def hess(x):
-    return [[np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_dx_matrix), np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_dy_matrix)],
-            [np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_dx_matrix), np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_dy_matrix)]]
+    # coefficients of the polynomial
+    C = model.named_steps['linear'].coef_
 
-print ""
+    print "Coefficients: "
+    print C
+    print "Sum of Residuals:"
+    print model.named_steps['linear'].residues_
+    print model.named_steps['linear'].residues_/len(p_pca[objIndex])
 
-stop = False
-iter = 0
-while (not stop) and (iter < 10):
-    # find roots of the gradient TODO: vary initial guess
-    sol = scipy.optimize.root(fun=grad, x0=[0, 0], jac=hess)
-    if sol.success:
-        print "SUCCESS"
-        print sol.message
-        print "Check if saddle"
-        if (np.linalg.det(hess(sol.x)) < 0):
-            print "FOUND SADDLE"
-            stop = True
+
+    print "Time: {}".format(timer()-start)
+    print "Find a critical point"
+
+    # axis = 0 is x and axis = 1 is y (powers of y rise within a row, powers of x rise within a coloumn
+    C_as_matrix = np.array([[C[i+j*(j+1)/2] if j<=order else 0 for j in range(i, order+i+1)] for i in range(order+1)]).transpose()
+
+    # gradient
+    C_dx_matrix = np.polynomial.polynomial.polyder(C_as_matrix, axis = 0)
+    C_dy_matrix = np.polynomial.polynomial.polyder(C_as_matrix, axis = 1)
+
+    def grad(x):
+        return [np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_matrix),
+                np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_matrix)]
+
+    # hessian = jacobian of the gradient
+    C_dx_dx_matrix = np.polynomial.polynomial.polyder(C_dx_matrix, axis = 0)
+    C_dx_dy_matrix = np.polynomial.polynomial.polyder(C_dx_matrix, axis = 1)
+    C_dy_dx_matrix = np.polynomial.polynomial.polyder(C_dy_matrix, axis = 0)
+    C_dy_dy_matrix = np.polynomial.polynomial.polyder(C_dy_matrix, axis = 1)
+
+    def hess(x):
+        return [[np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_dx_matrix), np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_dy_matrix)],
+                [np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_dx_matrix), np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_dy_matrix)]]
+
+    print ""
+
+    stop = False
+    iter = 0
+    maxIter = 10
+    guesses = np.concatenate(([[0.0,0.0]], np.random.normal(loc = [0,0], scale = 2.0, size = (maxIter-1, 2))))
+    while (not stop) and (iter < maxIter):
+        # find roots of the gradient
+        sol = scipy.optimize.root(fun=grad, x0=guesses[iter], jac=hess)
+        if sol.success:
+            print "SUCCESS"
+            print sol.message
+            print "Check if saddle"
+            if (np.linalg.det(hess(sol.x)) < 0):
+                print "FOUND SADDLE"
+                stop = True
+            else:
+                print "NOT A SADDLE"
         else:
-            print "NOT A SADDLE"
-    else:
-        print "FAIL"
-        print sol.message
-    iter += 1
+            print "FAIL"
+            print sol.message
+        iter += 1
 
-saddle_pca = [sol.x[0], sol.x[1], np.polynomial.polynomial.polyval2d(sol.x[0], sol.x[1], C_as_matrix)]
-saddle = pca.inverse_transform(saddle_pca)
+    saddle_pca = [sol.x[0], sol.x[1], np.polynomial.polynomial.polyval2d(sol.x[0], sol.x[1], C_as_matrix)]
+    saddle = pca[objIndex].inverse_transform(saddle_pca)
 
-# TODO: calculate curvature of saddle
+    print "Time: {}".format(timer()-start)
 
-# first find all points in a lightly higher radius than the given
-# then calculate principal curvature for these points and then average for all points within a given radius
-scope_outer_idx = t0.query_ball_point(saddle, radius_outer)
-scope_outer = p0[scope_outer_idx]
-scope_outer_pca = pca.transform(scope_outer)
+    # calculate curvature in a scope around saddle
 
-# interpolate through spline
-spline = scipy.interpolate.SmoothBivariateSpline(x=scope_outer_pca[:, 0],
-                                        y=scope_outer_pca[:, 1],
-                                        z=scope_outer_pca[:, 2],
-                                        kx=interpolation_order,
-                                        ky=interpolation_order)
+    # first find all points in a lightly higher radius than the given
+    # then calculate principal curvature for these points and then average for all points within a given radius
+    # scope_outer_idx = idx0
+    # scope_outer = p0_scope
+    scope_outer_pca = p_pca[objIndex]
 
-# coords for evaluation
-# coords_x_range = np.arange(start=saddle_pca[0]-radius, stop=saddle_pca[0]+radius+interpolation_stepsize, step=interpolation_stepsize)
-# coords_y_range = np.arange(start=saddle_pca[0]-radius, stop=saddle_pca[0]+radius+interpolation_stepsize, step=interpolation_stepsize)
-# coords = [[x,y] for x in coords_x_range for y in coords_y_range if scipy.spatial.distance.euclidean([x,y], [saddle_pca[0], saddle_pca[1]])<radius]
+    # scope_outer_idx = t0.query_ball_point(saddle, radius_outer)
+    # scope_outer = p0[scope_outer_idx]
+    # scope_outer_pca = pca.transform(scope_outer)
 
-# find points in inner scope
-scope_inner_idx = t0.query_ball_point(saddle, radius)
-scope_inner = p0[scope_inner_idx]
-scope_inner_pca = pca.transform(scope_inner)
+    # interpolate through spline
+    spline = scipy.interpolate.SmoothBivariateSpline(x=scope_outer_pca[:, 0],
+                                            y=scope_outer_pca[:, 1],
+                                            z=scope_outer_pca[:, 2],
+                                            kx=interpolation_order,
+                                            ky=interpolation_order)
 
-# calculate the shape operator at these points
-shape_operator_scope, tangent_basis = shape_operator_spline(spline=spline, points=scope_inner_pca)
+    print "Time: {}".format(timer()-start)
 
-# calculate the eigenvectors of the shape operator and average them
-shape_eigen_values, shape_eigen_vectors = np.linalg.eig(shape_operator_scope)
-shape_sorted_idx = shape_eigen_values.argsort()[:,::-1]
-shape_eigen_values = np.array([shape_eigen_values[i][shape_sorted_idx[i]] for i in range(len(shape_sorted_idx))])
-shape_eigen_vectors = np.array([shape_eigen_vectors[i][:,shape_sorted_idx[i]] for i in range(len(shape_sorted_idx))])
+    # coords for evaluation
+    # coords_x_range = np.arange(start=saddle_pca[0]-radius, stop=saddle_pca[0]+radius+interpolation_stepsize, step=interpolation_stepsize)
+    # coords_y_range = np.arange(start=saddle_pca[0]-radius, stop=saddle_pca[0]+radius+interpolation_stepsize, step=interpolation_stepsize)
+    # coords = [[x,y] for x in coords_x_range for y in coords_y_range if scipy.spatial.distance.euclidean([x,y], [saddle_pca[0], saddle_pca[1]])<radius]
 
-# shape_eigen_vectors[:,:,0] are the max eigenvectors
-max_curvature_pca = np.average([shape_eigen_vectors[:,:,0][i][0] * tangent_basis[i][0] +
-                                shape_eigen_vectors[:,:,0][i][1] * tangent_basis[i][1]
-                                for i in range(len(shape_eigen_vectors))],
-                               axis=0,
-                               weights=abs(shape_eigen_values[:,0]))
-min_curvature_pca = np.average([shape_eigen_vectors[:,:,1][i][0] * tangent_basis[i][0] +
-                                shape_eigen_vectors[:,:,1][i][1] * tangent_basis[i][1]
-                                for i in range(len(shape_eigen_vectors))],
-                               axis=0,
-                               weights=abs(shape_eigen_values[:, 1]))
+    # find points in inner scope
+    scope_inner_idx = t_pca[objIndex].query_ball_point(saddle_pca, radius)
+    scope_inner_pca = p_pca[objIndex][scope_inner_idx]
 
-max_curvature = pca.inverse_transform(saddle_pca+max_curvature_pca)-saddle
-max_curvature *= 1/np.linalg.norm(max_curvature)
-min_curvature = pca.inverse_transform(saddle_pca+min_curvature_pca)-saddle
-min_curvature *= 1/np.linalg.norm(min_curvature)
+    # scope_inner_idx = t0.query_ball_point(saddle, radius)
+    # scope_inner = p0[scope_inner_idx]
+    # scope_inner_pca = pca.transform(scope_inner)
+
+    # calculate the shape operator at these points
+    shape_operator_scope, tangent_basis = shape_operator_spline(spline=spline, points=scope_inner_pca)
+
+    # calculate the eigenvectors of the shape operator and average them
+    shape_eigen_values, shape_eigen_vectors = np.linalg.eig(shape_operator_scope)
+    shape_sorted_idx = shape_eigen_values.argsort()[:,::-1]
+    shape_eigen_values = np.array([shape_eigen_values[i][shape_sorted_idx[i]] for i in range(len(shape_sorted_idx))])
+    shape_eigen_vectors = np.array([shape_eigen_vectors[i][:,shape_sorted_idx[i]] for i in range(len(shape_sorted_idx))])
+
+    # shape_eigen_vectors[:,:,0] are the max eigenvectors
+    max_curvature_pca = np.average([shape_eigen_vectors[:,:,0][i][0] * tangent_basis[i][0] +
+                                    shape_eigen_vectors[:,:,0][i][1] * tangent_basis[i][1]
+                                    for i in range(len(shape_eigen_vectors))],
+                                   axis=0)#,
+                                   #weights=abs(shape_eigen_values[:,0]))
+    min_curvature_pca = np.average([shape_eigen_vectors[:,:,1][i][0] * tangent_basis[i][0] +
+                                    shape_eigen_vectors[:,:,1][i][1] * tangent_basis[i][1]
+                                    for i in range(len(shape_eigen_vectors))],
+                                   axis=0)#,
+                                   #weights=abs(shape_eigen_values[:, 1]))
+
+    max_curvature = pca[objIndex].inverse_transform(saddle_pca+max_curvature_pca)-saddle
+    max_curvature *= 1/np.linalg.norm(max_curvature)
+    min_curvature = pca[objIndex].inverse_transform(saddle_pca+min_curvature_pca)-saddle
+    min_curvature *= 1/np.linalg.norm(min_curvature)
 
 
-sphere = cmds.polySphere(radius = 0.1)
-cmds.move(saddle[0], saddle[1], saddle[2], sphere, absolute = True)
+    print "Time: {}".format(timer()-start)
 
-cylinderMax = cmds.polyCylinder()
-cmds.scale(0.01,10,0.01, cylinderMax)
-r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(max_curvature).reshape(3,1))
-m = np.matrix(cmds.xform(cylinderMax, q=1, ws=1, m=1)).reshape(4,4).transpose()
-m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-cmds.xform(cylinderMax, m=m_new.transpose().A1, ws=1)
-cmds.move(saddle[0], saddle[1], saddle[2], cylinderMax, absolute = True)
+    objName = objs[objIndex]
+    objName_other = objs[0] if objIndex==1 else objs[1]
 
-cylinderMin = cmds.polyCylinder()
-cmds.scale(0.01,10,0.01, cylinderMin)
-r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(min_curvature).reshape(3,1))
-m = np.matrix(cmds.xform(cylinderMin, q=1, ws=1, m=1)).reshape(4,4).transpose()
-m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-cmds.xform(cylinderMin, m=m_new.transpose().A1, ws=1)
-cmds.move(saddle[0], saddle[1], saddle[2], cylinderMin, absolute = True)
+    sphere = cmds.polySphere(name="saddle_{}_{}".format(objName, objName_other), radius = 0.1)
+    cmds.move(saddle[0], saddle[1], saddle[2], sphere, absolute = True)
+
+    # cylinderMax = cmds.polyCylinder()
+    # cmds.scale(0.01,10,0.01, cylinderMax)
+    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(max_curvature).reshape(3,1))
+    # m = np.matrix(cmds.xform(cylinderMax, q=1, ws=1, m=1)).reshape(4,4).transpose()
+    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
+    # cmds.xform(cylinderMax, m=m_new.transpose().A1, ws=1)
+    # cmds.move(saddle[0], saddle[1], saddle[2], cylinderMax, absolute = True)
+
+    cylinderMin = cmds.polyCylinder(name = "cyl_min_{}_{}".format(objName, objName_other))
+    cmds.scale(0.01,10,0.01, cylinderMin)
+    r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(min_curvature).reshape(3,1))
+    m = np.matrix(cmds.xform(cylinderMin, q=1, ws=1, m=1)).reshape(4,4).transpose()
+    m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
+    cmds.xform(cylinderMin, m=m_new.transpose().A1, ws=1)
+    cmds.move(saddle[0], saddle[1], saddle[2], cylinderMin, absolute = True)
+
+    minXMax = np.cross(min_curvature, max_curvature)
+    cylinderMinxMax = cmds.polyCylinder(name = "cyl_min-x-max_{}_{}".format(objName, objName_other))
+    cmds.scale(0.01,10,0.01, cylinderMinxMax)
+    r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(minXMax).reshape(3,1))
+    m = np.matrix(cmds.xform(cylinderMinxMax, q=1, ws=1, m=1)).reshape(4,4).transpose()
+    m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
+    cmds.xform(cylinderMinxMax, m=m_new.transpose().A1, ws=1)
+    cmds.move(saddle[0], saddle[1], saddle[2], cylinderMinxMax, absolute = True)
+
+    last = np.cross(minXMax, min_curvature)
+    cylinderLast = cmds.polyCylinder(name = "cyl_last_{}_{}".format(objName, objName_other))
+    cmds.scale(0.01,10,0.01, cylinderLast)
+    r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(last).reshape(3,1))
+    m = np.matrix(cmds.xform(cylinderLast, q=1, ws=1, m=1)).reshape(4,4).transpose()
+    m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
+    cmds.xform(cylinderLast, m=m_new.transpose().A1, ws=1)
+    cmds.move(saddle[0], saddle[1], saddle[2], cylinderLast, absolute = True)
 
 # sphereMax = cmds.polySphere(radius = 0.1)
 # cmds.move((saddle+max_curvature)[0], (saddle+max_curvature)[1], (saddle+max_curvature)[2], sphereMax, absolute = True)
