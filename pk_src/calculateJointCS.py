@@ -197,28 +197,54 @@ def surfature(X,Y,Z):
     return Pmax,Pmin
 
 
-threshold = 0.4
+def makeAxis(origin, direction, cylinder_name="Cylinder", cone_name="Cone", cylinder_length=3, cylinder_size=0.025, cone_length=1, cone_size=0.1):
+    direct = direction/np.linalg.norm(direction)
+
+    cylinder = cmds.polyCylinder(name=cylinder_name)
+    cmds.scale(cylinder_size, cylinder_length, cylinder_size, cylinder)
+    r = misc.getRotationFromAToB(a=np.matrix([0, 1, 0]).reshape(3, 1),
+                                 b=np.matrix(direct).reshape(3, 1))
+    m = np.matrix(cmds.xform(cylinder, q=1, ws=1, m=1)).reshape(4, 4).transpose()
+    m_new = np.matrix(np.r_[np.c_[r, [0, 0, 0]], [[0, 0, 0, 1]]]) * m
+    cmds.xform(cylinder, m=m_new.transpose().A1, ws=1)
+    cmds.move(origin[0], origin[1], origin[2], cylinder, absolute=True)
+
+    cone = cmds.polyCone(name=cone_name)
+    cmds.scale(cone_size, cone_length, cone_size, cone)
+    m = np.matrix(cmds.xform(cone, q=1, ws=1, m=1)).reshape(4, 4).transpose()
+    m_new = np.matrix(np.r_[np.c_[r, [0, 0, 0]], [[0, 0, 0, 1]]]) * m
+    cmds.xform(cone, m=m_new.transpose().A1, ws=1)
+    pos_cone = origin + (cylinder_length + cone_length) * direct
+    cmds.move(pos_cone[0],
+              pos_cone[1],
+              pos_cone[2], cone, absolute=True)
+    cmds.parent(cone[0], cylinder[0])
+    return cylinder, cone
+
+threshold = 0.3
 order = 5
-radius = 1
+radius = 0.9
 radius_outer = 1.2*radius
 interpolation_order = 3
 interpolation_stepsize = 0.05
+axis_used = "min"
 
 print "Time: {}".format(timer()-start)
 print "Finding close point pairs"
 
 # get point to the 2 bones who are selected, build kd trees
-objs = cmds.ls(sl=1)
+objs = cmds.ls(sl=1) # first bone is the lower bone or the bone which has the axis for flexion
 p0 = np.array(misc.getPointsAsList(objs[0], worldSpace=True))
 p1 = np.array(misc.getPointsAsList(objs[1], worldSpace=True))
 p = [p0, p1]
 t0 = scipy.spatial.KDTree(p[0])
 t1 = scipy.spatial.KDTree(p[1])
 t = [t0, t1]
+direction_up = np.array(cmds.xform(objs[1], t=1, q=1, ws=1))-cmds.xform(objs[0], t=1, q=1, ws=1)
 
 # find pairs of points who are not further away than a given threshold
 rIntersection = t[0].query_ball_tree(other=t[1], r=threshold)
-idx0 = [i for i in range(len(p0)) if rIntersection[i]]
+idx0 = np.array(list(set([i for i in range(len(p0)) if rIntersection[i]])))
 idx1 = np.array(list(set(np.uint32(np.concatenate(rIntersection)))))
 idx = [idx0, idx1]
 
@@ -239,9 +265,9 @@ p1_scope = p[1][idx[1]]
 p_scope = [p0_scope, p1_scope]
 
 pca0 = decomposition.PCA(n_components=3)
-pca0.fit(p0_scope)
+pca0.fit(p_scope[0])
 pca1 = decomposition.PCA(n_components=3)
-pca1.fit(p1_scope)
+pca1.fit(p_scope[1])
 
 pca = [pca0, pca1]
 
@@ -250,13 +276,17 @@ pca = [pca0, pca1]
 # pca.fit(all_points)
 # pca = [pca, pca]
 
-p0_pca = pca[0].transform(p0_scope)
+p0_pca = pca[0].transform(p_scope[0])
 t0_pca = scipy.spatial.KDTree(p0_pca)
-p1_pca = pca[1].transform(p1_scope)
+p1_pca = pca[1].transform(p_scope[1])
 t1_pca = scipy.spatial.KDTree(p1_pca)
 
 p_pca = [p0_pca, p1_pca]
 t_pca = [t0_pca, t1_pca]
+
+min_curvature = np.empty([2,3])
+max_curvature = np.empty([2,3])
+saddle = np.empty([2,3])
 
 for objIndex in [0, 1]:
     print "Time: {}".format(timer()-start)
@@ -326,7 +356,7 @@ for objIndex in [0, 1]:
         iter += 1
 
     saddle_pca = [sol.x[0], sol.x[1], np.polynomial.polynomial.polyval2d(sol.x[0], sol.x[1], C_as_matrix)]
-    saddle = pca[objIndex].inverse_transform(saddle_pca)
+    saddle[objIndex] = pca[objIndex].inverse_transform(saddle_pca)
 
     print "Time: {}".format(timer()-start)
 
@@ -385,10 +415,14 @@ for objIndex in [0, 1]:
                                    axis=0)#,
                                    #weights=abs(shape_eigen_values[:, 1]))
 
-    max_curvature = pca[objIndex].inverse_transform(saddle_pca+max_curvature_pca)-saddle
-    max_curvature *= 1/np.linalg.norm(max_curvature)
-    min_curvature = pca[objIndex].inverse_transform(saddle_pca+min_curvature_pca)-saddle
-    min_curvature *= 1/np.linalg.norm(min_curvature)
+    if ((objIndex==0 and pca[objIndex].components_[2].dot(direction_up)<0) or
+            (objIndex==1 and pca[objIndex].components_[2].dot(direction_up)>0)):
+        max_curvature_pca, min_curvature_pca = min_curvature_pca, max_curvature_pca
+
+    max_curvature[objIndex] = pca[objIndex].inverse_transform(saddle_pca+max_curvature_pca)-saddle[objIndex]
+    max_curvature[objIndex] *= 1/np.linalg.norm(max_curvature[objIndex])
+    min_curvature[objIndex] = pca[objIndex].inverse_transform(saddle_pca+min_curvature_pca)-saddle[objIndex]
+    min_curvature[objIndex] *= 1/np.linalg.norm(min_curvature[objIndex])
 
 
     print "Time: {}".format(timer()-start)
@@ -397,7 +431,7 @@ for objIndex in [0, 1]:
     objName_other = objs[0] if objIndex==1 else objs[1]
 
     sphere = cmds.polySphere(name="saddle_{}_{}".format(objName, objName_other), radius = 0.1)
-    cmds.move(saddle[0], saddle[1], saddle[2], sphere, absolute = True)
+    cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], sphere, absolute = True)
 
     # cylinderMax = cmds.polyCylinder()
     # cmds.scale(0.01,10,0.01, cylinderMax)
@@ -407,31 +441,67 @@ for objIndex in [0, 1]:
     # cmds.xform(cylinderMax, m=m_new.transpose().A1, ws=1)
     # cmds.move(saddle[0], saddle[1], saddle[2], cylinderMax, absolute = True)
 
-    cylinderMin = cmds.polyCylinder(name = "cyl_min_{}_{}".format(objName, objName_other))
-    cmds.scale(0.01,10,0.01, cylinderMin)
-    r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(min_curvature).reshape(3,1))
-    m = np.matrix(cmds.xform(cylinderMin, q=1, ws=1, m=1)).reshape(4,4).transpose()
-    m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-    cmds.xform(cylinderMin, m=m_new.transpose().A1, ws=1)
-    cmds.move(saddle[0], saddle[1], saddle[2], cylinderMin, absolute = True)
+    # length_cylinder = 3
+    #
+    # cylinderMin = cmds.polyCylinder(name = "cyl_min_{}_{}".format(objName, objName_other))
+    # cmds.scale(0.01,length_cylinder ,0.01, cylinderMin)
+    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(min_curvature[objIndex]).reshape(3,1))
+    # m = np.matrix(cmds.xform(cylinderMin, q=1, ws=1, m=1)).reshape(4,4).transpose()
+    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
+    # cmds.xform(cylinderMin, m=m_new.transpose().A1, ws=1)
+    # cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], cylinderMin, absolute = True)
+    #
+    # coneMin = cmds.polyCone(name="cone_min_{}_{}".format(objName, objName_other))
+    # cmds.scale(0.1, 1., 0.1, coneMin)
+    # m = np.matrix(cmds.xform(coneMin, q=1, ws=1, m=1)).reshape(4, 4).transpose()
+    # m_new = np.matrix(np.r_[np.c_[r, [0, 0, 0]], [[0, 0, 0, 1]]]) * m
+    # cmds.xform(coneMin, m=m_new.transpose().A1, ws=1)
+    # cmds.move((saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[0], (saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[1], (saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[2], coneMin, absolute=True)
+    # cmds.parent(coneMin[0], cylinderMin[0])
 
-    minXMax = np.cross(min_curvature, max_curvature)
-    cylinderMinxMax = cmds.polyCylinder(name = "cyl_min-x-max_{}_{}".format(objName, objName_other))
-    cmds.scale(0.01,10,0.01, cylinderMinxMax)
-    r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(minXMax).reshape(3,1))
-    m = np.matrix(cmds.xform(cylinderMinxMax, q=1, ws=1, m=1)).reshape(4,4).transpose()
-    m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-    cmds.xform(cylinderMinxMax, m=m_new.transpose().A1, ws=1)
-    cmds.move(saddle[0], saddle[1], saddle[2], cylinderMinxMax, absolute = True)
+    if axis_used =="min":
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
+                 cylinder_name="cyl_min_{}_{}".format(objName, objName_other),
+                 cone_name="cone_min_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+    elif axis_used == "all":
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
+                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
+                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+    else:
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
+                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
 
-    last = np.cross(minXMax, min_curvature)
-    cylinderLast = cmds.polyCylinder(name = "cyl_last_{}_{}".format(objName, objName_other))
-    cmds.scale(0.01,10,0.01, cylinderLast)
-    r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(last).reshape(3,1))
-    m = np.matrix(cmds.xform(cylinderLast, q=1, ws=1, m=1)).reshape(4,4).transpose()
-    m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-    cmds.xform(cylinderLast, m=m_new.transpose().A1, ws=1)
-    cmds.move(saddle[0], saddle[1], saddle[2], cylinderLast, absolute = True)
+
+    # minXMax = np.cross(min_curvature[objIndex], max_curvature[objIndex])
+    # cylinderMinxMax = cmds.polyCylinder(name = "cyl_min-x-max_{}_{}".format(objName, objName_other))
+    # cmds.scale(0.01,length_cylinder,0.01, cylinderMinxMax)
+    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(minXMax).reshape(3,1))
+    # m = np.matrix(cmds.xform(cylinderMinxMax, q=1, ws=1, m=1)).reshape(4,4).transpose()
+    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
+    # cmds.xform(cylinderMinxMax, m=m_new.transpose().A1, ws=1)
+    # cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], cylinderMinxMax, absolute = True)
+    #
+    #
+    # last = np.cross(minXMax, min_curvature[objIndex])
+    # cylinderLast = cmds.polyCylinder(name = "cyl_last_{}_{}".format(objName, objName_other))
+    # cmds.scale(0.01,length_cylinder,0.01, cylinderLast)
+    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(last).reshape(3,1))
+    # m = np.matrix(cmds.xform(cylinderLast, q=1, ws=1, m=1)).reshape(4,4).transpose()
+    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
+    # cmds.xform(cylinderLast, m=m_new.transpose().A1, ws=1)
+    # cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], cylinderLast, absolute = True)
+
+
+
+
 
 # sphereMax = cmds.polySphere(radius = 0.1)
 # cmds.move((saddle+max_curvature)[0], (saddle+max_curvature)[1], (saddle+max_curvature)[2], sphereMax, absolute = True)
