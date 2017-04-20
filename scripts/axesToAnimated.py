@@ -8,9 +8,9 @@
 import maya.cmds as cmds
 import os
 
-base_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/Achsen_neu"           # base dir
+base_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/achsen/testdaten"           # base dir
 scene_animated = "Berta_Beton_8erkeys.mb"     # scene paths relative to base dir
-scene_ct = "Berta_Beton_cs.mb"
+scene_ct = "Berta_ct.mb"
 base_dir = os.path.abspath(base_dir)        # nothing to do here
 scene_animated = os.path.abspath("{}/{}".format(base_dir, scene_animated))
 scene_ct = os.path.abspath("{}/{}".format(base_dir, scene_ct))
@@ -19,8 +19,16 @@ bones_animated = [u'Hornkapsel_links:Mesh', u'Klauenbein_links:Mesh', u'Kronbein
                   u'Hornkapsel_rechts:Mesh', u'Klauenbein_rechts:Mesh', u'Kronbein_rechts:Mesh', u'Fesselbein_rechts:Mesh']     # bones in the animated scene
 bones_ct = [u'Hornkapsel_links:Mesh', u'Klauenbein_links:Mesh', u'Kronbein_links:Mesh', u'Fesselbein_links:Mesh',
             u'Hornkapsel_rechts:Mesh', u'Klauenbein_rechts:Mesh', u'Kronbein_rechts:Mesh', u'Fesselbein_rechts:Mesh']           # in the ct scene
-axes = [[], ["Klauenbein_Kronbein_links"], ["Kronbein_Klauenbein_links", "Kronbein_Fesselbein_links"], ["Fesselbein_Kronbein_links"],
-        [], ["Klauenbein_Kronbein_rechts"], ["Kronbein_Klauenbein_rechts", "Kronbein_Fesselbein_rechts"], ["Fesselbein_Kronbein_rechts"]]             # corresponding axes
+
+# axes = [[], ["Klauenbein_Kronbein_links"], ["Kronbein_Klauenbein_links", "Kronbein_Fesselbein_links"], ["Fesselbein_Kronbein_links"],
+#         [], ["Klauenbein_Kronbein_rechts"], ["Kronbein_Klauenbein_rechts", "Kronbein_Fesselbein_rechts"], ["Fesselbein_Kronbein_rechts"]]             # corresponding axes
+
+axes = [[], ["saddle_Klauenbein_links_Kronbein_links"],
+        ["saddle_Kronbein_links_Klauenbein_links", "saddle_Kronbein_links_Fesselbein_links"],
+        ["saddle_Fesselbein_links_Kronbein_links"],
+        [], ["saddle_Klauenbein_rechts_Kronbein_rechts"],
+        ["saddle_Kronbein_rechts_Klauenbein_rechts", "saddle_Kronbein_rechts_Fesselbein_rechts"],
+        ["saddle_Fesselbein_rechts_Kronbein_rechts"]]             # corresponding axes
 
 # more variables, nothing necessarily to specify here
 trans_dir = os.path.abspath("{}/trans/anim".format(base_dir))
@@ -38,7 +46,8 @@ rep_files = cmds.repositionVertices(bones_ct, ex=True, f=rep_dir, sf=1)
 axes_set = set([ax for sl in axes for ax in sl])
 for ax in axes_set:
     export_path = os.path.abspath("{}/ax_{}.mb".format(axes_export_dir, ax))
-    cmds.parent(ax, world=True)
+    if cmds.listRelatives(ax, parent=True) is not None:
+        cmds.parent(ax, world=True)
     cmds.select(clear=True)
     cmds.select(ax)
     exported_file = cmds.file(export_path, type='mayaBinary', es=True)
@@ -62,7 +71,8 @@ for idx_bone_animated, bone_animated in enumerate(bones_animated):
         axis_file = exported_axis_files[axis_for_bone]
         new_nodes = cmds.file(axis_file, i=True, rnn=True, mnc=True)
         tf_nodes = [n for n in new_nodes if cmds.objectType(n) == "transform"]
-        imported_axis = tf_nodes[-1].split("|")[-1]
+        # imported_axis = tf_nodes[-1].split("|")[-1]
+        imported_axis = tf_nodes[0].split("|")[-1]
 
         # apply transformation on the imported
         cmds.applyTransformationFile(imported_axis, f=trans_files[0], inverse=True)

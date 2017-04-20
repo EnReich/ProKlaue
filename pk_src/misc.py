@@ -319,7 +319,6 @@ def getTriangleEdgesReferences(triangles):
 
     return edgeRefs
 
-
 def areaTriangle(vertices):
     """
     Returns the area of a triangle given its three vertices.
@@ -446,7 +445,6 @@ def alignYAxis():
     else:
         cmds.warning("Select exactly two coordinate systems!")
 
-
 def getRotationMatrix(alpha, beta, gamma, order="xyz", rad=False):
     """Calculate a Rotation Matrix for given euler angles
     :param alpha: angle for rotation around x-axis
@@ -513,7 +511,6 @@ def getRotationMatrix(alpha, beta, gamma, order="xyz", rad=False):
 
     return rot
 
-
 def getSkew(v):
     return np.matrix([[0, -v[2], v[1]],
                       [v[2], 0, -v[0]],
@@ -544,7 +541,6 @@ def getRotationFromAToB(a, b):
 
     return R
 
-
 def getEulerAnglesToMatrix(m):
     """Calculate the Euler Angles for a given rotation matrix
         :param m: rotation matrix
@@ -556,3 +552,19 @@ def getEulerAnglesToMatrix(m):
                       math.sqrt(math.pow(m[2, 1], 2) + math.pow(m[2, 2], 2))) * RAD_TO_DEG
     gamma = math.atan2(m[1, 0], m[0, 0]) * RAD_TO_DEG
     return [alpha, beta, gamma]
+
+def getRotationAroundAxis(angle, v, rad=True):
+    if not isinstance(v, np.matrix):
+        v = np.matrix(v).reshape(-1,1)
+    if not rad:
+        angle *= DEG_TO_RAD
+    v_norm = v / np.linalg.norm(v)
+    return np.matrix([[(1 - math.cos(angle)) * v_norm.A1[0] ** 2 + math.cos(angle),
+                       v_norm.A1[0] * v_norm.A1[1] * (1 - math.cos(angle)) - v_norm.A1[2] * math.sin(angle),
+                       v_norm.A1[0] * v_norm.A1[2] * (1 - math.cos(angle)) + v_norm.A1[1] * math.sin(angle)],
+                      [v_norm.A1[1] * v_norm.A1[0] * (1 - math.cos(angle)) + v_norm.A1[2] * math.sin(angle),
+                       (1 - math.cos(angle)) * v_norm.A1[1] ** 2 + math.cos(angle),
+                       v_norm.A1[1] * v_norm.A1[2] * (1 - math.cos(angle)) - v_norm.A1[0] * math.sin(angle)],
+                      [v_norm.A1[2] * v_norm.A1[0] * (1 - math.cos(angle)) - v_norm.A1[1] * math.sin(angle),
+                       v_norm.A1[2] * v_norm.A1[1] * (1 - math.cos(angle)) + v_norm.A1[0] * math.sin(angle),
+                       (1 - math.cos(angle)) * v_norm.A1[2] ** 2 + math.cos(angle)]])

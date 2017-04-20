@@ -224,10 +224,11 @@ def makeAxis(origin, direction, cylinder_name="Cylinder", cone_name="Cone", cyli
 threshold = 0.3
 order = 5
 radius = 0.9
-radius_outer = 1.2*radius
+# radius_outer = 1.2*radius
 interpolation_order = 3
-interpolation_stepsize = 0.05
-axis_used = "min"
+# interpolation_stepsize = 0.05
+left = False
+axis_used = ["auto"]
 
 print "Time: {}".format(timer()-start)
 print "Finding close point pairs"
@@ -240,7 +241,18 @@ p = [p0, p1]
 t0 = scipy.spatial.KDTree(p[0])
 t1 = scipy.spatial.KDTree(p[1])
 t = [t0, t1]
-direction_up = np.array(cmds.xform(objs[1], t=1, q=1, ws=1))-cmds.xform(objs[0], t=1, q=1, ws=1)
+direction_up = np.average(p1, axis=0)-np.average(p0, axis=0)
+direction_up /= np.linalg.norm(direction_up)
+
+if len(objs)>2:
+    direction_in = np.average(misc.getPointsAsList(objs[2], worldSpace=True), axis=0)-np.average(p0, axis=0)
+    direction_in /= np.linalg.norm(direction_in)
+
+if objs[0].find("_links")<0:
+    left = False
+else:
+    left = True
+
 
 # find pairs of points who are not further away than a given threshold
 rIntersection = t[0].query_ball_tree(other=t[1], r=threshold)
@@ -258,7 +270,6 @@ print "Time: {}".format(timer()-start)
 print "Transform coordinates"
 
 # pca on the data points to transform the coordinates
-
 
 p0_scope = p[0][idx[0]]
 p1_scope = p[1][idx[1]]
@@ -424,14 +435,88 @@ for objIndex in [0, 1]:
     min_curvature[objIndex] = pca[objIndex].inverse_transform(saddle_pca+min_curvature_pca)-saddle[objIndex]
     min_curvature[objIndex] *= 1/np.linalg.norm(min_curvature[objIndex])
 
-
     print "Time: {}".format(timer()-start)
 
-    objName = objs[objIndex]
-    objName_other = objs[0] if objIndex==1 else objs[1]
+floating_min = np.cross(min_curvature[0], min_curvature[1])
+floating_min *= 1./np.linalg.norm(floating_min)
+floating_max = np.cross(max_curvature[0], max_curvature[1])
+floating_max *= 1./np.linalg.norm(floating_max)
+
+auto = np.empty([2,3])
+if "auto" in axis_used:
+    if len(objs)>2:
+        # Y points down for left, up for right
+        # Z points away from the body for left, towards the body for right
+        if abs(direction_in.dot(min_curvature[0]))>abs(direction_in.dot(max_curvature[0])):
+            auto[0] = min_curvature[0]
+        else:
+            auto[0] = max_curvature[0]
+
+        if (left and direction_in.dot(auto[0])>0) or ((not left) and  direction_in.dot(auto[0])<0):
+            auto[0] *= -1
+
+        # X points in the direction of sight for left, opposite direction for right
+        sight_estimate = np.cross(auto[0], direction_up)
+        if abs(sight_estimate.dot(min_curvature[1]))>abs(sight_estimate.dot(max_curvature[1])):
+            auto[1] = min_curvature[1]
+        else:
+            auto[1] = max_curvature[1]
+
+        if (left and sight_estimate.dot(auto[1]) < 0) or ((not left) and sight_estimate.dot(auto[1]) > 0):
+            auto[1] *= -1
+
+    else:
+        auto[0] = min_curvature[0] # Z
+        auto[1] = min_curvature[1] # X
+
+    floating_auto = np.cross(auto[0], auto[1]) # Y
+    floating_auto *= 1./np.linalg.norm(floating_auto)
+
+
+# center, body fixed axis and reference axis
+for objIndex in [0, 1]:
+    objName = objs[objIndex].split(":")[0]
+    objName_other = (objs[0] if objIndex==1 else objs[1]).split(":")[0]
 
     sphere = cmds.polySphere(name="saddle_{}_{}".format(objName, objName_other), radius = 0.1)
     cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], sphere, absolute = True)
+
+    if "auto" in axis_used:
+        ax_label = "X" if objIndex==1 else "Z"
+
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=auto[objIndex],
+                               cylinder_name="cyl_{}_{}_{}".format(ax_label, objName, objName_other),
+                               cone_name="cone_{}_{}_{}".format(ax_label, objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=floating_auto,
+                               cylinder_name="cyl_{}_ref_{}_{}".format(ax_label, objName, objName_other),
+                               cone_name="cone_{}_ref_{}_{}".format(ax_label, objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+
+    if "min" in axis_used:
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
+                 cylinder_name="cyl_min_{}_{}".format(objName, objName_other),
+                 cone_name="cone_min_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+
+    if "max" in axis_used:
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
+                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+
+    if "floating_min" in axis_used:
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=floating_min,
+                               cylinder_name="cyl_floating_min_{}_{}".format(objName, objName_other),
+                               cone_name="cone_floating_min_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
+
+    if "floating_max" in axis_used:
+        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=floating_max,
+                               cylinder_name="cyl_floating_max_{}_{}".format(objName, objName_other),
+                               cone_name="cone_floating_max_{}_{}".format(objName, objName_other))
+        cmds.parent(cylinder[0], sphere[0])
 
     # cylinderMax = cmds.polyCylinder()
     # cmds.scale(0.01,10,0.01, cylinderMax)
@@ -459,26 +544,25 @@ for objIndex in [0, 1]:
     # cmds.move((saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[0], (saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[1], (saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[2], coneMin, absolute=True)
     # cmds.parent(coneMin[0], cylinderMin[0])
 
-    if axis_used =="min":
-        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
-                 cylinder_name="cyl_min_{}_{}".format(objName, objName_other),
-                 cone_name="cone_min_{}_{}".format(objName, objName_other))
-        cmds.parent(cylinder[0], sphere[0])
-    elif axis_used == "all":
-        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
-                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
-                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
-        cmds.parent(cylinder[0], sphere[0])
-        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
-                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
-                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
-        cmds.parent(cylinder[0], sphere[0])
-    else:
-        cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
-                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
-                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
-        cmds.parent(cylinder[0], sphere[0])
-
+    # if axis_used =="min" or axis_used =="all":
+    #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
+    #              cylinder_name="cyl_min_{}_{}".format(objName, objName_other),
+    #              cone_name="cone_min_{}_{}".format(objName, objName_other))
+    #     cmds.parent(cylinder[0], sphere[0])
+    # # elif axis_used == "all":
+    # #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
+    # #                               cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+    # #                               cone_name="cone_max_{}_{}".format(objName, objName_other))
+    # #     cmds.parent(cylinder[0], sphere[0])
+    # #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
+    # #                               cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+    # #                               cone_name="cone_max_{}_{}".format(objName, objName_other))
+    # #     cmds.parent(cylinder[0], sphere[0])
+    # if axis_used == "max" or axis_used=="all":
+    #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
+    #                               cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+    #                               cone_name="cone_max_{}_{}".format(objName, objName_other))
+    #     cmds.parent(cylinder[0], sphere[0])
 
     # minXMax = np.cross(min_curvature[objIndex], max_curvature[objIndex])
     # cylinderMinxMax = cmds.polyCylinder(name = "cyl_min-x-max_{}_{}".format(objName, objName_other))
