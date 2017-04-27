@@ -14,7 +14,7 @@ def angles(a, b):
     return math.atan2(np.cross(a,b), np.dot(a,b))*180/math.pi
 
 
-frames = range(0, 830)
+frames = range(0, 820)
 sel = cmds.ls(sl=1)
 axis1 = sel[0]
 axis2 = sel[1]
@@ -87,11 +87,12 @@ for frame in frames:
     dir1_ref /= np.linalg.norm(dir1_ref)
     dir2_ref /= np.linalg.norm(dir2_ref)
 
-    dir1_other = np.cross(dir1, dir1_ref) # pi/2 ahead
-    dir2_other = np.cross(dir2, dir2_ref) # pi/2 ahead
+    dir1_other = np.cross(dir1, dir1_ref) # pi/2 ahead wrt. dir1_ref around dir1
+    dir2_other = np.cross(dir2, dir2_ref) # pi/2 ahead wrt. dir2_ref around dir2
 
     r1 = math.acos(np.clip(np.dot(dir1_ref, dir_floating),-1,1))*misc.RAD_TO_DEG
     r2 = math.acos(np.clip(np.dot(dir2_ref, dir_floating),-1,1))*misc.RAD_TO_DEG
+
 
     if np.dot(dir1_other,dir_floating)>0:
         r1 *= -1
