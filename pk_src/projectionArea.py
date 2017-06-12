@@ -1,5 +1,5 @@
 """
-Given a plane (4 vertices, 1 facet) and an triangulated mesh to calculte the projected Area
+Given a plane (4 vertices, 1 facet) and a triangulated mesh to calculte the projected Area
 onto the plane (projection in the inverse direction of the face normal of the plane).
 The distance for the threshold is measured from the plane to the centroid of the triangle.
 Triangles in negative direction from the plane are not considered (I.r.t. the plane normal).
@@ -7,7 +7,7 @@ Triangles with a larger distance than a given threshold will be discarded.
 
 **see also:** :ref:`axisParallelPlane`
 
-**command:** cmds.altitudeMap(obj, plane, threshold = 10.0, cosinusmax = 0.0)
+**command:** cmds.projectionArea(obj, plane, threshold = 10.0, cosinusmax = 0.0)
 
 **Args:**
     :threshold(t): threshold of maximum distance from plane; all facets with larger distance will be discarded
@@ -18,7 +18,7 @@ Triangles with a larger distance than a given threshold will be discarded.
         of the polygon wont always be outlines of the projection.
     :select(s): boolean (default False) indicating whether the outline points should be selected if present in the
         current object (created intersection points can and will not be selected)
-    :f(file): save the calculated outline segments to the given file path
+    :file(f): save the calculated outline segments to the given file path
 
 :returns: the area of the projection of the mesh onto the plane
 """
@@ -85,7 +85,7 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         argData = om.MArgParser(self.syntax(), argList)
         s_file = argData.flagArgumentString('file', 0) if (argData.isFlagSet('file')) else ""
         threshold = argData.flagArgumentDouble('threshold', 0) if (argData.isFlagSet('threshold')) else 10.0
-        angle_culling = argData.flagArgumentDouble('radiant', 0) if (argData.isFlagSet('radiant')) else 0
+        angle_culling = argData.flagArgumentDouble('cosinusmax', 0) if (argData.isFlagSet('cosinusmax')) else 0
         # animation = argData.flagArgumentBool('anim', 0) if (argData.isFlagSet('anim')) else False
         select = argData.flagArgumentBool('select', 0) if (argData.isFlagSet('select')) else False
 
@@ -100,7 +100,7 @@ class projectionArea(OpenMayaMPx.MPxCommand):
         # remove all triangles whose face normal points in same direction as plane normal (backface culling)
         obj_tri_bc = [obj_tri[i] for i, n in enumerate(obj_n) if dot(plane_n, n) < angle_culling]
 
-        # remove all tringles that are further away than threshhold
+        # remove all triangles that are further away than threshhold
         obj_tri_th = [tri for tri in obj_tri_bc
                       if 0 <= np.dot(plane_n, (np.array(
                 misc.centroidTriangle([obj_vtx[tri[i]] for i in range(3)]))-plane_vtx[0])) < threshold]

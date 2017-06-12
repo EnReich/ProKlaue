@@ -2,6 +2,7 @@ import pk_src
 from pk_src import misc
 import maya.cmds as cmds
 import numpy as np
+import math
 import scipy
 import scipy.optimize
 import scipy.spatial
@@ -14,7 +15,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 # from mpl_toolkits.mplot3d import Axes3D
 # import matplotlib.pyplot as plt
-import sympy
+# import sympy
 from timeit import default_timer as timer
 
 start = timer()
@@ -229,6 +230,8 @@ interpolation_order = 3
 # interpolation_stepsize = 0.05
 left = False
 axis_used = ["auto"]
+save_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/achsen/ergebnisse"
+
 
 print "Time: {}".format(timer()-start)
 print "Finding close point pairs"
@@ -253,6 +256,18 @@ if objs[0].find("_links")<0:
 else:
     left = True
 
+# open save file
+if save_dir != "":
+    path = "{}/cs-{}-{}.csv".format(save_dir, objs[0].split(":")[0], objs[1].split(":")[0])
+    save_file = open(path, 'w')
+    save_file.write('variable,value\n')
+    save_file.write('"objs[0]","{}"\n'.format(objs[0]))
+    save_file.write('"objs[1]","{}"\n'.format(objs[1]))
+    save_file.write('"TM[0]","{}"\n'.format(cmds.xform(objs[0], q=1, ws=1, m=1)))
+    save_file.write('"TM[1]","{}"\n'.format(cmds.xform(objs[1], q=1, ws=1, m=1)))
+    save_flag = True
+else:
+    save_flag = False
 
 # find pairs of points who are not further away than a given threshold
 rIntersection = t[0].query_ball_tree(other=t[1], r=threshold)
@@ -517,6 +532,51 @@ for objIndex in [0, 1]:
                                cylinder_name="cyl_floating_max_{}_{}".format(objName, objName_other),
                                cone_name="cone_floating_max_{}_{}".format(objName, objName_other))
         cmds.parent(cylinder[0], sphere[0])
+
+
+
+if save_flag:
+    for objIndex in [0, 1]:
+        save_file.write('"saddle[{}]","{}"\n'.format(objIndex, saddle[objIndex]))
+        save_file.write('"max[{}]","{}"\n'.format(objIndex, max_curvature[objIndex]))
+        save_file.write('"min[{}]","{}"\n'.format(objIndex, min_curvature[objIndex]))
+
+    save_file.write('"axis_used","{}"\n'.format(axis_used))
+
+    if "auto" in axis_used:
+        save_file.write('"X","{}"\n'.format(auto[1]))
+        save_file.write('"Y","{}"\n'.format(floating_auto))
+        save_file.write('"Z","{}"\n'.format(auto[0]))
+        x_axis = auto[1]
+        y_axis = floating_auto
+        z_axis = auto[0]
+
+
+    elif axis_used[0]=="min":
+        save_file.write('"X","{}"\n'.format(min_curvature[1]))
+        save_file.write('"Y","{}"\n'.format(floating_min))
+        save_file.write('"Z","{}"\n'.format(min_curvature[0]))
+        x_axis = min_curvature[1]
+        y_axis = floating_min
+        z_axis = min_curvature[0]
+
+    else:
+        save_file.write('"X","{}"\n'.format(max_curvature[1]))
+        save_file.write('"Y","{}"\n'.format(floating_max))
+        save_file.write('"Z","{}"\n'.format(max_curvature[0]))
+        x_axis = max_curvature[1]
+        y_axis = floating_max
+        z_axis = max_curvature[0]
+
+    r_floating = math.acos(np.clip(np.dot(z_axis, x_axis), -1, 1)) * misc.RAD_TO_DEG
+    x_ahead = np.array((misc.getRotationAroundAxis(angle=math.pi / 2, v=y_axis, rad=True) * np.matrix(
+        x_axis).reshape(3, 1))).reshape(3)
+    if np.dot(z_axis, x_ahead) > 0:
+        r_floating *= -1
+    save_file.write('"RF","{}"\n'.format(r_floating))
+
+    save_file.close()
+
 
     # cylinderMax = cmds.polyCylinder()
     # cmds.scale(0.01,10,0.01, cylinderMax)
