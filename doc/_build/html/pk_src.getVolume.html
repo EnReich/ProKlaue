@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>getVolume &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>getVolume &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -49,7 +49,7 @@
 <span class="target" id="module-pk_src.getVolume"></span><p>Calculates the volume of a polygonal object by using signed volumes.
 All triangle faces of the mesh will be expanded to tetrahedra which are topped off at the origin (0,0,0). Sign of the volume is determined by the direction of the origin from the current face
 (<a class="reference external" href="http://stackoverflow.com/questions/1406029/how-to-calculate-the-volume-of-a-3d-mesh-object-the-surface-of-which-is-made-up">source</a>).
-Command only accepts &#8216;transform&#8217; nodes and will only be applied to the first object of the current selection.</p>
+Command only accepts ‘transform’ nodes and will only be applied to the first object of the current selection.</p>
 <p>There is a mel-command in Maya named <a class="reference external" href="http://help.autodesk.com/cloudhelp/2016/ENU/Maya-Tech-Docs/Commands/computePolysetVolume.html">computePolysetVolume</a> which calculates the volume of the selected object. The Maya command returns the exact same result (except numerical error <img class="math" src="_images/math/26cc3cf76baf4e94d6956571b24fb46ad433d0e2.png" alt="&lt; 10^{-5}"/>) as this implementation but runs roughly 100 times slower.</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
@@ -57,7 +57,7 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object&#8217;s name inside maya</td>
+<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object’s name inside maya</td>
 </tr>
 </tbody>
 </table>
@@ -67,7 +67,7 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">float value with volume (based on maya&#8217;s unit of length)</td>
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">float value with volume (based on maya’s unit of length)</td>
 </tr>
 </tbody>
 </table>
@@ -130,8 +130,8 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.getVolume.rst.txt"

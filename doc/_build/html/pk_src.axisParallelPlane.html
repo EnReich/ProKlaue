@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>axisParallelPlane &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>axisParallelPlane &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -46,19 +46,19 @@
   <div class="section" id="axisparallelplane">
 <span id="id1"></span><h1>axisParallelPlane<a class="headerlink" href="#axisparallelplane" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
-<span class="target" id="module-pk_src.axisParallelPlane"></span><p>Inserts an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object&#8217;s center point.
-The axis parallel plane can be calculated for one single time step or a complete animation. In case of a parent node with the type &#8216;joint&#8217; the keyframes will be automatically catched (whether the transform node or joint node is selected, the behaviour will be the same). If the first keyframe in the animation is &#8216;separated&#8217; from all other frames, i.e. the frame distance from first to second is much larger than from second to third frame, this first keyframe will be ignored in the calculation of the axis parallel plane.</p>
+<span class="target" id="module-pk_src.axisParallelPlane"></span><p>Inserts an axis parallel plane (app) with normal vector along x-,y- or z-axis to be tangential to the minimum/maximum vertex of a selected object (in the specified axis direction), i.e. the plane has exactly one contact point with the selected object in its minimum/maximum x, y or z direction. Additionally the position of the plane is set to be below/above the mesh object’s center point.
+The axis parallel plane can be calculated for one single time step or a complete animation. In case of a parent node with the type ‘joint’ the keyframes will be automatically catched (whether the transform node or joint node is selected, the behaviour will be the same). If the first keyframe in the animation is ‘separated’ from all other frames, i.e. the frame distance from first to second is much larger than from second to third frame, this first keyframe will be ignored in the calculation of the axis parallel plane.</p>
 <p><strong>see also:</strong> <a class="reference internal" href="pk_src.centerPoint.html#centerpoint"><span class="std std-ref">centerPoint</span></a>, <a class="reference internal" href="pk_src.altitudeMap.html#altitudemap"><span class="std std-ref">altitudeMap</span></a></p>
-<p><strong>command:</strong> cmds.axisParallelPlane([obj], plane = &#8216;yz&#8217;, position = &#8216;min&#8217;)</p>
+<p><strong>command:</strong> cmds.axisParallelPlane([obj], plane = ‘yz’, position = ‘min’)</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
 <dd><table class="first last docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">plane(p):</th><td class="field-body">string (&#8216;xy&#8217;, &#8216;xz&#8217;, &#8216;yz&#8217;) to specifiy plane direction (default &#8216;xz&#8217;)</td>
+<tr class="field-odd field"><th class="field-name">plane(p):</th><td class="field-body">string (‘xy’, ‘xz’, ‘yz’) to specifiy plane direction (default ‘xz’)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">position(pos):</th><td class="field-body">string (&#8216;min&#8217;, &#8216;max&#8217;) to specify if plane should be positioned at the minimal/maximal vertex position concerning the plane orientation (default &#8216;min&#8217;)</td>
+<tr class="field-even field"><th class="field-name">position(pos):</th><td class="field-body">string (‘min’, ‘max’) to specify if plane should be positioned at the minimal/maximal vertex position concerning the plane orientation (default ‘min’)</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">anim(a):</th><td class="field-body">boolean flag to indicate if plane should be calculated for the whole animation (True) or only for the current time step (default False)</td>
 </tr>
@@ -70,7 +70,7 @@ The axis parallel plane can be calculated for one single time step or a complete
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">name of created polyPlane object (name will be object name plus &#8216;_app&#8217;)</td>
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">name of created polyPlane object (name will be object name plus ‘_app’)</td>
 </tr>
 </tbody>
 </table>
@@ -129,8 +129,8 @@ The axis parallel plane can be calculated for one single time step or a complete
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.axisParallelPlane.rst.txt"

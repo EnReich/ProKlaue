@@ -1,6 +1,11 @@
 Known Issues/TODO:
-   - No Shelf tab/buttons in Maya 2016
+   - No Shelf tab/buttons in Maya 2016, no compatibility
    - Rework UI (show currently selected object(s), progress, info-messages, remove deprecated elements, etc.)
+
+Update 0.3.4:
+    - added scripts to calculate Joint Axes on principal curvature directions
+    - added scripts to parse a tek pressure data file and calculate outline of imprint
+    - both uses sklearn
 
 Update 0.3.3:
     - new commands: cmds.projectionArea, cmds.overlapStatistic

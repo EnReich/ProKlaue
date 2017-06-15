@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>alignObj &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>alignObj &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -27,7 +27,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="centerPoint" href="pk_src.centerPoint.html" />
-    <link rel="prev" title="altitudeMap" href="pk_src.altitudeMap.html" />
+    <link rel="prev" title="projectionArea" href="pk_src.projectionArea.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -47,18 +47,18 @@
 <span id="id1"></span><h1>alignObj<a class="headerlink" href="#alignobj" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
 <span class="target" id="module-pk_src.alignObj"></span><p>Calculates the eigenvectors of the current object, inserts one extra column and row and returns a 4x4 transformation matrix as 16 float-values. The eigenvectors are calculated in another function called <a class="reference internal" href="pk_src.eigenvector.html#eigenvector"><span class="std std-ref">eigenvector</span></a>.
-Command only accepts &#8216;transform&#8217; nodes and will only be applied to the first object of the current selection.</p>
+Command only accepts ‘transform’ nodes and will only be applied to the first object of the current selection.</p>
 <p><strong>see also:</strong> <a class="reference internal" href="pk_src.eigenvector.html#eigenvector"><span class="std std-ref">eigenvector</span></a>, <a class="reference internal" href="pk_src.normalize.html#normalize"><span class="std std-ref">normalize</span></a></p>
-<p><strong>command:</strong> cmds.alignObj([obj], axisOrder = &#8216;yzx&#8217;, fast = False)</p>
+<p><strong>command:</strong> cmds.alignObj([obj], axisOrder = ‘yzx’, fast = False)</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
 <dd><table class="first last docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object&#8217;s name inside maya</td>
+<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object’s name inside maya</td>
 </tr>
-<tr class="field-even field"><th class="field-name">axisOrder(ao):</th><td class="field-body">string to define axis order of eigenvectors (default &#8216;yzx&#8217;)</td>
+<tr class="field-even field"><th class="field-name">axisOrder(ao):</th><td class="field-body">string to define axis order of eigenvectors (default ‘yzx’)</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">fast(f):</th><td class="field-body">boolean flag to indicate if calculation should use convex hull (faster but inaccurate)</td>
 </tr>
@@ -88,7 +88,7 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
   <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
-      <li>Previous: <a href="pk_src.altitudeMap.html" title="previous chapter">altitudeMap</a></li>
+      <li>Previous: <a href="pk_src.projectionArea.html" title="previous chapter">projectionArea</a></li>
       <li>Next: <a href="pk_src.centerPoint.html" title="next chapter">centerPoint</a></li>
   </ul></li>
   </ul></li>
@@ -119,8 +119,8 @@ Command only accepts &#8216;transform&#8217; nodes and will only be applied to t
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.alignObj.rst.txt"

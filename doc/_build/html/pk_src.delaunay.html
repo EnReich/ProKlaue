@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>delaunay &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>delaunay &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -47,8 +47,8 @@
 <span id="id1"></span><h1>delaunay<a class="headerlink" href="#delaunay" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
 <span class="target" id="module-pk_src.delaunay"></span><p>Calculates the 3D delaunay triangulation (scipy library) on the vertices of a mesh object to have a real 3D solid representation of a given object model. Because the delaunay triangulation in scipy returns an unsorted list of vertices for each tetrahedron, the vertices are reordered to comply with the implicit normal definition used in Maya Autodesk. The result will be the triangulated convex hull of the given object mesh.</p>
-<p>Command currently only returns a list of strings where each string encodes the vertices of one tetrahedron (as flattened 1D list) with its correct vertex order for an implicit normal definition (all normals are pointing away from center point of tetrahedron). That means, that the result needs to be converted to matrices (nested lists) again using &#8216;numpy.fromstring(str, sep=&#8221;,&#8221;).reshape(4,3)&#8217; for each string &#8216;str&#8217; in the returned list. The reason for this behavior is the fact, that one cannot return nested lists in Maya commands and the only workaround is to cast them to strings first.</p>
-<p>Command only accepts &#8216;transform&#8217; nodes and will only be applied to the first object of the current selection.</p>
+<p>Command currently only returns a list of strings where each string encodes the vertices of one tetrahedron (as flattened 1D list) with its correct vertex order for an implicit normal definition (all normals are pointing away from center point of tetrahedron). That means, that the result needs to be converted to matrices (nested lists) again using ‘numpy.fromstring(str, sep=”,”).reshape(4,3)’ for each string ‘str’ in the returned list. The reason for this behavior is the fact, that one cannot return nested lists in Maya commands and the only workaround is to cast them to strings first.</p>
+<p>Command only accepts ‘transform’ nodes and will only be applied to the first object of the current selection.</p>
 <p><strong>command:</strong> cmds.delaunay([obj])</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
@@ -56,7 +56,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object&#8217;s name inside maya</td>
+<tr class="field-odd field"><th class="field-name">obj:</th><td class="field-body">string with object’s name inside maya</td>
 </tr>
 </tbody>
 </table>
@@ -66,7 +66,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">list of tetrahedrons as strings (each string represents 4 vertices with 3 points each separated by &#8216;,&#8217;. Numbers [0:3] are first vertex, [3:6] second vertex, ...)</td>
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">list of tetrahedrons as strings (each string represents 4 vertices with 3 points each separated by ‘,’. Numbers [0:3] are first vertex, [3:6] second vertex, …)</td>
 </tr>
 </tbody>
 </table>
@@ -123,8 +123,8 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.delaunay.rst.txt"

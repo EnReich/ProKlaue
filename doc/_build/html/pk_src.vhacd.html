@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>vhacd &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>vhacd &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -46,12 +46,12 @@
   <div class="section" id="vhacd">
 <span id="id1"></span><h1>vhacd<a class="headerlink" href="#vhacd" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
-<span class="target" id="module-pk_src.vhacd"></span><p>Uses the V-HACD library (<a class="reference external" href="https://github.com/kmammou/v-hacd">https://github.com/kmammou/v-hacd</a>) to calculate an approximate convex decomposition for a number of selected or given objects. Because Maya&#8217;s object representation is usually a surface mesh, it is sometimes necessary to convert the object to a solid geometry (especially when using complex objects or boolean operations). Using convex decomposition avoids problems concerning holes or non-manifold geometry. The original object will be approximated by a finite number of convex polyhedra organized in one group per original object.</p>
+<span class="target" id="module-pk_src.vhacd"></span><p>Uses the V-HACD library (<a class="reference external" href="https://github.com/kmammou/v-hacd">https://github.com/kmammou/v-hacd</a>) to calculate an approximate convex decomposition for a number of selected or given objects. Because Maya’s object representation is usually a surface mesh, it is sometimes necessary to convert the object to a solid geometry (especially when using complex objects or boolean operations). Using convex decomposition avoids problems concerning holes or non-manifold geometry. The original object will be approximated by a finite number of convex polyhedra organized in one group per original object.</p>
 <p>The available properties and settings of V-HACD are taken directly from the <a class="reference external" href="http://kmamou.blogspot.de/2014/12/v-hacd-20-parameters-description.html">description page</a>.</p>
-<p>Script makes use of the <em>wrl2ma</em>-command under <em>maya/bin</em> to parse to and from different formats. Apparently there are some old parser-inconsistencies which may produce warning or error messages, which (as far as observed) have no visible effect on the produces mesh. Also the path to the directories <em>maya/bin</em> for <em>wrl2ma</em> and <em>plug-ins/bin</em> for V-HACD is guessed through the environment path variable of the operating system.</p>
+<p>(Outdated, but maybe used again: Script makes use of the <em>wrl2ma</em>-command under <em>maya/bin</em> to parse to and from different formats. Apparently there are some old parser-inconsistencies which may produce warning or error messages, which (as far as observed) have no visible effect on the produces mesh. Also the path to the directories <em>maya/bin</em> for <em>wrl2ma</em> and <em>plug-ins/bin</em> for V-HACD is guessed through the environment path variable of the operating system.)</p>
 <p><strong>NOTE:</strong> There are observed cases where V-HACD was not able to create a real solid geometry for a given mesh (without any topological holes) but rather creates a convex decomposition where the summed volume of the convex parts is smaller than the volume of the original mesh, i.e. the decomposition creates a topologically different model where the inner area is hollow. Therefore one should always verify the output mesh and in case of a faulty decomposition choose different parameter settings (a smaller <em>depth</em>-value usually avoids this problem).</p>
 <p><strong>see also:</strong> <a class="reference internal" href="pk_src.getVolume.html#getvolume"><span class="std std-ref">getVolume</span></a>, <a class="reference internal" href="pk_src.intersection.html#intersection"><span class="std std-ref">intersection</span></a></p>
-<p><strong>command:</strong> cmds.vhacd([obj], tmp = &#8216;~/&#8217;, exe = &#8216;../maya/bin/plug-ins/bin/testVHACD&#8217;, res = 100000, d = 20, con = 0.001, pd = 4, chd = 4, a = 0.05, b = 0.05, g = 0.0005, pca = False, m = 0, vtx = 64, vol = 0.0001)</p>
+<p><strong>command:</strong> cmds.vhacd([obj], tmp = ‘~/’, exe = ‘../maya/bin/plug-ins/bin/testVHACD’, res = 100000, d = 20, con = 0.001, pd = 4, chd = 4, a = 0.05, b = 0.05, g = 0.0005, pca = False, m = 0, vtx = 64, vol = 0.0001)</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
 <dd><table class="first last docutils field-list" frame="void" rules="none">
@@ -59,23 +59,23 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name" colspan="2">tmp(temporaryDir):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">directory to save temporary created files (needs read and write access). If no path is given the temporary files will be written into the user home directory</td>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">directory to save temporary created files (needs read and write access). If no path is given the temporary files will be written into the user home directory</td>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">executable(exe):</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body">absolute path to the executable V-HACD file. If no path is given maya/bin/plug-ins/bin/testVHACD is used.</td>
+<tr class="field-even field"><td>&#160;</td><td class="field-body">absolute path to the executable V-HACD file. If no path is given maya/bin/plug-ins/bin/testVHACD is used.</td>
 </tr>
 <tr class="field-odd field"><th class="field-name" colspan="2">resolution(res):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">maximum number of voxels generated during the voxelization stage (10.000 - 64.000.000, default: 100.000)</td>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">maximum number of voxels generated during the voxelization stage (10.000 - 64.000.000, default: 100.000)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">depth(d):</th><td class="field-body">maximum number of clipping stages. During each split stage, all the model parts (with a concavity higher than the user defined threshold) are clipped according the &#8220;best&#8221; clipping plane (1 - 32, default: 20)</td>
+<tr class="field-even field"><th class="field-name">depth(d):</th><td class="field-body">maximum number of clipping stages. During each split stage, all the model parts (with a concavity higher than the user defined threshold) are clipped according the “best” clipping plane (1 - 32, default: 20)</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">concavity(con):</th><td class="field-body">maximum concavity (0.0 - 1.0, default: 0.001)</td>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">planeDownsampling(pd):</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body">controls the granularity of the search for the &#8220;best&#8221; clipping plane (1 - 16, default: 4)</td>
+<tr class="field-even field"><td>&#160;</td><td class="field-body">controls the granularity of the search for the “best” clipping plane (1 - 16, default: 4)</td>
 </tr>
 <tr class="field-odd field"><th class="field-name" colspan="2">convexHullDownsampling(chd):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">controls the precision of the convex-hull generation process during the clipping plane selection stage (1 - 16, default: 4)</td>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">controls the precision of the convex-hull generation process during the clipping plane selection stage (1 - 16, default: 4)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">alpha(a):</th><td class="field-body">controls the bias toward clipping along symmetry planes (0.0 - 1.0, default: 0.05)</td>
 </tr>
@@ -84,15 +84,15 @@
 <tr class="field-even field"><th class="field-name">gamma(g):</th><td class="field-body">maximum allowed concavity during the merge stage (0.0 - 1.0, default: 0.0005)</td>
 </tr>
 <tr class="field-odd field"><th class="field-name" colspan="2">normalizeMesh(pca):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">enable/disable normalizing the mesh before applying the convex decomposition (True/False, default: False)</td>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">enable/disable normalizing the mesh before applying the convex decomposition (True/False, default: False)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">mode(m):</th><td class="field-body">voxel-based approximate convex decomposition (0, default) or tetrahedron-based approximate convex decomposition (1)</td>
 </tr>
 <tr class="field-odd field"><th class="field-name" colspan="2">maxNumVerticesPerCH(vtx):</th></tr>
-<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">controls the maximum number of triangles per convex-hull (4 - 1024, default: 64)</td>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">controls the maximum number of triangles per convex-hull (4 - 1024, default: 64)</td>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">minVolumePerCH(vol):</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body">controls the adaptive sampling of the generated convex-hulls (0.0 - 0.01, default: 0.0001)</td>
+<tr class="field-even field"><td>&#160;</td><td class="field-body">controls the adaptive sampling of the generated convex-hulls (0.0 - 0.01, default: 0.0001)</td>
 </tr>
 </tbody>
 </table>
@@ -149,8 +149,8 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.vhacd.rst.txt"

@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>proKlaue &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>proKlaue &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -33,7 +33,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -54,22 +54,29 @@
 
 <span class="sd">Requirements</span>
 <span class="sd">============</span>
-<span class="sd">- Maya Autodesk 2013 (or newer)</span>
+<span class="sd">- Maya Autodesk 2014 (not working under newer versions and all systems)</span>
 <span class="sd">- Numpy Package for Python2.7 (at least 0.12.0)</span>
 <span class="sd">- Scipy Package for Python2.7 (at least 0.16.0)</span>
-<span class="sd">- V-HACD Library</span>
+
+<span class="sd">and for some commands:</span>
+
+<span class="sd">- V-HACD Library (approximation of intersection volume)</span>
+<span class="sd">- Sklearn Package for Python2.7 (at least 0.18.1, for PCA and Clustering) </span>
 
 <span class="sd">Installation of Numpy &amp; Scipy for Maya</span>
 <span class="sd">--------------------------------------</span>
-<span class="sd">Maya Autodesk is shipped with its own Python2.7-Installation which does not make any use of already existing Python-Installations on the system. This includes all Python-Libraries as well. So in order to make Python-Libraries work directly inside Maya, the following steps are necessary:</span>
+<span class="sd">Maya Autodesk is shipped with its own Python2.7-Installation which does not make any use of already existing Python-Installations on the system. This includes all Python-Libraries as well. So in order to make Python-Libraries work directly inside Maya, one has only a few limited options. One of them is to install the same Python Version, which is used by Maya, and install the packages needed and place them into the associated Maya Python directory. The installation of such a Python version can be rather tricky, for example Maya2014 under Windows uses a Python version compiled with MSVC2010 (for further details see here: https://forums.autodesk.com/t5/maya-programming/guide-how-to-install-numpy-scipy-in-maya-windows-64-bit/td-p/5796722). For an alternative under windows see down below.</span>
 
 <span class="sd">- Installation of Python 2.7 for the current system</span>
-<span class="sd">- Install *Numpy* and *Scipy* (either using the Linux install repository or the *pip*-command of python, e.g. &#39;pip install -i https://pypi.anaconda.org/carlkl/simple numpy&#39;)</span>
+<span class="sd">- Install *Numpy* and *Scipy* (and sklearn) (either using the Linux install repository or the *pip*-command of python, e.g. &#39;pip install -i https://pypi.anaconda.org/carlkl/simple numpy&#39;)</span>
 <span class="sd">- Search subdirectory &#39;site-packages&#39; in Python2.7 install path</span>
 <span class="sd">- Select and copy directories *numpy* &amp; *scipy*</span>
 <span class="sd">- Go to the Maya Directory (e.g. &#39;C://Program Files/Autodesk/Maya2014/Python/lib/site-packages&#39;) and insert copied files</span>
 
 <span class="sd">After a restart of Maya the command &#39;import numpy&#39; should be usable; if not the wrong version was installed.</span>
+
+<span class="sd">An alternative solution would be to simply copy the associated packages from some source, for example https://drive.google.com/drive/folders/0BwsYd1k8t0lEfjJqV21yTnd2elVhNXEyTXhHclhxbDhvWVF5WWZUeVFISWViaFh1TzhrNTQ and simply copy them to the maya directory.</span>
+
 
 <span class="sd">Troubleshooting</span>
 <span class="sd">^^^^^^^^^^^^^^^</span>
@@ -98,10 +105,14 @@
 <span class="kn">import</span> <span class="nn">re</span>
 
 <span class="c1"># list with all commands (command names must have the same name as their class AND module to be loaded without errors)</span>
-<span class="n">kPluginCmdName</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;centerPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;centroidPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;normalize&quot;</span><span class="p">,</span> <span class="s2">&quot;eigenvector&quot;</span><span class="p">,</span> <span class="s2">&quot;alignObj&quot;</span><span class="p">,</span> <span class="s2">&quot;exportData&quot;</span><span class="p">,</span> <span class="s2">&quot;rangeObj&quot;</span><span class="p">,</span> <span class="s2">&quot;convexHull&quot;</span><span class="p">,</span> <span class="s2">&quot;getShells&quot;</span><span class="p">,</span> <span class="s2">&quot;findTubeFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;cleanup&quot;</span><span class="p">,</span> <span class="s2">&quot;getVolume&quot;</span><span class="p">,</span> <span class="s2">&quot;delaunay&quot;</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span> <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">,</span> <span class="s2">&quot;axisParallelPlane&quot;</span><span class="p">,</span> <span class="s2">&quot;altitudeMap&quot;</span><span class="p">,</span> <span class="s2">&quot;coordinateSystem&quot;</span><span class="p">,</span> <span class="s2">&quot;projectionArea&quot;</span><span class="p">,</span> <span class="s2">&quot;overlapStatistic&quot;</span><span class="p">,</span> <span class="s2">&quot;findIsolatedFaces&quot;</span><span class="p">]</span>
+<span class="n">kPluginCmdName</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;centerPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;centroidPoint&quot;</span><span class="p">,</span> <span class="s2">&quot;normalize&quot;</span><span class="p">,</span> <span class="s2">&quot;eigenvector&quot;</span><span class="p">,</span> <span class="s2">&quot;alignObj&quot;</span><span class="p">,</span> <span class="s2">&quot;exportData&quot;</span><span class="p">,</span> <span class="s2">&quot;rangeObj&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;convexHull&quot;</span><span class="p">,</span> <span class="s2">&quot;getShells&quot;</span><span class="p">,</span> <span class="s2">&quot;findTubeFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;cleanup&quot;</span><span class="p">,</span> <span class="s2">&quot;getVolume&quot;</span><span class="p">,</span> <span class="s2">&quot;delaunay&quot;</span><span class="p">,</span> <span class="s2">&quot;intersection&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;adjustAxisDirection&quot;</span><span class="p">,</span> <span class="s2">&quot;vhacd&quot;</span><span class="p">,</span> <span class="s2">&quot;axisParallelPlane&quot;</span><span class="p">,</span> <span class="s2">&quot;altitudeMap&quot;</span><span class="p">,</span> <span class="s2">&quot;coordinateSystem&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;projectionArea&quot;</span><span class="p">,</span> <span class="s2">&quot;overlapStatistic&quot;</span><span class="p">,</span> <span class="s2">&quot;findIsolatedFaces&quot;</span><span class="p">,</span> <span class="s2">&quot;repositionVertices&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;applyTransformationFile&quot;</span><span class="p">,</span> <span class="s2">&quot;frontVertices&quot;</span><span class="p">]</span>
 
 <span class="c1"># current plugin version</span>
-<span class="n">pk_version</span> <span class="o">=</span> <span class="s2">&quot;0.3.3&quot;</span>
+<span class="n">pk_version</span> <span class="o">=</span> <span class="s2">&quot;0.3.4&quot;</span>
 
 <span class="c1"># Initialize the script plug-in</span>
 <div class="viewcode-block" id="initializePlugin"><a class="viewcode-back" href="../proKlaue.html#proKlaue.initializePlugin">[docs]</a><span class="k">def</span> <span class="nf">initializePlugin</span><span class="p">(</span><span class="n">mobject</span><span class="p">):</span>
@@ -195,8 +206,8 @@
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>
 

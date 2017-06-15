@@ -1,3 +1,7 @@
+# script to calculate joint cs on principal curvature directions
+
+
+
 import pk_src
 from pk_src import misc
 import maya.cmds as cmds

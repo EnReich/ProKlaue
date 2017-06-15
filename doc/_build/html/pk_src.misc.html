@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>misc &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>misc &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -61,7 +61,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vertices</strong> &#8211; list of 3 vertices defining the triangle</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vertices</strong> – list of 3 vertices defining the triangle</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value with area of triangle</td>
 </tr>
@@ -89,9 +89,9 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vertices</strong> &#8211; list of 3 vertices defining the triangle</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vertices</strong> – list of 3 vertices defining the triangle</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of 3 float values representing the 3D-coordinates of the triangle&#8217;s centroid</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of 3 float values representing the 3D-coordinates of the triangle’s centroid</td>
 </tr>
 </tbody>
 </table>
@@ -118,12 +118,12 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>syntax</strong> (<em>OpenMaya.MSyntax</em><em> (</em><em>api 1.0</em><em>)</em><em></em>) &#8211; Function to syntax definition of current command</li>
-<li><strong>argList</strong> &#8211; Argument list for command</li>
+<li><strong>syntax</strong> (<em>OpenMaya.MSyntax</em><em> (</em><em>api 1.0</em><em>)</em>) – Function to syntax definition of current command</li>
+<li><strong>argList</strong> – Argument list for command</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>AttributeError</strong> &#8211; Raised when no object is selected</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>AttributeError</strong> – Raised when no object is selected</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of object names in argument list (or from current selection)</p>
@@ -134,6 +134,15 @@
 </dd></dl>
 
 <dl class="function">
+<dt id="pk_src.misc.getEulerAnglesToMatrix">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getEulerAnglesToMatrix</code><span class="sig-paren">(</span><em>m</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getEulerAnglesToMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getEulerAnglesToMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Euler Angles for a given rotation matrix
+:param m: rotation matrix
+:type m: np.matrix, shape (3,3)
+:returns: [alpha, beta, gamma] for rotation around global X, Y, Z axis in that order</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pk_src.misc.getFaceNormals">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getFaceNormals</code><span class="sig-paren">(</span><em>obj</em>, <em>worldSpace=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getFaceNormals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getFaceNormals" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method to return all face normals. Uses the command <a class="reference external" href="http://download.autodesk.com/us/maya/2011help/Commands/polyInfo.html">polyInfo</a> to access the normal information as string and parse them to a numpy array</p>
@@ -141,7 +150,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) &#8211; name of object</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) – name of object</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of numpy arrays with the 3 float values for each normal</td>
 </tr>
@@ -172,7 +181,7 @@ the normals.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) &#8211; name of object</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) – name of object</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of numpy arrays with the 3 float values for each normal</td>
 </tr>
@@ -199,7 +208,7 @@ the normals.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) &#8211; name of object</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>string</em>) – name of object</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">MFnMesh object (api 2.0)</td>
 </tr>
@@ -210,15 +219,15 @@ the normals.</p>
 <dl class="function">
 <dt id="pk_src.misc.getPoints">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getPoints</code><span class="sig-paren">(</span><em>obj</em>, <em>mfnObject=None</em>, <em>worldSpace=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getPoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getPoints" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return MPointArray with points of object&#8217;s mesh.</p>
+<dd><p>Method to return MPointArray with points of object’s mesh.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>obj</strong> (<em>string</em>) &#8211; name of object</li>
-<li><strong>mfnObject</strong> (<em>MFnMesh</em>) &#8211; mesh object</li>
-<li><strong>worldSpace</strong> (<em>Boolean</em>) &#8211; should coordinates be in world space (with transform) or in local space (without transform); default True</li>
+<li><strong>obj</strong> (<em>string</em>) – name of object</li>
+<li><strong>mfnObject</strong> (<em>MFnMesh</em>) – mesh object</li>
+<li><strong>worldSpace</strong> (<em>Boolean</em>) – should coordinates be in world space (with transform) or in local space (without transform); default True</li>
 </ul>
 </td>
 </tr>
@@ -248,14 +257,14 @@ the normals.</p>
 <dl class="function">
 <dt id="pk_src.misc.getPointsAsList">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getPointsAsList</code><span class="sig-paren">(</span><em>obj</em>, <em>worldSpace=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getPointsAsList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getPointsAsList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return the points of an object&#8217;s mesh in a list of lists with coordinates.</p>
+<dd><p>Method to return the points of an object’s mesh in a list of lists with coordinates.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>obj</strong> (<em>str</em>) &#8211; name of object</li>
-<li><strong>worldSpace</strong> (<em>bool</em>) &#8211; should coordinates be in world space (with transform) or in local space (without transform); default True</li>
+<li><strong>obj</strong> (<em>str</em>) – name of object</li>
+<li><strong>worldSpace</strong> (<em>bool</em>) – should coordinates be in world space (with transform) or in local space (without transform); default True</li>
 </ul>
 </td>
 </tr>
@@ -280,8 +289,25 @@ the normals.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pk_src.misc.getRotationAroundAxis">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getRotationAroundAxis</code><span class="sig-paren">(</span><em>angle</em>, <em>v</em>, <em>rad=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getRotationAroundAxis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getRotationAroundAxis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pk_src.misc.getRotationFromAToB">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getRotationFromAToB</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getRotationFromAToB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getRotationFromAToB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a rotation matrix to rotate the first vector in the place of the second vector. (In case of normed
+vectors, the vectors will overlap after rotating a with the rotation matrix).
+:param a: first vector, to be rotated
+:type a: np.matrix, shape (3,1)
+:param b: second vector, determines the position to achieve
+:type b: np.matrix, shape (3,1)
+:returns: rotation matrix for a rotation from a to b, as a np.matrix shape (3,3)</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pk_src.misc.getRotationMatrix">
-<code class="descclassname">pk_src.misc.</code><code class="descname">getRotationMatrix</code><span class="sig-paren">(</span><em>alpha</em>, <em>beta</em>, <em>gamma</em>, <em>order='xyz'</em>, <em>rad=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getRotationMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getRotationMatrix" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pk_src.misc.</code><code class="descname">getRotationMatrix</code><span class="sig-paren">(</span><em>alpha</em>, <em>beta</em>, <em>gamma</em>, <em>order=’xyz’</em>, <em>rad=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getRotationMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getRotationMatrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate a Rotation Matrix for given euler angles
 :param alpha: angle for rotation around x-axis
 :type alpha: float
@@ -318,14 +344,19 @@ the normals.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pk_src.misc.getSkew">
+<code class="descclassname">pk_src.misc.</code><code class="descname">getSkew</code><span class="sig-paren">(</span><em>v</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getSkew"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getSkew" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="pk_src.misc.getTriangleEdges">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getTriangleEdges</code><span class="sig-paren">(</span><em>triangles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getTriangleEdges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getTriangleEdges" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return all edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices&#8217; list; key is the index of the current vertex and for each outgoing edge the value contains an index to the corresponding vertex. Values are always lists of indices.</p>
+<dd><p>Method to return all edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices’ list; key is the index of the current vertex and for each outgoing edge the value contains an index to the corresponding vertex. Values are always lists of indices.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>triangles</strong> (<em></em><em>[</em><em></em><em>[</em><em>1</em><em>, </em><em>2</em><em>, </em><em>3</em><em>]</em><em></em><em>, </em><em></em><em>[</em><em>1</em><em>, </em><em>3</em><em>, </em><em>4</em><em>]</em><em></em><em>, </em><em>..</em><em>]</em><em></em>) &#8211; list of triangle definitions (in index represenation, see <em>misc.getTriangles</em>)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>triangles</strong> (<em>[</em><em>[</em><em>1</em><em>, </em><em>2</em><em>, </em><em>3</em><em>]</em><em>, </em><em>[</em><em>1</em><em>, </em><em>3</em><em>, </em><em>4</em><em>]</em><em>, </em><em>..</em><em>]</em>) – list of triangle definitions (in index represenation, see <em>misc.getTriangles</em>)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict (keys: index of current vertex, values: list of vertices with existing edge)</td>
 </tr>
@@ -356,12 +387,12 @@ the normals.</p>
 <dl class="function">
 <dt id="pk_src.misc.getTriangleEdgesCount">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getTriangleEdgesCount</code><span class="sig-paren">(</span><em>triangles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getTriangleEdgesCount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getTriangleEdgesCount" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return the reference count of all  edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices&#8217; list; key is the set of indices of the current vertex-pair for an edge and the value contains the count of triangles with a reference to that edge. Values are always integer. Only edges with at least 1 reference appear in the dict.</p>
+<dd><p>Method to return the reference count of all  edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices’ list; key is the set of indices of the current vertex-pair for an edge and the value contains the count of triangles with a reference to that edge. Values are always integer. Only edges with at least 1 reference appear in the dict.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>triangles</strong> (<em></em><em>[</em><em></em><em>[</em><em>1</em><em>, </em><em>2</em><em>, </em><em>3</em><em>]</em><em></em><em>, </em><em></em><em>[</em><em>1</em><em>, </em><em>3</em><em>, </em><em>4</em><em>]</em><em></em><em>, </em><em>..</em><em>]</em><em></em>) &#8211; list of triangle definitions (in index represenation, see <em>misc.getTriangles</em>)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>triangles</strong> (<em>[</em><em>[</em><em>1</em><em>, </em><em>2</em><em>, </em><em>3</em><em>]</em><em>, </em><em>[</em><em>1</em><em>, </em><em>3</em><em>, </em><em>4</em><em>]</em><em>, </em><em>..</em><em>]</em>) – list of triangle definitions (in index represenation, see <em>misc.getTriangles</em>)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict (keys: a frozenset with exactly 2 indices of vertices, values: count of triangles which reference the given edge)</td>
 </tr>
@@ -372,12 +403,12 @@ the normals.</p>
 <dl class="function">
 <dt id="pk_src.misc.getTriangleEdgesReferences">
 <code class="descclassname">pk_src.misc.</code><code class="descname">getTriangleEdgesReferences</code><span class="sig-paren">(</span><em>triangles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/misc.html#getTriangleEdgesReferences"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.misc.getTriangleEdgesReferences" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to return the references to face indices of all  edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices&#8217; list; key is the set of indices of the current vertex-pair for an edge and the value contains a set of triangle indices with a reference to that edge. Values are always integer. Only edges with at least 1 reference appear in the dict.</p>
+<dd><p>Method to return the references to face indices of all  edges of the given triangle list as dictionary. Given triangle must use indices to point list, so the key-value pairs only contain indices to the vertices’ list; key is the set of indices of the current vertex-pair for an edge and the value contains a set of triangle indices with a reference to that edge. Values are always integer. Only edges with at least 1 reference appear in the dict.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>triangles</strong> (<em></em><em>[</em><em></em><em>[</em><em>1</em><em>, </em><em>2</em><em>, </em><em>3</em><em>]</em><em></em><em>, </em><em></em><em>[</em><em>1</em><em>, </em><em>3</em><em>, </em><em>4</em><em>]</em><em></em><em>, </em><em>..</em><em>]</em><em></em>) &#8211; list of triangle definitions (in index represenation, see <em>misc.getTriangles</em>)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>triangles</strong> (<em>[</em><em>[</em><em>1</em><em>, </em><em>2</em><em>, </em><em>3</em><em>]</em><em>, </em><em>[</em><em>1</em><em>, </em><em>3</em><em>, </em><em>4</em><em>]</em><em>, </em><em>..</em><em>]</em>) – list of triangle definitions (in index represenation, see <em>misc.getTriangles</em>)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict (keys: a frozenset with exactly 2 indices of vertices, values: set of triangle indices which reference the given edge)</td>
 </tr>
@@ -394,12 +425,12 @@ the normals.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>obj</strong> (<em>string</em>) &#8211; name of object</li>
-<li><strong>mfnObject</strong> (<em>MFnMesh</em>) &#8211; mesh object</li>
+<li><strong>obj</strong> (<em>string</em>) – name of object</li>
+<li><strong>mfnObject</strong> (<em>MFnMesh</em>) – mesh object</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">numpy.ndarray (e.g. array([[2,1,3],[2,3,4],[4,3,5],[4,5,6],...]) for a polygon cube)</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">numpy.ndarray (e.g. array([[2,1,3],[2,3,4],[4,3,5],[4,5,6],…]) for a polygon cube)</p>
 </td>
 </tr>
 </tbody>
@@ -437,8 +468,8 @@ the normals.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>p</strong> (<em></em><em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em><em></em>) &#8211; vector to be projected</li>
-<li><strong>v</strong> (<em></em><em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em><em></em>) &#8211; vector where p shall be projected to</li>
+<li><strong>p</strong> (<em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em>) – vector to be projected</li>
+<li><strong>v</strong> (<em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em>) – vector where p shall be projected to</li>
 </ul>
 </td>
 </tr>
@@ -458,10 +489,10 @@ the normals.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>p1</strong> (<em></em><em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em><em></em>) &#8211; first point of triangle</li>
-<li><strong>p2</strong> (<em></em><em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em><em></em>) &#8211; second point of triangle</li>
-<li><strong>p3</strong> (<em></em><em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em><em></em>) &#8211; third point of triangle</li>
-<li><strong>center</strong> (<em></em><em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em><em></em>) &#8211; top of tetrahedron (default (0,0,0))</li>
+<li><strong>p1</strong> (<em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em>) – first point of triangle</li>
+<li><strong>p2</strong> (<em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em>) – second point of triangle</li>
+<li><strong>p3</strong> (<em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em>) – third point of triangle</li>
+<li><strong>center</strong> (<em>[</em><em>x</em><em>,</em><em>y</em><em>,</em><em>z</em><em>]</em>) – top of tetrahedron (default (0,0,0))</li>
 </ul>
 </td>
 </tr>
@@ -529,8 +560,8 @@ the normals.</p>
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.misc.rst.txt"

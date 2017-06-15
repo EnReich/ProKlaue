@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>cleanup &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>cleanup &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -47,8 +47,8 @@
 <span id="id1"></span><h1>cleanup<a class="headerlink" href="#cleanup" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
 <span class="target" id="module-pk_src.cleanup"></span><p>Main purpose of this command is the extraction of the outer shell of an arbitrary object. Natural bones may have
-natural inclusions due to air bubbles, blood vessels or imaging errors. During animation these inclusions can obstruct a clear view when the bone model is set half-transparent and inflate computation time. To extract only the outer bone shell one needs to delete all separate inclusions and possibly cut through &#8216;connecting tubes&#8217;, i.e. small blood vessels connecting an outer shell with an inner shell. A threshold can be set to determine and delete all triangles of the bone model whose normal&#8217;s distance (orthogonal distance from center point of triangle) to the next triangle is smaller than this threshold.</p>
-<p>The command implements a button <em>clean</em> under the shelf tab &#8216;ProKlaue&#8217;, where one can find and list all shells of a currently selected transform node. The shells can then be selected to show which part of the bone model is part of this shell. A number behind each shell indicates the amount of triangles inside each set and finally one shell can be extracted, so that all other shells and their triangles will be deleted from the mesh.</p>
+natural inclusions due to air bubbles, blood vessels or imaging errors. During animation these inclusions can obstruct a clear view when the bone model is set half-transparent and inflate computation time. To extract only the outer bone shell one needs to delete all separate inclusions and possibly cut through ‘connecting tubes’, i.e. small blood vessels connecting an outer shell with an inner shell. A threshold can be set to determine and delete all triangles of the bone model whose normal’s distance (orthogonal distance from center point of triangle) to the next triangle is smaller than this threshold.</p>
+<p>The command implements a button <em>clean</em> under the shelf tab ‘ProKlaue’, where one can find and list all shells of a currently selected transform node. The shells can then be selected to show which part of the bone model is part of this shell. A number behind each shell indicates the amount of triangles inside each set and finally one shell can be extracted, so that all other shells and their triangles will be deleted from the mesh.</p>
 <p>The command primarily handles all the user interaction inside maya and processes output of commands <a class="reference internal" href="pk_src.getShells.html#getshells"><span class="std std-ref">getShells</span></a> and <a class="reference internal" href="pk_src.findTubeFaces.html#findtubefaces"><span class="std std-ref">findTubeFaces</span></a>.</p>
 <p><strong>Command should only be used over the button interface</strong></p>
 </div>
@@ -94,8 +94,8 @@ natural inclusions due to air bubbles, blood vessels or imaging errors. During a
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.cleanup.rst.txt"

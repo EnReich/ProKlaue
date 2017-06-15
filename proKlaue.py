@@ -10,22 +10,29 @@ To support the necessary work and to provide some useful routines inside the 3D-
 
 Requirements
 ============
-- Maya Autodesk 2013 (or newer)
+- Maya Autodesk 2014 (not working under newer versions and all systems)
 - Numpy Package for Python2.7 (at least 0.12.0)
 - Scipy Package for Python2.7 (at least 0.16.0)
-- V-HACD Library
+
+and for some commands:
+
+- V-HACD Library (approximation of intersection volume)
+- Sklearn Package for Python2.7 (at least 0.18.1, for PCA and Clustering) 
 
 Installation of Numpy & Scipy for Maya
 --------------------------------------
-Maya Autodesk is shipped with its own Python2.7-Installation which does not make any use of already existing Python-Installations on the system. This includes all Python-Libraries as well. So in order to make Python-Libraries work directly inside Maya, the following steps are necessary:
+Maya Autodesk is shipped with its own Python2.7-Installation which does not make any use of already existing Python-Installations on the system. This includes all Python-Libraries as well. So in order to make Python-Libraries work directly inside Maya, one has only a few limited options. One of them is to install the same Python Version, which is used by Maya, and install the packages needed and place them into the associated Maya Python directory. The installation of such a Python version can be rather tricky, for example Maya2014 under Windows uses a Python version compiled with MSVC2010 (for further details see here: https://forums.autodesk.com/t5/maya-programming/guide-how-to-install-numpy-scipy-in-maya-windows-64-bit/td-p/5796722). For an alternative under windows see down below.
 
 - Installation of Python 2.7 for the current system
-- Install *Numpy* and *Scipy* (either using the Linux install repository or the *pip*-command of python, e.g. 'pip install -i https://pypi.anaconda.org/carlkl/simple numpy')
+- Install *Numpy* and *Scipy* (and sklearn) (either using the Linux install repository or the *pip*-command of python, e.g. 'pip install -i https://pypi.anaconda.org/carlkl/simple numpy')
 - Search subdirectory 'site-packages' in Python2.7 install path
 - Select and copy directories *numpy* & *scipy*
 - Go to the Maya Directory (e.g. 'C://Program Files/Autodesk/Maya2014/Python/lib/site-packages') and insert copied files
 
 After a restart of Maya the command 'import numpy' should be usable; if not the wrong version was installed.
+
+An alternative solution would be to simply copy the associated packages from some source, for example https://drive.google.com/drive/folders/0BwsYd1k8t0lEfjJqV21yTnd2elVhNXEyTXhHclhxbDhvWVF5WWZUeVFISWViaFh1TzhrNTQ and simply copy them to the maya directory.
+
 
 Troubleshooting
 ^^^^^^^^^^^^^^^
@@ -61,7 +68,7 @@ kPluginCmdName = ["centerPoint", "centroidPoint", "normalize", "eigenvector", "a
                   "applyTransformationFile", "frontVertices"]
 
 # current plugin version
-pk_version = "0.3.3"
+pk_version = "0.3.4"
 
 # Initialize the script plug-in
 def initializePlugin(mobject):

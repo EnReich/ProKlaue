@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>collision_tet_tet &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>collision_tet_tet &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -47,9 +47,9 @@
 <span id="id1"></span><h1>collision_tet_tet<a class="headerlink" href="#collision-tet-tet" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#sec-misc"><span class="std std-ref">Misc</span></a></p>
 <span class="target" id="module-pk_src.collision_tet_tet"></span><p>Module to test for collision of two tetrahedra using the axis separating theorem.
-Based on the paper <a class="reference external" href="http://vcg.isti.cnr.it/Publications/2003/GPR03/fast_tetrahedron_tetrahedron_overlap_algorithm.pdf">&#8220;Fast tetrahedron-tetrahedron overlap algorithm&#8221;</a> by F. Ganovelli, F. Ponchio and C. Rocchini.</p>
+Based on the paper <a class="reference external" href="http://vcg.isti.cnr.it/Publications/2003/GPR03/fast_tetrahedron_tetrahedron_overlap_algorithm.pdf">“Fast tetrahedron-tetrahedron overlap algorithm”</a> by F. Ganovelli, F. Ponchio and C. Rocchini.</p>
 <p>Uses two lists of vertices for each tetrahedra. The class function Collision_tet_tet.check() returns True iff the two given tetrahedra actually intersect (or at least have common vertices).
-Before calling &#8216;Collision_tet_tet.check()&#8217; the two tetrahedra need to be set with the methods <strong>setV1</strong>, <strong>setV2</strong> or <strong>setV1V2</strong>.</p>
+Before calling ‘Collision_tet_tet.check()’ the two tetrahedra need to be set with the methods <strong>setV1</strong>, <strong>setV2</strong> or <strong>setV1V2</strong>.</p>
 <dl class="class">
 <dt id="pk_src.collision_tet_tet.Collision_tet_tet">
 <em class="property">class </em><code class="descclassname">pk_src.collision_tet_tet.</code><code class="descname">Collision_tet_tet</code><span class="sig-paren">(</span><em>tetra1=None</em>, <em>tetra2=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pk_src/collision_tet_tet.html#Collision_tet_tet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pk_src.collision_tet_tet.Collision_tet_tet" title="Permalink to this definition">¶</a></dt>
@@ -59,8 +59,8 @@ Before calling &#8216;Collision_tet_tet.check()&#8217; the two tetrahedra need t
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>tetra1</strong> &#8211; list of the 4 3D-vertices describing the first tetrahedron</li>
-<li><strong>tetra2</strong> &#8211; list of the 4 3D-vertices describing the second tetrahedron</li>
+<li><strong>tetra1</strong> – list of the 4 3D-vertices describing the first tetrahedron</li>
+<li><strong>tetra2</strong> – list of the 4 3D-vertices describing the second tetrahedron</li>
 </ul>
 </td>
 </tr>
@@ -89,10 +89,10 @@ Before calling &#8216;Collision_tet_tet.check()&#8217; the two tetrahedra need t
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>coord</strong> &#8211; 4x4 list of lists</li>
-<li><strong>self.masks</strong> &#8211; 4x1 list of lists with single element</li>
-<li><strong>f0</strong> &#8211; integer</li>
-<li><strong>f1</strong> &#8211; integer</li>
+<li><strong>coord</strong> – 4x4 list of lists</li>
+<li><strong>self.masks</strong> – 4x1 list of lists with single element</li>
+<li><strong>f0</strong> – integer</li>
+<li><strong>f1</strong> – integer</li>
 </ul>
 </td>
 </tr>
@@ -110,10 +110,10 @@ checks if plane pv1 is a separating plane. Stores local coordinates and the mask
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>pv1</strong> &#8211; vectors between vertices of second tetrahedron and vertex V[0] of first tetrahedron (list of lists [[...],[...],...])</li>
-<li><strong>n</strong> &#8211; normal (list [x,y,z])</li>
-<li><strong>coord</strong> &#8211; reference to list</li>
-<li><strong>mask_edges</strong> &#8211; reference to list with single element [m]</li>
+<li><strong>pv1</strong> – vectors between vertices of second tetrahedron and vertex V[0] of first tetrahedron (list of lists [[…],[…],…])</li>
+<li><strong>n</strong> – normal (list [x,y,z])</li>
+<li><strong>coord</strong> – reference to list</li>
+<li><strong>mask_edges</strong> – reference to list with single element [m]</li>
 </ul>
 </td>
 </tr>
@@ -134,11 +134,11 @@ checks if plane v1,v2 is a separating plane. Stores local coordinates and the ma
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>V1</strong> &#8211; list with vertices of tetrahedron 1</li>
-<li><strong>V2</strong> &#8211; list with vertices of tetrahedron 2</li>
-<li><strong>n</strong> &#8211; normal</li>
-<li><strong>coord</strong> &#8211; reference to list</li>
-<li><strong>mask_edges</strong> &#8211; reference to list with single element [m]</li>
+<li><strong>V1</strong> – list with vertices of tetrahedron 1</li>
+<li><strong>V2</strong> – list with vertices of tetrahedron 2</li>
+<li><strong>n</strong> – normal</li>
+<li><strong>coord</strong> – reference to list</li>
+<li><strong>mask_edges</strong> – reference to list with single element [m]</li>
 </ul>
 </td>
 </tr>
@@ -164,7 +164,7 @@ checks if plane v1,v2 is a separating plane. Stores local coordinates and the ma
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>V1</strong> &#8211; list of the 4 3D-vertices describing the first tetrahedron</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>V1</strong> – list of the 4 3D-vertices describing the first tetrahedron</td>
 </tr>
 </tbody>
 </table>
@@ -179,8 +179,8 @@ checks if plane v1,v2 is a separating plane. Stores local coordinates and the ma
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>V1</strong> &#8211; list of the 4 3D-vertices describing the first tetrahedron</li>
-<li><strong>V2</strong> &#8211; list of the 4 3D-vertices describing the second tetrahedron</li>
+<li><strong>V1</strong> – list of the 4 3D-vertices describing the first tetrahedron</li>
+<li><strong>V2</strong> – list of the 4 3D-vertices describing the second tetrahedron</li>
 </ul>
 </td>
 </tr>
@@ -196,7 +196,7 @@ checks if plane v1,v2 is a separating plane. Stores local coordinates and the ma
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>V2</strong> &#8211; list of the 4 3D-vertices describing the second tetrahedron</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>V2</strong> – list of the 4 3D-vertices describing the second tetrahedron</td>
 </tr>
 </tbody>
 </table>
@@ -262,8 +262,8 @@ checks if plane v1,v2 is a separating plane. Stores local coordinates and the ma
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.collision_tet_tet.rst.txt"

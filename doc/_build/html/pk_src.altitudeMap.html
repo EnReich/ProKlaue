@@ -1,12 +1,12 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>altitudeMap &#8212; ProKlaue 0.3.3 documentation</title>
+    <title>altitudeMap &#8212; ProKlaue 0.3.4 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.3.3',
+        VERSION:     '0.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="alignObj" href="pk_src.alignObj.html" />
+    <link rel="next" title="projectionArea" href="pk_src.projectionArea.html" />
     <link rel="prev" title="axisParallelPlane" href="pk_src.axisParallelPlane.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -46,13 +46,17 @@
   <div class="section" id="altitudemap">
 <span id="id1"></span><h1>altitudeMap<a class="headerlink" href="#altitudemap" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="index.html#commands"><span class="std std-ref">Command list</span></a></p>
-<span class="target" id="module-pk_src.altitudeMap"></span><p>Uses an axis parallel plane (app) and the object model connected to this plane to create an altitude map, i.e. a set of perpendicular distances from the faces of the object to the plane. The distance is measures from the plane to the centroid of each face. A ray is constructed from each of the faces to the plane and only those faces without any other intersection than the plane (only faces directly visible from the plane) are considered part of the altitude map.
+<span class="target" id="module-pk_src.altitudeMap"></span><p>Uses an axis parallel plane (app) and the object model connected to this plane to create an altitude map,
+i.e. a set of perpendicular distances from the faces of the object to the plane. The distance is measures from the
+plane to the centroid of each face. A ray is constructed from each of the faces to the plane and only those faces
+without any other intersection than the plane (only faces directly visible from the plane) are considered part of
+the altitude map.
 Points with a larger distance than a given threshold will be discarded.</p>
 <p><strong>see also:</strong> <a class="reference internal" href="pk_src.axisParallelPlane.html#axisparallelplane"><span class="std std-ref">axisParallelPlane</span></a></p>
-<p><strong>command:</strong> cmds.altitudeMap([obj, plane], file = &#8220;&#8221;, threshold = 10.0)</p>
+<p><strong>command:</strong> cmds.altitudeMap([obj, plane], file = “”, threshold = 10.0)</p>
 <dl class="docutils">
 <dt><strong>Args:</strong></dt>
-<dd><table class="first last docutils field-list" frame="void" rules="none">
+<dd><table class="first docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
@@ -60,20 +64,16 @@ Points with a larger distance than a given threshold will be discarded.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">threshold(t):</th><td class="field-body">threshold of maximum distance from plane; all points with larger distance will be discarded (default 10.0)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">anim(a):</th><td class="field-body">boolean flag to indicate if altitude map shall be calculation for each frame (TRUE) or only for the current frame (FALSE, default). If TRUE a file name needs to be specified, because the amount of data could massively slow down maya if its only kept in work memory.</td>
+<tr class="field-odd field"><th class="field-name">anim(a):</th><td class="field-body">boolean flag to indicate if altitude map shall be calculation for each frame (TRUE) or only for</td>
 </tr>
 </tbody>
 </table>
+<p class="last">the current frame (FALSE, default). If TRUE a file name needs to be specified, because the amount of data
+could massively slow down maya if its only kept in work memory.
+:returns: list of centroid points of faces, their indices in the mesh vtx-list and their distances to the plane,</p>
 </dd>
 </dl>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">list of centroid points of faces, their indices in the mesh vtx-list and their distances to the plane, i.e. &#8216;[[n_1, x_1, y_1, z_1, d_1], [n_2, x_2, y_2, z_2, d_2], ...]&#8217;</td>
-</tr>
-</tbody>
-</table>
+<p>i.e. ‘[[n_1, x_1, y_1, z_1, d_1], [n_2, x_2, y_2, z_2, d_2], …]’</p>
 <dl class="docutils">
 <dt><strong>Example:</strong></dt>
 <dd><div class="first last highlight-python"><div class="highlight"><pre><span></span><span class="n">cmds</span><span class="o">.</span><span class="n">polyCube</span><span class="p">()</span>
@@ -107,7 +107,7 @@ Points with a larger distance than a given threshold will be discarded.</p>
   <li><a href="index.html">Documentation overview</a><ul>
   <li><a href="pk_src.html">&lt;no title&gt;</a><ul>
       <li>Previous: <a href="pk_src.axisParallelPlane.html" title="previous chapter">axisParallelPlane</a></li>
-      <li>Next: <a href="pk_src.alignObj.html" title="next chapter">alignObj</a></li>
+      <li>Next: <a href="pk_src.projectionArea.html" title="next chapter">projectionArea</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -137,8 +137,8 @@ Points with a larger distance than a given threshold will be discarded.</p>
       &copy;2016, Enrico Reich.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/pk_src.altitudeMap.rst.txt"
