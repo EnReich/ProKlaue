@@ -119,7 +119,7 @@ def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pre
     # -------------------------------- PRESSURE FILE ---------------------------------------------------------
     # --------------------------------------------------------------------------------------------------------
 
-    keywords = ["ASCII_DATA @@", "ROW_SPACING", "COL_SPACING"]
+    keywords = ["ASCII_DATA @@", "ROW_SPACING", "COL_SPACING", "UNITS"]
     with open(pressure_file_path, 'r') as file:
         line = file.readline()
         while line != '':
@@ -141,6 +141,10 @@ def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pre
                     if len(lsplit)>2:
                         if lsplit[2] == "millimeters":
                             col_spacing = col_spacing * 0.1
+
+                elif keyword == "UNITS":
+                    lsplit = line.split(" ")
+                    units = float(lsplit[1])
 
                 elif keyword == "ASCII_DATA @@":
                     # next block is ascii data
@@ -173,6 +177,7 @@ def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pre
         file.write("variable,value\n")
         file.write('"ROW_SPACING",{}\n'.format(row_spacing))
         file.write('"COL_SPACING",{}'.format(col_spacing))
+        file.write('"UNITS",{}'.format(units))
 
 
     pts_pressure = np.array([pt for pt in pressure_data if pt[2] != 0])
@@ -299,6 +304,9 @@ def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pre
         output_path = path_to_write_transform_left_zones if idx_side==0 else path_to_write_transform_right_zones
         np.savetxt(output_path, transformation_s, delimiter=',', fmt='%.25e')
 
+    return([path_to_write_transform_imprint, path_to_write_transform_left_zones, path_to_write_transform_right_zones
+            ])
+
 # function to calculate the imprint of a list of front facing triangles of an object
 def calculateImprint(tsf_file_left, tsf_file_right, path_to_write_left_segs, path_to_write_right_segs, th=0.5):
     paths_write = [path_to_write_left_segs,path_to_write_right_segs]
@@ -327,7 +335,7 @@ def calculateImprint(tsf_file_left, tsf_file_right, path_to_write_left_segs, pat
 
         segs = np.array([np.array([pts[:2] for pts in seg]) for seg in segs])
 
-        signed_area = [sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1])) for seg in segs]
+        signed_area = [sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in segs]
         to_reverse = [i for i,a in enumerate(signed_area) if a>0]
         for i in to_reverse:
             segs[i] = segs[i][::-1]
@@ -342,7 +350,7 @@ def calculateImprint(tsf_file_left, tsf_file_right, path_to_write_left_segs, pat
 
         union2 = np.array(union)
         for i, u in enumerate(union2): union2[i]= np.array(union2[i])
-        signed_area2 = [sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1])) for seg in union2]
+        signed_area2 = [sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in union2]
         union_without_holes = union2[[i for i, a in enumerate(signed_area2) if a<0]]
 
         if idx_path == 0:
@@ -356,5 +364,108 @@ def calculateImprint(tsf_file_left, tsf_file_right, path_to_write_left_segs, pat
 
 
     return([path_to_write_left_segs, path_to_write_right_segs])
+
+
+def transformSegments(segs, matrix):
+    return([[np.array((matrix*np.vstack([np.matrix(pt).reshape(2,1),[[1]]]))[:2,:]).reshape(2) for pt in seg] for seg in segs])
+
+def calculateStatistics(path_to_imprint_file_left,
+                        path_to_imprint_file_right,
+                        path_to_zones_left,
+                        path_to_zones_right,
+                        path_to_transform_imprint,
+                        path_to_transform_left_zones,
+                        path_to_transform_right_zones,
+                        path_to_pressure_data,
+                        path_to_pressure_metadata):
+
+    transform_imprint = np.matrix(np.loadtxt(path_to_transform_imprint, delimiter=","))
+    transform_left_zones = np.loadtxt(path_to_transform_left_zones, delimiter=",")
+    transform_right_zones = np.loadtxt(path_to_transform_right_zones, delimiter=",")
+
+    segs_left_orig = segs_from_file(path_to_imprint_file_left)
+    segs_right_orig = segs_from_file(path_to_imprint_file_right)
+    segs_zones_left_orig = segs_from_file(path_to_zones_left)
+    segs_zones_right_orig = segs_from_file(path_to_zones_right)
+
+    segs_left = transformSegments(segs_left_orig, transform_imprint)
+    segs_right = transformSegments(segs_right_orig, transform_imprint)
+    segs_zones_left = transformSegments(segs_zones_left_orig, transform_left_zones)
+    segs_zones_right = transformSegments(segs_zones_right_orig, transform_right_zones)
+
+    col_spacing = 0.5
+    row_spacing = 0.5
+
+    with open(path_to_pressure_metadata) as metadata_file:
+        reader = csv.DictReader(metadata_file)
+        for row in reader:
+            variable = row["variable"]
+            value = row["value"]
+            if str(variable).lower()=="COL_SPACING".lower():
+                col_spacing = float(value)
+            elif str(variable).lower()=="ROW_SPACING".lower():
+                row_spacing = float(value)
+            elif str(variable).lower() == "UNITS".lower():
+                units = float(value)
+
+    with open(path_to_pressure_data) as pressure_file:
+        reader = csv.reader(pressure_file)
+        header = reader.next()
+        pressure_data = []
+        for row in reader:
+            pressure_data.append([float(val) for val in row])
+
+    pressure_data = np.array(pressure_data)
+    pressure_data_x_col = next(i for i, var in enumerate(header) if var=="x")
+    pressure_data_y_col = next(i for i, var in enumerate(header) if var == "y")
+    pressure_data_pressure_col = next(i for i, var in enumerate(header) if var == "pressure")
+
+    pressure_data_not_null = pressure_data[pressure_data[:,pressure_data_pressure_col]!=0]
+
+    pressure_meas = []
+    area = []
+    area_intersect = [[],[]]
+
+
+    for row in pressure_data_not_null:
+        ar = col_spacing*row_spacing
+        area.append(ar)
+        pressure_meas.append(row[pressure_data_pressure_col]*ar)
+
+        # clip against segments
+        x = row[pressure_data_x_col]
+        y = row[pressure_data_y_col]
+        subj = ((x-row_spacing/2., y-col_spacing/2.),
+                (x+row_spacing/2., y-col_spacing/2.),
+                (x+row_spacing/2., y+col_spacing/2.),
+                (x-row_spacing/2., y+col_spacing/2.))
+
+        # left
+        pc = pyclipper.Pyclipper()
+        pc.AddPaths(pyclipper.scale_to_clipper(segs_left), pyclipper.PT_CLIP, True)
+        pc.AddPath(pyclipper.scale_to_clipper(subj), pyclipper.PT_SUBJECT, True)
+        sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_NONZERO, pyclipper.PFT_NONZERO)
+
+        ar_intersect = sum(abs(np.array([sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in np.array(pyclipper.scale_from_clipper(sol))])))
+        area_intersect[0].append(ar_intersect)
+
+        # right
+        pc = pyclipper.Pyclipper()
+        pc.AddPaths(pyclipper.scale_to_clipper(segs_right), pyclipper.PT_CLIP, True)
+        pc.AddPath(pyclipper.scale_to_clipper(subj), pyclipper.PT_SUBJECT, True)
+        sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_NONZERO, pyclipper.PFT_NONZERO)
+
+        ar_intersect = sum(abs(np.array([sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in np.array(pyclipper.scale_from_clipper(sol))])))
+        area_intersect[1].append(ar_intersect)
+
+
+
+
+
+
+
+
+
+
 
 
