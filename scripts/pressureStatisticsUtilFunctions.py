@@ -1,28 +1,119 @@
 import numpy as np
 import pyclipper
 import csv
+import math
 import sklearn.decomposition
 import sklearn.cluster
-import math
 import copy
-from pressureStatistics import segs_from_file, trans_matrix_from_pca
 
 
 
-# script to calculate a fit of the imprint to the pressure_file
+def rotation_matrix(alpha, radian=True):
+    if not radian:
+        alpha = (alpha%360)*math.pi/180
 
+    return np.array(math.cos(alpha), -math.sin(alpha), math.sin(alpha), math.cos(alpha)).reshape(2,2)
+
+# signed angle between -180 and 180
+def angle(x,y):
+    return (180/math.pi)*math.atan2(np.cross(x,y), np.dot(x,y))
+
+def get_th_point(p1, p2, th):
+    # p1 under th, p2 over th
+    under = np.array(p1)
+    over = np.array(p2)
+    if (under[2]>th):
+        under, over = over, under
+
+    diff = over - under
+    to_th = (th - under[2])/diff[2]
+    return under+to_th*diff
+
+def segs_from_file(file_path):
+    with open(file_path, 'rb') as def_f:
+        def_reader = csv.DictReader(def_f)
+        sid = 0
+        seg = []
+        segs = []
+        for row in def_reader:
+            if sid != int(row["SID"]):
+                segs.append(seg)
+                sid = int(row["SID"])
+                seg = []
+            seg.append([float(row["x"]), float(row["y"])])
+        segs.append(seg)
+    segs = np.array([np.array(seg) for seg in segs])
+    return segs
+
+def write_segs_to_file(segs, file_path):
+    with open(file_path, 'w') as o_file_seg:
+        o_file_seg.write("SID,PID,x,y\n")
+        for SID, seg in enumerate(segs):
+            for PID, p in enumerate(seg):
+                o_file_seg.write('"{}","{}","{}","{}"\n'.format(SID, PID, p[0], p[1]))
+
+def seg_cutoff(seg, th):
+    pts_idx_under_th = np.array([i for i, pt in enumerate(seg) if pt[2]<=th])
+    case = len(pts_idx_under_th)
+    if case == len(seg):
+        return seg
+    elif case < 1:
+        return
+    elif len(seg)==3:
+        if case == 2:
+            idx_over_th = [i for i in range(len(seg)) if i not in pts_idx_under_th][0]
+            replacement = [get_th_point(seg[idx_under], seg[idx_over_th], th) for idx_under in (np.array([idx_over_th-1, idx_over_th+1])%3)]
+            replaced_seg = np.array([seg[(idx_over_th-1)%3], replacement[0], replacement[1], seg[(idx_over_th+1)%3]])
+            return replaced_seg
+        else:
+            #case == 1
+            idx_under_th = pts_idx_under_th[0]
+            replacement_pts = [get_th_point(seg[idx_under_th], seg[idx_over], th) for idx_over in (np.array([idx_under_th-1, idx_under_th+1])%3)]
+            replaced_seg = np.array([replacement_pts[0], seg[idx_under_th], replacement_pts[1]])
+            return replaced_seg
+
+    else:
+        return
+
+# cutoffs of segments for a given threshold in z (2nd col)
+def segs_cutoff(segs, th):
+    segs_under_th = [seg for seg in segs if sum([1 if i[2]<th else 0 for i in seg])>0]
+    return np.array([seg_cutoff(seg, th) for seg in segs_under_th ])
+
+# estimate mean by bounding box after pca
+def estimate_mean_by_bounding_pca(pts_array, pca):
+    pts_transformed_to_estimate_mean = np.array([pca.transform(pts) for pts in pts_array])
+    min_x = [min(pts[:,0]) for pts in pts_transformed_to_estimate_mean]
+    max_x = [max(pts[:,0]) for pts in pts_transformed_to_estimate_mean]
+    min_y = [min(pts[:,1]) for pts in pts_transformed_to_estimate_mean]
+    max_y = [max(pts[:,1]) for pts in pts_transformed_to_estimate_mean]
+    estimated_mean = pca.inverse_transform([np.mean([np.mean(min_x), np.mean(max_x)]), np.mean([np.mean(min_y), np.mean(max_y)])])
+    return estimated_mean
+
+def trans_matrix_from_pca(pca):
+    return np.matrix(np.vstack([np.hstack([pca.components_.transpose(), np.array([0,0]).reshape(-1,1)]), np.array([0,0,1])])) * \
+           np.matrix(((np.vstack([np.hstack([np.array([1,0,0,1]).reshape(2,2), -pca.mean_.transpose().reshape(-1,1)]), np.array([0,0,1])]))))
+
+
+# function to calculate a fit of the imprint to the pressure_file
 def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pressure_file_path,
                            path_to_write_transform_imprint,
                            path_to_write_transform_left_zones,
                            path_to_write_transform_right_zones,
                            path_to_write_pressure_data,
-                           path_to_write_pressure_metadata):
+                           path_to_write_pressure_metadata,
+                           mean_method = 2,                             #0 - mean by mean of single pca's, 1 - mean by center of bounding boxes after pcas, 2 - average between both (wrt weights (mean, bounding boxes))
+                           mean_method_weights = (0.75, 0.25),
+                           clustering_method = 1,                       # 0 - Kmeans, 1 - Spectral
+                           clustering_scale_x = 1,                        # 0 - nothing 1 - scales the x - axis after centering
+                           clustering_scale_x_factor = 0.1):
 
-    MEAN_METHOD = 2  # 0 - mean by mean of single pca's, 1 - mean by center of bounding boxes after pcas, 2 - average between both (wrt weights (mean, bounding boxes))
-    MEAN_METHOD_WEIGHTS = [0.75, 0.25]
-    CLUSTERING_METHOD = 1  # 0 - Kmeans, 1 - Spectral
-    CLUSTERING_SCALE_X = 1  # 0 - nothing 1 - scales the x - axis after centering
-    CLUSTERING_SCALE_X_FACTOR = 0.1
+
+    MEAN_METHOD = mean_method
+    MEAN_METHOD_WEIGHTS = mean_method_weights
+    CLUSTERING_METHOD = clustering_method
+    CLUSTERING_SCALE_X = clustering_scale_x
+    CLUSTERING_SCALE_X_FACTOR = clustering_scale_x_factor
 
     # --------------------------------------------------------------------------------------------------------
     # -------------------------------- PRESSURE FILE ---------------------------------------------------------
@@ -195,15 +286,75 @@ def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pre
     np.savetxt(path_to_write_transform_imprint, transformation, delimiter=',', fmt='%.25e')
 
     for idx_side in range(len(pca_single)):
+        transform_single_pca = trans_matrix_from_pca(pca_single[idx_side])
         pts_transformed_s = pca_single[idx_side].transform(np.vstack([segs_left, segs_right][idx_side]))
         min_x = min(pts_transformed_s[:, 0])
         max_x = max(pts_transformed_s[:, 0])
         min_y = min(pts_transformed_s[:, 1])
         max_y = max(pts_transformed_s[:, 1])
         scale_matrix = np.matrix([[max_x-min_x,0,0],[0,max_y-min_y,0],[0,0,1]])
-        reposition_matrix = np.matrix([1,0,0], [0,1,0],[min_x,min_y])
+        reposition_matrix = np.matrix([[1,0,min_x], [0,1,min_y],[0,0,1]])
         # pca_pressure-1*pca**single_pca-1*reposition*scale
-        transformation_s =  transformation*np.linalg.inv(trans_matrix_from_pca(pca_single[idx_side]))*reposition_matrix*scale_matrix
+        transformation_s =  transformation*np.linalg.inv(transform_single_pca)*reposition_matrix*scale_matrix
         output_path = path_to_write_transform_left_zones if idx_side==0 else path_to_write_transform_right_zones
         np.savetxt(output_path, transformation_s, delimiter=',', fmt='%.25e')
+
+# function to calculate the imprint of a list of front facing triangles of an object
+def calculateImprint(tsf_file_left, tsf_file_right, path_to_write_left_segs, path_to_write_right_segs, th=0.5):
+    paths_write = [path_to_write_left_segs,path_to_write_right_segs]
+
+    for idx_path, path in enumerate([tsf_file_left, tsf_file_right]):
+        file = open(path, 'r')
+        reader = csv.DictReader(file, delimiter=',', quotechar='"')
+        segs =[]
+        currentSeg = []
+        old_SID = 0
+        for row in reader:
+            SID = int(row['SID'])
+            PID = int(row['PID'])
+            cords = [float(row['x']), float(row['z']), float(row['y'])]
+            if SID != old_SID:
+                segs.append(currentSeg)
+                currentSeg= []
+
+            currentSeg.append(cords)
+            old_SID = SID
+        segs.append(currentSeg)
+        file.close()
+
+        segs = np.array(segs)
+        segs = segs_cutoff(segs, th)
+
+        segs = np.array([np.array([pts[:2] for pts in seg]) for seg in segs])
+
+        signed_area = [sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1])) for seg in segs]
+        to_reverse = [i for i,a in enumerate(signed_area) if a>0]
+        for i in to_reverse:
+            segs[i] = segs[i][::-1]
+
+
+        union = pyclipper.scale_to_clipper(segs)
+        clipper = pyclipper.Pyclipper()
+        clipper.AddPaths(union, pyclipper.PT_CLIP, True)
+        union = clipper.Execute(pyclipper.CT_UNION, pyclipper.PFT_NONZERO, pyclipper.PFT_NONZERO)
+        union = pyclipper.scale_from_clipper(union)
+
+
+        union2 = np.array(union)
+        for i, u in enumerate(union2): union2[i]= np.array(union2[i])
+        signed_area2 = [sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1])) for seg in union2]
+        union_without_holes = union2[[i for i, a in enumerate(signed_area2) if a<0]]
+
+        if idx_path == 0:
+            segs_left = union_without_holes
+        else:
+            segs_right = union_without_holes
+
+    for idx_side, segs in enumerate([segs_left, segs_right]):
+        output_path = path_to_write_left_segs if idx_side==0 else path_to_write_right_segs
+        write_segs_to_file(segs, output_path)
+
+
+    return([path_to_write_left_segs, path_to_write_right_segs])
+
 

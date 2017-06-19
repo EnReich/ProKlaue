@@ -5,7 +5,7 @@ import sklearn.decomposition
 import sklearn.cluster
 import math
 import copy
-
+from scripts import pressureStatisticsUtilFunctions
 
 def rotation_matrix(alpha, radian=True):
     if not radian:
@@ -99,12 +99,19 @@ def trans_matrix_from_pca(pca):
            np.matrix(((np.vstack([np.hstack([np.array([1,0,0,1]).reshape(2,2), -pca.mean_.transpose().reshape(-1,1)]), np.array([0,0,1])]))))
 
 
+
+
+
+
+
+
+
 MEAN_METHOD = 2 # 0 - mean by mean of single pca's, 1 - mean by center of bounding boxes after pcas, 2 - average between both (wrt weights (mean, bounding boxes))
 MEAN_METHOD_WEIGHTS = [0.75,0.25]
 CLUSTERING_METHOD = 1 # 0 - Kmeans, 1 - Spectral
 CLUSTERING_SCALE_X = 1 # 0 - nothing 1 - scales the x - axis after centering
 CLUSTERING_SCALE_X_FACTOR = 0.1
-bone = "Klaue 2 (K2T)"
+bone = "Klaue 1 (K1T)"
 ground = "beton"
 
 base_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/druck"
@@ -118,6 +125,27 @@ th = 0.5
 
 path_zones_left = "{}/segments_for_measurements_left.csv".format(base_dir)
 path_zones_right = "{}/segments_for_measurements_right.csv".format(base_dir)
+
+
+
+
+imprintFiles = pressureStatisticsUtilFunctions.calculateImprint(path_left,
+                                                                path_right,
+                                                                '{}/{}/segments_imprint_{}.csv'.format(base_dir, bone, "left"),
+                                                                '{}/{}/segments_imprint_{}.csv'.format(base_dir, bone, "right"))
+
+transformFiles = pressureStatisticsUtilFunctions.calculateFitToPressure(imprint_file_left_path=imprintFiles[0],
+                                                                        imprint_file_right_path=imprintFiles[1],
+                                                                        pressure_file_path=path_to_tek_csv,
+                                                                        path_to_write_transform_imprint='{}/{}/transformation_imprint_{}.csv'.format(base_dir, bone, ground),
+                                                                        path_to_write_transform_left_zones='{}/{}/transformation_zones_left_{}.csv'.format(base_dir, bone, ground),
+                                                                        path_to_write_transform_right_zones='{}/{}/transformation_zones_right_{}.csv'.format(base_dir, bone, ground),
+                                                                        path_to_write_pressure_data='{}/{}/pressure_data_{}.csv'.format(base_dir, bone, ground),
+                                                                        path_to_write_pressure_metadata='{}/{}/pressure_metadata_{}.csv'.format(base_dir, bone, ground))
+
+
+
+
 
 
 # path_use_transformation = ''
