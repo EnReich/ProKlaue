@@ -94,6 +94,10 @@ def trans_matrix_from_pca(pca):
     return np.matrix(np.vstack([np.hstack([pca.components_.transpose(), np.array([0,0]).reshape(-1,1)]), np.array([0,0,1])])) * \
            np.matrix(((np.vstack([np.hstack([np.array([1,0,0,1]).reshape(2,2), -pca.mean_.transpose().reshape(-1,1)]), np.array([0,0,1])]))))
 
+def transformSegments(segs, matrix):
+    return([[np.array((matrix*np.vstack([np.matrix(pt).reshape(2,1),[[1]]]))[:2,:]).reshape(2) for pt in seg] for seg in segs])
+
+
 
 # function to calculate a fit of the imprint to the pressure_file
 def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pressure_file_path,
@@ -144,7 +148,7 @@ def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pre
 
                 elif keyword == "UNITS":
                     lsplit = line.split(" ")
-                    units = float(lsplit[1])
+                    units = lsplit[1]
 
                 elif keyword == "ASCII_DATA @@":
                     # next block is ascii data
@@ -176,8 +180,8 @@ def calculateFitToPressure(imprint_file_left_path,  imprint_file_right_path, pre
     with open(path_to_write_pressure_metadata, 'w') as file:
         file.write("variable,value\n")
         file.write('"ROW_SPACING",{}\n'.format(row_spacing))
-        file.write('"COL_SPACING",{}'.format(col_spacing))
-        file.write('"UNITS",{}'.format(units))
+        file.write('"COL_SPACING",{}\n'.format(col_spacing))
+        file.write('"UNITS",{}\n'.format(units))
 
 
     pts_pressure = np.array([pt for pt in pressure_data if pt[2] != 0])
@@ -366,8 +370,6 @@ def calculateImprint(tsf_file_left, tsf_file_right, path_to_write_left_segs, pat
     return([path_to_write_left_segs, path_to_write_right_segs])
 
 
-def transformSegments(segs, matrix):
-    return([[np.array((matrix*np.vstack([np.matrix(pt).reshape(2,1),[[1]]]))[:2,:]).reshape(2) for pt in seg] for seg in segs])
 
 def calculateStatistics(path_to_imprint_file_left,
                         path_to_imprint_file_right,
@@ -377,7 +379,8 @@ def calculateStatistics(path_to_imprint_file_left,
                         path_to_transform_left_zones,
                         path_to_transform_right_zones,
                         path_to_pressure_data,
-                        path_to_pressure_metadata):
+                        path_to_pressure_metadata,
+                        path_to_write_statistics):
 
     transform_imprint = np.matrix(np.loadtxt(path_to_transform_imprint, delimiter=","))
     transform_left_zones = np.loadtxt(path_to_transform_left_zones, delimiter=",")
@@ -396,7 +399,7 @@ def calculateStatistics(path_to_imprint_file_left,
     col_spacing = 0.5
     row_spacing = 0.5
 
-    with open(path_to_pressure_metadata) as metadata_file:
+    with open(path_to_pressure_metadata, "rb") as metadata_file:
         reader = csv.DictReader(metadata_file)
         for row in reader:
             variable = row["variable"]
@@ -406,9 +409,9 @@ def calculateStatistics(path_to_imprint_file_left,
             elif str(variable).lower()=="ROW_SPACING".lower():
                 row_spacing = float(value)
             elif str(variable).lower() == "UNITS".lower():
-                units = float(value)
+                units = value
 
-    with open(path_to_pressure_data) as pressure_file:
+    with open(path_to_pressure_data, "rb") as pressure_file:
         reader = csv.reader(pressure_file)
         header = reader.next()
         pressure_data = []
@@ -424,15 +427,13 @@ def calculateStatistics(path_to_imprint_file_left,
 
     pressure_meas = []
     area = []
-    area_intersect = [[],[]]
+    area_intersect = []
+    sensor_segs = []
+    sensor_clipped_against_imprint_scaled_for_clipper = []
 
+    pc = pyclipper.Pyclipper()
 
     for row in pressure_data_not_null:
-        ar = col_spacing*row_spacing
-        area.append(ar)
-        pressure_meas.append(row[pressure_data_pressure_col]*ar)
-
-        # clip against segments
         x = row[pressure_data_x_col]
         y = row[pressure_data_y_col]
         subj = ((x-row_spacing/2., y-col_spacing/2.),
@@ -440,23 +441,115 @@ def calculateStatistics(path_to_imprint_file_left,
                 (x+row_spacing/2., y+col_spacing/2.),
                 (x-row_spacing/2., y+col_spacing/2.))
 
+        sensor_segs.append(subj)
+
+        ar = col_spacing*row_spacing
+        area.append(ar)
+        pressure_meas.append(row[pressure_data_pressure_col]*ar)
+
+        # clip against segments
         # left
-        pc = pyclipper.Pyclipper()
+        pc.Clear()
         pc.AddPaths(pyclipper.scale_to_clipper(segs_left), pyclipper.PT_CLIP, True)
-        pc.AddPath(pyclipper.scale_to_clipper(subj), pyclipper.PT_SUBJECT, True)
-        sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_NONZERO, pyclipper.PFT_NONZERO)
-
-        ar_intersect = sum(abs(np.array([sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in np.array(pyclipper.scale_from_clipper(sol))])))
-        area_intersect[0].append(ar_intersect)
-
-        # right
-        pc = pyclipper.Pyclipper()
         pc.AddPaths(pyclipper.scale_to_clipper(segs_right), pyclipper.PT_CLIP, True)
         pc.AddPath(pyclipper.scale_to_clipper(subj), pyclipper.PT_SUBJECT, True)
         sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_NONZERO, pyclipper.PFT_NONZERO)
 
-        ar_intersect = sum(abs(np.array([sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in np.array(pyclipper.scale_from_clipper(sol))])))
-        area_intersect[1].append(ar_intersect)
+        sensor_clipped_against_imprint_scaled_for_clipper.append(sol)
+        sol_for_ar = np.array([np.array(seg) for seg in pyclipper.scale_from_clipper(sol)])
+        ar_intersect = sum(abs(np.array([sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in sol_for_ar])))
+
+        area_intersect.append(ar_intersect)
+
+    pc.Clear()
+
+    area_zones = [[abs(sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2.) for seg in np.array(segs)] for segs in (segs_zones_left, segs_zones_right)]
+
+    area_intersect_zones=[[],[]]
+    for side in (0, 1):
+        segs_zone = segs_zones_left if side == 0 else segs_zones_right
+        for seg_zone in segs_zone:
+            ar_segment_with_pressure_points = []
+            for sensor_clipped_segs in sensor_clipped_against_imprint_scaled_for_clipper:
+                if sensor_clipped_segs!=[]:
+                    pc.Clear()
+                    pc.AddPath(pyclipper.scale_to_clipper(seg_zone), pyclipper.PT_CLIP, True)
+                    pc.AddPaths(sensor_clipped_segs, pyclipper.PT_SUBJECT, True)
+                    sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_NONZERO, pyclipper.PFT_NONZERO)
+                    sol_for_ar = np.array([np.array(seg) for seg in pyclipper.scale_from_clipper(sol)])
+                    ar = sum(abs(np.array([sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in sol_for_ar])))
+                else:
+                    ar = 0
+                ar_segment_with_pressure_points.append(ar)
+            area_intersect_zones[side].append(ar_segment_with_pressure_points)
+
+    area_zones_clipped_against_imprint = [[],[]]
+    for side in (0, 1):
+        segs_zone = segs_zones_left if side == 0 else segs_zones_right
+        segs_imprint = segs_left if side == 0 else segs_right
+        for seg_zone in segs_zone:
+            pc.Clear()
+            pc.AddPath(pyclipper.scale_to_clipper(seg_zone), pyclipper.PT_CLIP, True)
+            pc.AddPaths(pyclipper.scale_to_clipper(segs_imprint), pyclipper.PT_SUBJECT, True)
+            sol = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_NONZERO, pyclipper.PFT_NONZERO)
+            sol_for_ar = np.array([np.array(seg) for seg in pyclipper.scale_from_clipper(sol)])
+            ar = sum(abs(np.array([sum((seg[np.r_[1:len(seg), 0],0]-seg[:,0])*(seg[np.r_[1:len(seg), 0],1]+seg[:,1]))/2. for seg in sol_for_ar])))
+            area_zones_clipped_against_imprint[side].append(ar)
+
+
+
+    pressure_calculated_for_zones = [[sum([(ar_zone[k]/area_intersect[k])*pressure_meas[k] if area_intersect[k]!=0 else 0 for k in range(0, len(area_intersect))]) for j, ar_zone in enumerate(ar_zones_s)] for i, ar_zones_s in enumerate(area_intersect_zones)]
+
+    pressure_all = sum(pressure_meas)
+
+
+    if path_to_write_statistics!="":
+        with open(path_to_write_statistics, 'w') as statistics_file:
+            statistics_file.write('side,'
+                                  'SID,'
+                                  'pressure,'
+                                  'pressure_rel_to_all,'
+                                  'pressure_rel_to_side,'
+                                  'pressure_rel_to_area,'
+                                  'area,'
+                                  'area_unclipped,'
+                                  'area_with_pressure,'
+                                  'area_with_pressure_unclipped'
+                                  '\n')
+            for side_idx in (0,1):
+                side = "left" if side_idx==0 else "right"
+                segs_zone = segs_zones_left if side_idx==0 else segs_zones_right
+                pressure_side =sum(pressure_calculated_for_zones[side_idx])
+
+                for sid in range(0, len(segs_zone)):
+                    area_clipped = area_zones_clipped_against_imprint[side_idx][sid]
+                    area_unclipped = area_zones[side_idx][sid]
+                    area_with_pressure_clipped = sum(area_intersect_zones[side_idx][sid])
+                    area_with_pressure_unclipped =sum([1 if a >0 else 0 for a in area_intersect_zones[side_idx][sid]])*row_spacing*col_spacing
+                    pressure = pressure_calculated_for_zones[side_idx][sid]
+                    statistics_file.write('"{}",{},{},{},{},{},{},{},{},{}\n'.format(
+                        side,
+                        sid,
+                        pressure,
+                        pressure/pressure_all,
+                        pressure/pressure_side,
+                        pressure/area_clipped,
+                        area_clipped,
+                        area_unclipped,
+                        area_with_pressure_clipped,
+                        area_with_pressure_unclipped
+                    ))
+
+
+
+
+    return(pressure_calculated_for_zones)
+
+
+
+
+
+
 
 
 
