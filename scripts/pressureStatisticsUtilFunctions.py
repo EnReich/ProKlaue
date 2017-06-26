@@ -507,10 +507,10 @@ def calculateStatistics(path_to_imprint_file_left,
         with open(path_to_write_statistics, 'w') as statistics_file:
             statistics_file.write('side,'
                                   'SID,'
-                                  'pressure,'
-                                  'pressure_rel_to_all,'
-                                  'pressure_rel_to_side,'
-                                  'pressure_rel_to_area,'
+                                  'force,'
+                                  'force_rel_to_all,'
+                                  'force_rel_to_side,'
+                                  'force_rel_to_area,'
                                   'area,'
                                   'area_unclipped,'
                                   'area_with_pressure,'
@@ -531,9 +531,9 @@ def calculateStatistics(path_to_imprint_file_left,
                         side,
                         sid,
                         pressure,
-                        pressure/pressure_all,
-                        pressure/pressure_side,
-                        pressure/area_clipped,
+                        (pressure/pressure_all),
+                        (pressure/pressure_side),
+                        (pressure/area_clipped),
                         area_clipped,
                         area_unclipped,
                         area_with_pressure_clipped,

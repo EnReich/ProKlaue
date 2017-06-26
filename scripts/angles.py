@@ -1,6 +1,8 @@
 # script to calculate the angles of 2 axis over the curse of an animation
 # specify the range of the animation in the variable frames and the path to save
 # and select the 2 axes
+# Kronbein, dann Fesselbein
+# Klauenbein, dann Kronbein
 
 
 import maya.cmds as cmds

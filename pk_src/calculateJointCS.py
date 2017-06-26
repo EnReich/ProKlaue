@@ -1,26 +1,37 @@
 # script to calculate joint cs on principal curvature directions
+# one has to select first the bone which will get the axis for flexion (probably the distal bone)
+# second the counterpart bone (the distal bone) and third an object which indicates the direction towards
+# the center of the body (left/right counterpart, could be also a cylinder or a box though)
 
-
-
-import pk_src
 from pk_src import misc
 import maya.cmds as cmds
 import numpy as np
 import math
-import scipy
 import scipy.optimize
-import scipy.spatial
-import scipy.linalg
 import scipy.interpolate
-import sklearn
+import scipy.spatial
 from sklearn import decomposition
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
-# from mpl_toolkits.mplot3d import Axes3D
-# import matplotlib.pyplot as plt
-# import sympy
 from timeit import default_timer as timer
+
+# important settings
+threshold = 0.3                 # threshold for defining of the joint surface
+radius = 0.9                    # radius to average the principal curvature (from the saddle)
+save_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/achsen/ergebnisse"        # save dir for information file (used for plots later)
+
+# more settings
+order = 5                       # order of polynom used to interpolate joint surface
+interpolation_order = 3         # order of bivariate spline used to interpolate joint surface in the radius
+left = False                    # optional paramter if no third bone is selected to estimate direction to the center of body
+axis_used = ["auto"]            # one can specify if to use the minimal or maximal curvature or some automatic setting
+
+
+
+
+# radius_outer = 1.2*radius
+# interpolation_stepsize = 0.05
 
 start = timer()
 
@@ -56,6 +67,7 @@ def shape_operator_spline(spline, points):
     tangent_basis = [[np.array([1,0,f_u[i]]), np.array([0,1,f_v[i]])] for i in range(len(E))]
 
     return shape_operator, tangent_basis
+
 
 # calculate the principal curvature for a given bivariate polynomial as coefficient matrix,
 # surface is x(u,v)=x, y(u,v)=v, z(u,v)=P(u,v),
@@ -96,6 +108,7 @@ def shape_operator_polynomial(C_as_matrix, points):
     tangent_basis = [[np.array([1,0,f_u[i]]), np.array([0,1,f_v[i]])] for i in range(len(E))]
 
     return shape_operator, tangent_basis
+
 
 # calculate the shape operator at given points for a given bivariate polynomial spline,
 # surface is x(u,v)=x, y(u,v)=v, z(u,v)=P(u,v)
@@ -225,17 +238,6 @@ def makeAxis(origin, direction, cylinder_name="Cylinder", cone_name="Cone", cyli
               pos_cone[2], cone, absolute=True)
     cmds.parent(cone[0], cylinder[0])
     return cylinder, cone
-
-threshold = 0.3
-order = 5
-radius = 0.9
-# radius_outer = 1.2*radius
-interpolation_order = 3
-# interpolation_stepsize = 0.05
-left = False
-axis_used = ["auto"]
-save_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/achsen/ergebnisse"
-
 
 print "Time: {}".format(timer()-start)
 print "Finding close point pairs"
@@ -394,13 +396,8 @@ for objIndex in [0, 1]:
 
     # first find all points in a lightly higher radius than the given
     # then calculate principal curvature for these points and then average for all points within a given radius
-    # scope_outer_idx = idx0
-    # scope_outer = p0_scope
     scope_outer_pca = p_pca[objIndex]
 
-    # scope_outer_idx = t0.query_ball_point(saddle, radius_outer)
-    # scope_outer = p0[scope_outer_idx]
-    # scope_outer_pca = pca.transform(scope_outer)
 
     # interpolate through spline
     spline = scipy.interpolate.SmoothBivariateSpline(x=scope_outer_pca[:, 0],
@@ -411,18 +408,11 @@ for objIndex in [0, 1]:
 
     print "Time: {}".format(timer()-start)
 
-    # coords for evaluation
-    # coords_x_range = np.arange(start=saddle_pca[0]-radius, stop=saddle_pca[0]+radius+interpolation_stepsize, step=interpolation_stepsize)
-    # coords_y_range = np.arange(start=saddle_pca[0]-radius, stop=saddle_pca[0]+radius+interpolation_stepsize, step=interpolation_stepsize)
-    # coords = [[x,y] for x in coords_x_range for y in coords_y_range if scipy.spatial.distance.euclidean([x,y], [saddle_pca[0], saddle_pca[1]])<radius]
 
     # find points in inner scope
     scope_inner_idx = t_pca[objIndex].query_ball_point(saddle_pca, radius)
     scope_inner_pca = p_pca[objIndex][scope_inner_idx]
 
-    # scope_inner_idx = t0.query_ball_point(saddle, radius)
-    # scope_inner = p0[scope_inner_idx]
-    # scope_inner_pca = pca.transform(scope_inner)
 
     # calculate the shape operator at these points
     shape_operator_scope, tangent_basis = shape_operator_spline(spline=spline, points=scope_inner_pca)
@@ -580,172 +570,3 @@ if save_flag:
     save_file.write('"RF","{}"\n'.format(r_floating))
 
     save_file.close()
-
-
-    # cylinderMax = cmds.polyCylinder()
-    # cmds.scale(0.01,10,0.01, cylinderMax)
-    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(max_curvature).reshape(3,1))
-    # m = np.matrix(cmds.xform(cylinderMax, q=1, ws=1, m=1)).reshape(4,4).transpose()
-    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-    # cmds.xform(cylinderMax, m=m_new.transpose().A1, ws=1)
-    # cmds.move(saddle[0], saddle[1], saddle[2], cylinderMax, absolute = True)
-
-    # length_cylinder = 3
-    #
-    # cylinderMin = cmds.polyCylinder(name = "cyl_min_{}_{}".format(objName, objName_other))
-    # cmds.scale(0.01,length_cylinder ,0.01, cylinderMin)
-    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(min_curvature[objIndex]).reshape(3,1))
-    # m = np.matrix(cmds.xform(cylinderMin, q=1, ws=1, m=1)).reshape(4,4).transpose()
-    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-    # cmds.xform(cylinderMin, m=m_new.transpose().A1, ws=1)
-    # cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], cylinderMin, absolute = True)
-    #
-    # coneMin = cmds.polyCone(name="cone_min_{}_{}".format(objName, objName_other))
-    # cmds.scale(0.1, 1., 0.1, coneMin)
-    # m = np.matrix(cmds.xform(coneMin, q=1, ws=1, m=1)).reshape(4, 4).transpose()
-    # m_new = np.matrix(np.r_[np.c_[r, [0, 0, 0]], [[0, 0, 0, 1]]]) * m
-    # cmds.xform(coneMin, m=m_new.transpose().A1, ws=1)
-    # cmds.move((saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[0], (saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[1], (saddle[objIndex]+(length_cylinder+1)*min_curvature[objIndex])[2], coneMin, absolute=True)
-    # cmds.parent(coneMin[0], cylinderMin[0])
-
-    # if axis_used =="min" or axis_used =="all":
-    #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
-    #              cylinder_name="cyl_min_{}_{}".format(objName, objName_other),
-    #              cone_name="cone_min_{}_{}".format(objName, objName_other))
-    #     cmds.parent(cylinder[0], sphere[0])
-    # # elif axis_used == "all":
-    # #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
-    # #                               cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
-    # #                               cone_name="cone_max_{}_{}".format(objName, objName_other))
-    # #     cmds.parent(cylinder[0], sphere[0])
-    # #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
-    # #                               cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
-    # #                               cone_name="cone_max_{}_{}".format(objName, objName_other))
-    # #     cmds.parent(cylinder[0], sphere[0])
-    # if axis_used == "max" or axis_used=="all":
-    #     cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
-    #                               cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
-    #                               cone_name="cone_max_{}_{}".format(objName, objName_other))
-    #     cmds.parent(cylinder[0], sphere[0])
-
-    # minXMax = np.cross(min_curvature[objIndex], max_curvature[objIndex])
-    # cylinderMinxMax = cmds.polyCylinder(name = "cyl_min-x-max_{}_{}".format(objName, objName_other))
-    # cmds.scale(0.01,length_cylinder,0.01, cylinderMinxMax)
-    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(minXMax).reshape(3,1))
-    # m = np.matrix(cmds.xform(cylinderMinxMax, q=1, ws=1, m=1)).reshape(4,4).transpose()
-    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-    # cmds.xform(cylinderMinxMax, m=m_new.transpose().A1, ws=1)
-    # cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], cylinderMinxMax, absolute = True)
-    #
-    #
-    # last = np.cross(minXMax, min_curvature[objIndex])
-    # cylinderLast = cmds.polyCylinder(name = "cyl_last_{}_{}".format(objName, objName_other))
-    # cmds.scale(0.01,length_cylinder,0.01, cylinderLast)
-    # r = misc.getRotationFromAToB(a=np.matrix([0,1,0]).reshape(3,1), b=np.matrix(last).reshape(3,1))
-    # m = np.matrix(cmds.xform(cylinderLast, q=1, ws=1, m=1)).reshape(4,4).transpose()
-    # m_new = np.matrix(np.r_[np.c_[r, [0,0,0]],[[0,0,0,1]]])*m
-    # cmds.xform(cylinderLast, m=m_new.transpose().A1, ws=1)
-    # cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], cylinderLast, absolute = True)
-
-
-
-
-
-# sphereMax = cmds.polySphere(radius = 0.1)
-# cmds.move((saddle+max_curvature)[0], (saddle+max_curvature)[1], (saddle+max_curvature)[2], sphereMax, absolute = True)
-#
-# sphereMin = cmds.polySphere(radius = 0.1)
-# cmds.move((saddle+min_curvature)[0], (saddle+min_curvature)[1], (saddle+min_curvature)[2], sphereMin, absolute = True)
-
-
-
-
-# OLD CODE
-#
-# terms = ["x**{}*y**{}".format(i-j,j) for i in range(order+1) for j in range(i+1)]
-# terms_and_coeffs = ['{}*{}'.format(str(c), t) for c,t in zip(C, terms)]
-# expr = sympy.sympify('+'.join(terms_and_coeffs))
-# diff_x = sympy.diff(expr, x)
-# diff_y = sympy.diff(expr, y)
-# solution = sympy.solve([diff_x, diff_y], [x,y])
-#
-# # evaluate z
-# z = expr.subs(x, solution[0][0]).subs(y, solution[0][1])
-# pca.inverse_transform([solution[0][0], solution[0][1], z])
-#
-# #check if real
-# if(sympy.sympify(solution[0][0]).is_real): print 'real'
-#
-# data = p0[idx0]
-# order = 3
-# X_data, Y_data, Z_data = data[:, 0], data[:, 1], data[:, 2]
-# # since 1.12. A = np.stack([(X_data**i)*(Y_data**j) for i in range(order+1) for j in range(order+1-i)], axis=1)
-# A = np.concatenate([((X_data**i)*(Y_data**j)).reshape(-1,1) for i in range(order+1) for j in range(order+1-i)], axis = 1)
-# C, _, _, _ = scipy.linalg.lstsq(A, Z_data)
-# terms = ["x**{}*y**{}".format(i,j) for i in range(order+1) for j in range(order+1-i)]
-#
-#
-#
-# terms_and_coeffs = ['{}*{}'.format(str(c), t) for c,t in zip(C, terms)]
-#
-# x, y = sp.Symbol("x"), sp.Symbol("y")
-# expr = sp.sympify('+'.join(terms_and_coeffs))
-# diff_x = sp.diff(expr, x)
-# diff_y = sp.diff(expr, y)
-# solution = sp.solve([diff_x, diff_y], [x,y])
-#
-#
-# # some 3-dim points
-# mean = np.array([0.0, 0.0, 0.0])
-# cov = np.array([[1.0, -0.5, 0.8], [-0.5, 1.1, 0.0], [0.8, 0.0, 1.0]])
-# data = np.random.multivariate_normal(mean, cov, 50)
-#
-#
-# # regular grid covering the domain of the data
-# X, Y = np.meshgrid(np.arange(-3.0, 3.0, 0.5), np.arange(-3.0, 3.0, 0.5))
-# XX = X.flatten()
-# YY = Y.flatten()
-#
-# order = 2  # 1: linear, 2: quadratic
-# if order == 1:
-#     # best-fit linear plane
-#     A = np.c_[data[:, 0], data[:, 1], np.ones(data.shape[0])]
-#     C, _, _, _ = scipy.linalg.lstsq(A, data[:, 2])  # coefficients
-#
-#     # evaluate it on grid
-#     Z = C[0] * X + C[1] * Y + C[2]
-#
-#     # or expressed using matrix/vector product
-#     # Z = np.dot(np.c_[XX, YY, np.ones(XX.shape)], C).reshape(X.shape)
-#
-# elif order == 2:
-#     # best-fit quadratic curve
-#     A = np.c_[np.ones(data.shape[0]), data[:, :2], np.prod(data[:, :2], axis=1), data[:, :2] ** 2]
-#     C, _, _, _ = scipy.linalg.lstsq(A, data[:, 2])
-#
-#     # evaluate it on a grid
-#     Z2 = np.dot(np.c_[np.ones(XX.shape), XX, YY, XX * YY, XX ** 2, YY ** 2], C).reshape(X.shape)
-#
-#
-# X_data, Y_data, Z_data = data[:, 0], data[:, 1], data[:, 2]
-# A = np.stack([(X_data**i)*(Y_data**j) for i in range(order+1) for j in range(order+1-i)], axis=1)
-# grid_points = np.stack([(XX**i)*(YY**j) for i in range(order+1) for j in range(order+1-i)], axis=1)
-# C, _, _, _ = scipy.linalg.lstsq(A, Z_data)
-# # evaluate it on a grid
-# Z = np.dot(grid_points, C).reshape(X.shape)
-#
-# terms = ["x**{}*y**{}".format(i,j) for i in range(order+1) for j in range(order+1-i)]
-# terms_and_coeffs = ['{}*{}'.format(str(c), t) for c,t in zip(C, terms)]
-# expr = sp.sympify(terms_and_coeffs)
-#
-# # plot points and fitted surface
-# fig = plt.figure()
-# ax = fig.gca(projection='3d')
-# ax.plot_surface(X, Y, Z, rstride=1, cstride=1, alpha=0.2)
-# ax.scatter(data[:, 0], data[:, 1], data[:, 2], c='r', s=50)
-# plt.xlabel('X')
-# plt.ylabel('Y')
-# ax.set_zlabel('Z')
-# ax.axis('equal')
-# ax.axis('tight')
-# plt.show()

@@ -9,8 +9,8 @@ import maya.cmds as cmds
 import os
 
 base_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/achsen/testdaten"           # base dir
-scene_animated = "Berta_Pedikura_8erkeys.mb"     # scene paths relative to base dir
-scene_ct = "Berta_ct.mb"
+scene_animated = "Alma_Karera_8erkeys.mb"     # scene paths relative to base dir
+scene_ct = "Alma_ct.mb"
 base_dir = os.path.abspath(base_dir)        # nothing to do here
 scene_animated = os.path.abspath("{}/{}".format(base_dir, scene_animated))
 scene_ct = os.path.abspath("{}/{}".format(base_dir, scene_ct))

@@ -5,8 +5,8 @@ library(viridis)
 # ------------------------------ SETTINGS --------------------------------------------------
 
 setwd("~/ProKlaue/testdaten/druck")
-ground_type = "gummi"
-bone = "Klaue 1 (K1T)"
+ground_type = "beton"
+bone = "Klaue 3 (K3T)"
 
 
 # ------------------------------ TRANSFORM FIT --------------------------------------------------
@@ -20,9 +20,9 @@ rotation_matrix <- function(alpha, radian=TRUE)
   return(matrix(c(cos(alpha),sin(alpha),-sin(alpha),cos(alpha)), nrow=2, ncol=2))
 }
 
-rot = rotation_matrix(4, radian=F)
-rot_pivot = matrix(c(7.4,9), nrow=2)
-displace = matrix(c(0,0.3), nrow=2)
+rot = rotation_matrix(-20, radian=F)
+rot_pivot = matrix(c(8,11), nrow=2)
+displace = matrix(c(0,0), nrow=2)
 
 transform_extra = rbind(cbind(c(1,0),c(0,1),displace),c(0,0,1))%*%
   rbind(cbind(c(1,0),c(0,1),rot_pivot),c(0,0,1))%*%
@@ -123,5 +123,5 @@ segments_measurements_right[c("x", "y")] = t(apply(segments_measurements_right_o
 statistics = read.csv(paste0(bone, "/statistics_",ground_type, ".csv"))
 
 # ------------------------------ STATISTIC PLOTS --------------------------------------------
-ggplot(statistics, aes(group = side, x=SID, y=pressure_rel_to_area, fill=side))+geom_col(position = "dodge")
+ggplot(statistics, aes(group = side, x=SID, y=force_rel_to_area, fill=side))+geom_col(position = "dodge")
 

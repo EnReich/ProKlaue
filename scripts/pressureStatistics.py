@@ -1,5 +1,5 @@
 import sys, getopt
-from scripts import pressureStatisticsUtilFunctions
+import pressureStatisticsUtilFunctions
 
 def main(argv):
     step_set, th_set, bone_set, ground_set, base_dir_set = False, False, False, False, False
