@@ -4,9 +4,9 @@ library(viridis)
 
 # ------------------------------ SETTINGS --------------------------------------------------
 
-setwd("~/ProKlaue/testdaten/druck")
-ground_type = "beton"
-bone = "Klaue 3 (K3T)"
+setwd("~/ProKlaue/testdaten/druck/")
+ground_type = "gummi"
+bone = "Klaue 1 (K1T)"
 
 
 # ------------------------------ TRANSFORM FIT --------------------------------------------------
@@ -20,8 +20,8 @@ rotation_matrix <- function(alpha, radian=TRUE)
   return(matrix(c(cos(alpha),sin(alpha),-sin(alpha),cos(alpha)), nrow=2, ncol=2))
 }
 
-rot = rotation_matrix(-20, radian=F)
-rot_pivot = matrix(c(8,11), nrow=2)
+rot = rotation_matrix(0, radian=F)
+rot_pivot = matrix(c(0,0), nrow=2)
 displace = matrix(c(0,0), nrow=2)
 
 transform_extra = rbind(cbind(c(1,0),c(0,1),displace),c(0,0,1))%*%
@@ -37,11 +37,11 @@ transform = transform_extra%*%transform_imprint
 pressure_data <- read.csv(paste0(bone, "/pressure_data_",ground_type, ".csv"))
 pressure_data$pressure[pressure_data$pressure==0]=NA
 
-segments_imprint_right_orig <- read_csv(paste0(bone, "/segments_imprint_right", ".csv"))
-segments_imprint_left_orig <- read_csv(paste0(bone, "/segments_imprint_left", ".csv"))
+segments_imprint_right_orig <- read.csv(paste0(bone, "/segments_imprint_right", ".csv"))
+segments_imprint_left_orig <- read.csv(paste0(bone, "/segments_imprint_left", ".csv"))
 
-segments_measurements_right_orig <- read_csv(paste0("segments_for_measurements_right", ".csv"))
-segments_measurements_left_orig <- read_csv(paste0("segments_for_measurements_left", ".csv"))
+segments_measurements_right_orig <- read.csv(paste0("segments_for_measurements_right", ".csv"))
+segments_measurements_left_orig <- read.csv(paste0("segments_for_measurements_left", ".csv"))
 
 transform_zones_left = unname(as.matrix(read.csv(paste0(bone, "/transformation_zones_left_",ground_type, ".csv"), header = F)))
 transform_zones_right = unname(as.matrix(read.csv(paste0(bone, "/transformation_zones_right_",ground_type, ".csv"), header = F)))
@@ -108,6 +108,12 @@ transform = unname(as.matrix(read.csv(file = paste0(bone, "/transformation_r_imp
 transform_zones_left = unname(as.matrix(read.csv(paste0(bone, "/transformation_r_zones_left_",ground_type, ".csv"), header = F)))
 transform_zones_right = unname(as.matrix(read.csv(paste0(bone, "/transformation_r_zones_right_",ground_type, ".csv"), header = F)))
 
+segments_imprint_right_orig <- read_csv(paste0(bone, "/segments_imprint_right", ".csv"))
+segments_imprint_left_orig <- read_csv(paste0(bone, "/segments_imprint_left", ".csv"))
+
+segments_measurements_right_orig <- read_csv(paste0("segments_for_measurements_right", ".csv"))
+segments_measurements_left_orig <- read_csv(paste0("segments_for_measurements_left", ".csv"))
+
 segments_imprint_right <- segments_imprint_right_orig
 segments_imprint_left <- segments_imprint_left_orig
 segments_measurements <- segments_measurements_right_orig 
@@ -124,4 +130,5 @@ statistics = read.csv(paste0(bone, "/statistics_",ground_type, ".csv"))
 
 # ------------------------------ STATISTIC PLOTS --------------------------------------------
 ggplot(statistics, aes(group = side, x=SID, y=force_rel_to_area, fill=side))+geom_col(position = "dodge")
+ggplot(statistics, aes(group = side, x=SID, y=statistics$force/statistics$area_with_pressure, fill=side))+geom_col(position = "dodge")
 
