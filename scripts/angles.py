@@ -11,17 +11,17 @@ import math
 import os
 from pk_src import misc
 
+base_dir = "C:\\Users\\Kai\\Documents\\ProKlaue\\testdaten\\achsen\\ergebnisse"
+frames = range(0, 820)
+
 
 def angles(a, b):
     return math.atan2(np.cross(a,b), np.dot(a,b))*180/math.pi
 
 
-frames = range(0, 820)
 sel = cmds.ls(sl=1)
 axis1 = sel[0]
 axis2 = sel[1]
-# path = "rot-{}-{}.csv".format(axis1.replace(":", "_"), axis2.replace(":", "_"))
-base_dir = "C:\\Users\\Kai\\Documents\\ProKlaue\\testdaten\\achsen\\ergebnisse"
 path = "{}/rot-{}-{}.csv".format(base_dir, "_".join(axis1.split("_")[1:3]), "_".join(axis2.split("_")[1:3]))
 path = os.path.abspath(path)
 o_file = open(path, 'w')

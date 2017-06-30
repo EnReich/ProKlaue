@@ -12,6 +12,7 @@ Points with a larger distance than a given threshold will be discarded.
 
 **Args:**
     :file(f): path to save altitude map to ASCII-file; if string is empty, no data will be written
+    :filePlane(fp): path to save the plane vertices for each frame to a file, so one could track the plane also
     :threshold(t): threshold of maximum distance from plane; all points with larger distance will be discarded (default 10.0)
     :anim(a): boolean flag to indicate if altitude map shall be calculation for each frame (TRUE) or only for
     the current frame (FALSE, default). If TRUE a file name needs to be specified, because the amount of data
