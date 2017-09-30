@@ -3,13 +3,7 @@
 %
 
 \NeedsTeXFormat{LaTeX2e}[1995/12/01]
-\ProvidesClass{sphinxhowto}[2009/06/02 Document class (Sphinx HOWTO)]
-
-\ifx\directlua\undefined\else
-% if compiling with lualatex 0.85 or later load compatibility patch issued by
-% the LaTeX team for older packages relying on \pdf<name> named primitives.
-    \IfFileExists{luatex85.sty}{\RequirePackage{luatex85}}{}
-\fi
+\ProvidesClass{sphinxhowto}[2017/03/26 v1.6 Document class (Sphinx HOWTO)]
 
 % 'oneside' option overriding the 'twoside' default
 \newif\if@oneside
@@ -36,20 +30,12 @@
 % ``Bjarne'' style a bit better.
 %
 \renewcommand{\maketitle}{%
-  \noindent\rule{\textwidth}{1pt}\ifsphinxpdfoutput\newline\null\fi\par
-  \ifsphinxpdfoutput
-    \begingroup
-    % These \defs are required to deal with multi-line authors; it
-    % changes \\ to ', ' (comma-space), making it pass muster for
-    % generating document info in the PDF file.
-    \def\\{, }%
-    \def\and{and }%
-    \pdfinfo{
-      /Author (\@author)
-      /Title (\@title)
-    }%
+  \noindent\rule{\textwidth}{1pt}\par
+    \begingroup % for PDF information dictionary
+       \def\endgraf{ }\def\and{\& }%
+       \pdfstringdefDisableCommands{\def\\{, }}% overwrite hyperref setup
+       \hypersetup{pdfauthor={\@author}, pdftitle={\@title}}%
     \endgroup
-  \fi
   \begin{flushright}
     \sphinxlogo
     \py@HeaderFamily
@@ -70,11 +56,10 @@
   %\gdef\@thanks{}\gdef\@author{}\gdef\@title{}
 }
 
-\let\py@OldTableofcontents=\tableofcontents
-\renewcommand{\tableofcontents}{
+\newcommand{\sphinxtableofcontents}{
   \begingroup
     \parskip = 0mm
-    \py@OldTableofcontents
+    \tableofcontents
   \endgroup
   \rule{\textwidth}{1pt}
   \vspace{12pt}
@@ -91,21 +76,19 @@
 % Contents.
 % For an article document class this environment is a section,
 % so no page break before it.
-\let\py@OldThebibliography=\thebibliography
-\renewcommand{\thebibliography}[1]{
-  \phantomsection
-  \py@OldThebibliography{1}
-  \addcontentsline{toc}{section}{\bibname}
-}
+%
+\newenvironment{sphinxthebibliography}[1]{%
+  % \phantomsection % not needed here since TeXLive 2010's hyperref
+  \begin{thebibliography}{1}%
+  \addcontentsline{toc}{section}{\ifdefined\refname\refname\else\ifdefined\bibname\bibname\fi\fi}}{\end{thebibliography}}
+
 
 % Same for the indices.
 % The memoir class already does this, so we don't duplicate it in that case.
 %
-\@ifclassloaded{memoir}{}{
-  \let\py@OldTheindex=\theindex
-  \renewcommand{\theindex}{
-    \phantomsection
-    \py@OldTheindex
-    \addcontentsline{toc}{section}{\indexname}
-  }
-}
+\@ifclassloaded{memoir}
+ {\newenvironment{sphinxtheindex}{\begin{theindex}}{\end{theindex}}}
+ {\newenvironment{sphinxtheindex}{%
+    \phantomsection % needed because no chapter, section, ... is created by theindex
+    \begin{theindex}%
+    \addcontentsline{toc}{section}{\indexname}}{\end{theindex}}}
