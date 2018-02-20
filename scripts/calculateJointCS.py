@@ -1,6 +1,6 @@
 # script to calculate joint cs on principal curvature directions
 # one has to select first the bone which will get the axis for flexion (probably the distal bone)
-# second the counterpart bone (the distal bone) and third an object which indicates the direction towards
+# second the counterpart bone (the proximal bone) and third an object which indicates the direction towards
 # the center of the body (left/right counterpart, could be also a cylinder or a box though)
 
 from pk_src import misc
@@ -10,24 +10,40 @@ import math
 import scipy.optimize
 import scipy.interpolate
 import scipy.spatial
+import sklearn
 from sklearn import decomposition
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import TheilSenRegressor
+from sklearn.linear_model import RANSACRegressor
 from sklearn.pipeline import Pipeline
 from timeit import default_timer as timer
 
 # important settings
-threshold = 0.3                 # threshold for defining of the joint surface
-radius = 0.9                    # radius to average the principal curvature (from the saddle)
-save_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/achsen/ergebnisse"        # save dir for information file (used for plots later)
+threshold = 4.5                                              # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
+radius =  5.5                                                    # radius to average the principal curvature (from the saddle), cow 0.9, horse 6.5, 5.5
+save_dir = "C:/Users/Kai/Documents/ProKlaue - Sabrina"        # save dir for information file (used for plots later)
 
 # more settings
 order = 5                       # order of polynom used to interpolate joint surface
+regression_method = "ts"        # regression estimator
+RANSAC_SPECIFIERS = ["rs", "ransac"]
+TS_SPECIFIERS = ["ts", "theil-sen", "theilsen"]
 interpolation_order = 3         # order of bivariate spline used to interpolate joint surface in the radius
-left = False                    # optional paramter if no third bone is selected to estimate direction to the center of body
+left = "auto"                   # whether the first selected bone is the left bone (might be able to detect it
+                                # automatically by name)
 axis_used = ["auto"]            # one can specify if to use the minimal or maximal curvature or some automatic setting
+set_materials = True            # whether to set materials for regions used to calculate joint surface and curvature
+shading_grp_surface = "shadingGrpJointSurface"  # name of the shading grp for the region to calculate the joint surface
+shading_grp_curvature = "shadingGrpCurvatures"  # for the average of surface curvature
+shading_grp_bones = "shadingGrpBones"       # for the bones
+shading_grp_axis1 = "shadingGrpAxis1"       # for bodyfixed axis1
+shading_grp_axis2 = "shadingGrpAxis2"       # for bodyfixed axis2
+shading_grp_axisRef = "shadingGrpAxisRef"   # for reference axis
+shading_grp_saddle = "shadingGrpSaddle"     # for saddle point
 
-
+reset_shading_for_0 = False
+reset_shading_for_1 = False
 
 
 # radius_outer = 1.2*radius
@@ -215,7 +231,14 @@ def surfature(X,Y,Z):
     return Pmax,Pmin
 
 
-def makeAxis(origin, direction, cylinder_name="Cylinder", cone_name="Cone", cylinder_length=3, cylinder_size=0.025, cone_length=1, cone_size=0.1):
+def makeAxis(origin, direction,
+             cylinder_name="Cylinder",
+             cone_name="Cone",
+             cylinder_length=3,
+             cylinder_size=0.025,
+             cone_length=1,
+             cone_size=0.1,
+             shading_grp = ""):
     direct = direction/np.linalg.norm(direction)
 
     cylinder = cmds.polyCylinder(name=cylinder_name)
@@ -228,6 +251,24 @@ def makeAxis(origin, direction, cylinder_name="Cylinder", cone_name="Cone", cyli
     cmds.move(origin[0], origin[1], origin[2], cylinder, absolute=True)
 
     cone = cmds.polyCone(name=cone_name)
+
+    #shader grps
+    if (shading_grp != ""):
+        if not cmds.objExists(shading_grp):
+            shading_grp = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp)
+        else:
+            if not cmds.objectType(shading_grp) == "shadingEngine":
+                while (cmds.objExists(shading_grp)):
+                    shading_grp = "{0}1".format(shading_grp)
+
+                shading_grp = cmds.sets(renderable=True, noSurfaceShader=True, empty=True,
+                                                name=shading_grp)
+
+        cmds.sets(cone[0], fe=shading_grp )
+        cmds.sets(cylinder[0], fe=shading_grp)
+
+
+    #position and scale
     cmds.scale(cone_size, cone_length, cone_size, cone)
     m = np.matrix(cmds.xform(cone, q=1, ws=1, m=1)).reshape(4, 4).transpose()
     m_new = np.matrix(np.r_[np.c_[r, [0, 0, 0]], [[0, 0, 0, 1]]]) * m
@@ -237,6 +278,8 @@ def makeAxis(origin, direction, cylinder_name="Cylinder", cone_name="Cone", cyli
               pos_cone[1],
               pos_cone[2], cone, absolute=True)
     cmds.parent(cone[0], cylinder[0])
+
+
     return cylinder, cone
 
 print "Time: {}".format(timer()-start)
@@ -257,10 +300,11 @@ if len(objs)>2:
     direction_in = np.average(misc.getPointsAsList(objs[2], worldSpace=True), axis=0)-np.average(p0, axis=0)
     direction_in /= np.linalg.norm(direction_in)
 
-if objs[0].find("_links")<0:
-    left = False
-else:
-    left = True
+if(left == "auto"):
+    if objs[0].find("_links")<0 or objs[0].find("_left")<0:
+        left = False
+    else:
+        left = True
 
 # open save file
 if save_dir != "":
@@ -275,16 +319,61 @@ if save_dir != "":
 else:
     save_flag = False
 
+
+# visual indication for bones (overrides shadergrps)
+if(set_materials):
+    if not cmds.objExists(shading_grp_bones):
+        shading_grp_bones=cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_bones)
+    else:
+        if not cmds.objectType(shading_grp_bones)=="shadingEngine":
+            while(cmds.objExists(shading_grp_bones)):
+                shading_grp_bones = "{0}1".format(shading_grp_bones)
+
+            shading_grp_bones = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_bones)
+
+    if(reset_shading_for_0):
+        cmds.sets(objs[0], fe=shading_grp_bones)
+    if(reset_shading_for_1):
+        cmds.sets(objs[1], fe=shading_grp_bones)
+
+
 # find pairs of points who are not further away than a given threshold
 rIntersection = t[0].query_ball_tree(other=t[1], r=threshold)
 idx0 = np.array(list(set([i for i in range(len(p0)) if rIntersection[i]])))
 idx1 = np.array(list(set(np.uint32(np.concatenate(rIntersection)))))
 idx = [idx0, idx1]
 
-# # visual indication by selection
+# selection of used vertices
 # cmds.select(clear=True)
 # for i in idx0: cmds.select("{}.vtx[{}]".format(objs[0], i), add=True)
 # for i in idx1: cmds.select("{}.vtx[{}]".format(objs[1], i), add=True)
+
+# visual indication
+if(set_materials):
+    if not cmds.objExists(shading_grp_surface):
+        shading_grp_surface=cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_surface)
+    else:
+        if not cmds.objectType(shading_grp_surface)=="shadingEngine":
+            while(cmds.objExists(shading_grp_surface)):
+                shading_grp_surface = "{0}1".format(shading_grp_surface)
+
+            shading_grp_surface = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_surface)
+
+    faces_idx0 = cmds.polyListComponentConversion(["{}.vtx[{}]".format(objs[0], i) for i in idx0], fromVertex=1, toFace=1, internal=1)
+    faces_idx1 = cmds.polyListComponentConversion(["{}.vtx[{}]".format(objs[1], i) for i in idx1], fromVertex=1, toFace=1, internal=1)
+    cmds.sets(faces_idx0, fe=shading_grp_surface)
+    cmds.sets(faces_idx1, fe=shading_grp_surface)
+
+
+    if not cmds.objExists(shading_grp_saddle):
+        shading_grp_saddle=cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_saddle)
+    else:
+        if not cmds.objectType(shading_grp_saddle)=="shadingEngine":
+            while(cmds.objExists(shading_grp_saddle)):
+                shading_grp_saddle = "{0}1".format(shading_grp_saddle)
+
+            shading_grp_saddle = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_saddle)
+
 
 print "Time: {}".format(timer()-start)
 
@@ -324,20 +413,30 @@ for objIndex in [0, 1]:
     print "Time: {}".format(timer()-start)
     print "Fit polynomial"
 
-    model = Pipeline([('poly', PolynomialFeatures(degree=order)),
-                      ('linear', LinearRegression(fit_intercept=False))])
+    if regression_method.lower() in TS_SPECIFIERS:
+        model = Pipeline([('poly', PolynomialFeatures(degree=order)),
+                          ('regr', TheilSenRegressor())])
+    elif regression_method.lower() in RANSAC_SPECIFIERS:
+        model = Pipeline([('poly', PolynomialFeatures(degree=order)),
+                          ('regr', RANSACRegressor())])
+    else:
+        model = Pipeline([('poly', PolynomialFeatures(degree=order)),
+                          ('regr', LinearRegression(fit_intercept=False))])
 
     # z as a response to x, y (coords in pca, z-3rd component)
     model = model.fit(p_pca[objIndex][:,:2], p_pca[objIndex][:, 2])
 
     # coefficients of the polynomial
-    C = model.named_steps['linear'].coef_
+    if regression_method.lower() in RANSAC_SPECIFIERS:
+        C = model.named_steps['regr'].estimator_.coef_
+    else:
+        C = model.named_steps['regr'].coef_
 
     print "Coefficients: "
     print C
-    print "Sum of Residuals:"
-    print model.named_steps['linear'].residues_
-    print model.named_steps['linear'].residues_/len(p_pca[objIndex])
+    #print "Sum of Residuals:"
+    #print model.named_steps['regr'].residues_
+    #print model.named_steps['regr'].residues_/len(p_pca[objIndex])
 
 
     print "Time: {}".format(timer()-start)
@@ -394,7 +493,8 @@ for objIndex in [0, 1]:
 
     # calculate curvature in a scope around saddle
 
-    # first find all points in a lightly higher radius than the given
+    # first find all points in a lightly higher radius than the given, right now its just all of the points
+    # used for finding the saddle point
     # then calculate principal curvature for these points and then average for all points within a given radius
     scope_outer_pca = p_pca[objIndex]
 
@@ -413,6 +513,21 @@ for objIndex in [0, 1]:
     scope_inner_idx = t_pca[objIndex].query_ball_point(saddle_pca, radius)
     scope_inner_pca = p_pca[objIndex][scope_inner_idx]
 
+    # set materials for inner scope
+    if (set_materials):
+        if not cmds.objExists(shading_grp_curvature):
+            shading_grp_curvature = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_curvature)
+        else:
+            if not cmds.objectType(shading_grp_curvature) == "shadingEngine":
+                while (cmds.objExists(shading_grp_curvature)):
+                    shading_grp_curvature = "{0}1".format(shading_grp_curvature)
+
+                shading_grp_curvature = cmds.sets(renderable=True, noSurfaceShader=True, empty=True,
+                                                name=shading_grp_curvature)
+
+        faces_inner_idx  = cmds.polyListComponentConversion(["{}.vtx[{}]".format(objs[objIndex], idx[objIndex][i]) for i in scope_inner_idx], fromVertex=1,
+                                                      toFace=1, internal=1)
+        cmds.sets(faces_inner_idx, fe=shading_grp_curvature)
 
     # calculate the shape operator at these points
     shape_operator_scope, tangent_basis = shape_operator_spline(spline=spline, points=scope_inner_pca)
@@ -490,41 +605,75 @@ for objIndex in [0, 1]:
     sphere = cmds.polySphere(name="saddle_{}_{}".format(objName, objName_other), radius = 0.1)
     cmds.move(saddle[objIndex][0], saddle[objIndex][1], saddle[objIndex][2], sphere, absolute = True)
 
+    if(set_materials):
+        cmds.sets(sphere[0], fe = shading_grp_saddle)
+
+    shading_grp_used = shading_grp_axis2 if objIndex == 1 else shading_grp_axis1
+
+    cylinder_len = 2*radius
+    cylinder_si = 0.025*radius
+    cone_si = 0.1*radius
+
     if "auto" in axis_used:
         ax_label = "X" if objIndex==1 else "Z"
 
         cylinder, _ = makeAxis(origin=saddle[objIndex], direction=auto[objIndex],
                                cylinder_name="cyl_{}_{}_{}".format(ax_label, objName, objName_other),
-                               cone_name="cone_{}_{}_{}".format(ax_label, objName, objName_other))
+                               cone_name="cone_{}_{}_{}".format(ax_label, objName, objName_other),
+                               shading_grp = shading_grp_used,
+                               cylinder_length = cylinder_len,
+                               cylinder_size = cylinder_si,
+                               cone_size=cone_si)
         cmds.parent(cylinder[0], sphere[0])
 
         cylinder, _ = makeAxis(origin=saddle[objIndex], direction=floating_auto,
                                cylinder_name="cyl_{}_ref_{}_{}".format(ax_label, objName, objName_other),
-                               cone_name="cone_{}_ref_{}_{}".format(ax_label, objName, objName_other))
+                               cone_name="cone_{}_ref_{}_{}".format(ax_label, objName, objName_other),
+                               shading_grp = shading_grp_axisRef,
+                               cylinder_length = cylinder_len,
+                               cylinder_size = cylinder_si,
+                               cone_size=cone_si)
         cmds.parent(cylinder[0], sphere[0])
 
     if "min" in axis_used:
         cylinder, _ = makeAxis(origin=saddle[objIndex], direction=min_curvature[objIndex],
-                 cylinder_name="cyl_min_{}_{}".format(objName, objName_other),
-                 cone_name="cone_min_{}_{}".format(objName, objName_other))
+                                    cylinder_name="cyl_min_{}_{}".format(objName, objName_other),
+                                    cone_name="cone_min_{}_{}".format(objName, objName_other),
+                                    cylinder_length=cylinder_len,
+                                    cylinder_size=cylinder_si,
+                                    cone_size=cone_si,
+                                    shading_grp = shading_grp_used)
         cmds.parent(cylinder[0], sphere[0])
 
     if "max" in axis_used:
         cylinder, _ = makeAxis(origin=saddle[objIndex], direction=max_curvature[objIndex],
-                                  cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
-                                  cone_name="cone_max_{}_{}".format(objName, objName_other))
+                                    cylinder_name="cyl_max_{}_{}".format(objName, objName_other),
+                                    cone_name="cone_max_{}_{}".format(objName, objName_other),
+                                    cylinder_length=cylinder_len,
+                                    cylinder_size=cylinder_si,
+                                    cone_size=cone_si,
+                                    shading_grp=shading_grp_used)
         cmds.parent(cylinder[0], sphere[0])
 
     if "floating_min" in axis_used:
         cylinder, _ = makeAxis(origin=saddle[objIndex], direction=floating_min,
-                               cylinder_name="cyl_floating_min_{}_{}".format(objName, objName_other),
-                               cone_name="cone_floating_min_{}_{}".format(objName, objName_other))
+                                    cylinder_name="cyl_floating_min_{}_{}".format(objName, objName_other),
+                                    cone_name="cone_floating_min_{}_{}".format(objName, objName_other),
+                                    cylinder_length = cylinder_len,
+                                    cylinder_size = cylinder_si,
+                                    cone_size = cone_si,
+                                    shading_grp=shading_grp_used)
+
         cmds.parent(cylinder[0], sphere[0])
 
     if "floating_max" in axis_used:
         cylinder, _ = makeAxis(origin=saddle[objIndex], direction=floating_max,
-                               cylinder_name="cyl_floating_max_{}_{}".format(objName, objName_other),
-                               cone_name="cone_floating_max_{}_{}".format(objName, objName_other))
+                                    cylinder_name="cyl_floating_max_{}_{}".format(objName, objName_other),
+                                    cone_name="cone_floating_max_{}_{}".format(objName, objName_other),
+                                    cylinder_length = cylinder_len,
+                                    cylinder_size = cylinder_si,
+                                    cone_size = cone_si,
+                                    shading_grp=shading_grp_used)
         cmds.parent(cylinder[0], sphere[0])
 
 

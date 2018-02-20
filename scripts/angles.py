@@ -11,7 +11,7 @@ import math
 import os
 from pk_src import misc
 
-base_dir = "C:\\Users\\Kai\\Documents\\ProKlaue\\testdaten\\achsen\\ergebnisse"
+base_dir = "C:\\Users\\Kai\\Documents\\ProKlaue - Moni\\ergebnisse"
 frames = range(0, 820)
 
 

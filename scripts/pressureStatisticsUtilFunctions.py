@@ -91,8 +91,13 @@ def estimate_mean_by_bounding_pca(pts_array, pca):
     return estimated_mean
 
 def trans_matrix_from_pca(pca):
-    return np.matrix(np.vstack([np.hstack([pca.components_.transpose(), np.array([0,0]).reshape(-1,1)]), np.array([0,0,1])])) * \
+    ret = np.matrix(np.vstack([np.hstack([pca.components_.transpose(), np.array([0,0]).reshape(-1,1)]), np.array([0,0,1])])) * \
            np.matrix(((np.vstack([np.hstack([np.array([1,0,0,1]).reshape(2,2), -pca.mean_.transpose().reshape(-1,1)]), np.array([0,0,1])]))))
+
+    ret[0:2, 0] = ret[0:2, 0] / np.linalg.norm(ret[0:2, 0])
+    ret[0:2, 1] = ret[0:2, 1] / np.linalg.norm(ret[0:2, 1])
+
+    return ret
 
 def transformSegments(segs, matrix):
     return([[np.array((matrix*np.vstack([np.matrix(pt).reshape(2,1),[[1]]]))[:2,:]).reshape(2) for pt in seg] for seg in segs])
@@ -544,21 +549,4 @@ def calculateStatistics(path_to_imprint_file_left,
 
 
     return(pressure_calculated_for_zones)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

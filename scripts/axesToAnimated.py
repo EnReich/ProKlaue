@@ -8,9 +8,9 @@
 import maya.cmds as cmds
 import os
 
-base_dir = "C:/Users/Kai/Documents/ProKlaue/testdaten/achsen/testdaten"           # base dir
-scene_animated = "Alma_Karera_8erkeys.mb"     # scene paths relative to base dir
-scene_ct = "Alma_ct.mb"
+base_dir = "C:/Users/Kai/Documents/ProKlaue - Moni/testdaten"           # base dir
+scene_animated = "Berta_Pedikura_8erkeys_neu_SG.mb"     # scene paths relative to base dir
+scene_ct = "Berta_ct.mb"
 base_dir = os.path.abspath(base_dir)        # nothing to do here
 scene_animated = os.path.abspath("{}/{}".format(base_dir, scene_animated))
 scene_ct = os.path.abspath("{}/{}".format(base_dir, scene_ct))
@@ -50,7 +50,7 @@ for ax in axes_set:
         cmds.parent(ax, world=True)
     cmds.select(clear=True)
     cmds.select(ax)
-    exported_file = cmds.file(export_path, type='mayaBinary', es=True)
+    exported_file = cmds.file(export_path, type='mayaBinary', es=True, force=True)
     exported_axis_files[ax] = exported_file
 
 # open animated scene
