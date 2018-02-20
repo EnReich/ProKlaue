@@ -11,7 +11,7 @@ import os, glob
 base_dir = os.path.abspath("C:/Users/Kai/Documents/ProKlaue - Sabrina/testdaten")           # base dir
 os.chdir(base_dir)
 
-for scene_animated in glob.glob("*.mb"):
+for scene_animated in glob.glob("*.mb")[24:27]:
 
     horse_name = scene_animated.split("_")[0]
 
