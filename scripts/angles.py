@@ -8,7 +8,7 @@
 import maya.cmds as cmds
 import numpy as np
 import math
-import os
+import os, glob
 from pk_src import misc
 
 base_dir = "C:\\Users\\Kai\\Documents\\ProKlaue - Moni\\ergebnisse"

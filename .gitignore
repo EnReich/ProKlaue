@@ -1,2 +1,4 @@
 *.pyc
 .Rproj.user
+*.RHistory
+*.RData

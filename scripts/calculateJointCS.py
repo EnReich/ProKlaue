@@ -20,8 +20,8 @@ from sklearn.pipeline import Pipeline
 from timeit import default_timer as timer
 
 # important settings
-threshold = 4.5                                              # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
-radius =  5.5                                                    # radius to average the principal curvature (from the saddle), cow 0.9, horse 6.5, 5.5
+threshold = 6.                                              # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
+radius =  6.5                                                    # radius to average the principal curvature (from the saddle), cow 0.9, horse 6.5, 5.5
 save_dir = "C:/Users/Kai/Documents/ProKlaue - Sabrina"        # save dir for information file (used for plots later)
 
 # more settings

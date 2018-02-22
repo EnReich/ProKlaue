@@ -5,8 +5,8 @@ library(viridis)
 # ------------------------------ SETTINGS --------------------------------------------------
 
 setwd("~/ProKlaue/testdaten/druck/")
-ground_type = "bet123"
-bone = "K20T"
+ground_type = "gummi"
+bone = "Klaue 1 (K1T)"
 
 
 # ------------------------------ TRANSFORM FIT --------------------------------------------------
@@ -34,7 +34,7 @@ normalize_scale <-function(mat)
 }
 
 
-rot = rotation_matrix(10, radian=F)
+rot = rotation_matrix(-10, radian=F)
 rot_pivot = matrix(c(9,9), nrow=2)
 displace = matrix(c(0,0), nrow=2)
 
@@ -149,8 +149,8 @@ segments_measurements_right[c("x", "y")] = t(apply(segments_measurements_right_o
 # ---------- Apply additional transformation ----------
 
 
-rot = rotation_matrix(-20, radian=F)
-rot_pivot = matrix(c(9,9), nrow=2)
+rot = rotation_matrix(2, radian=F)
+rot_pivot = matrix(c(9,8), nrow=2)
 displace = matrix(c(0,0), nrow=2)
 
 transform_extra = rbind(cbind(c(1,0),c(0,1),displace),c(0,0,1))%*%
@@ -176,6 +176,38 @@ segments_measurements <- segments_measurements_left_orig
 
 segments_imprint_left[c("x", "y")] = t(apply(segments_imprint_left, 1,trans_func, mat = transform))
 segments_imprint_right[c("x", "y")] = t(apply(segments_imprint_right, 1, trans_func, mat = transform))
+
+segments_measurements_left[c("x", "y")] = t(apply(segments_measurements_left_orig, 1, trans_func, mat = transform_zones_left))
+segments_measurements_right[c("x", "y")] = t(apply(segments_measurements_right_orig, 1, trans_func, mat = transform_zones_right))
+
+
+
+# ------------------------------ Normalize zones --------------------------------------------
+replace_transform_zones_left = solve(transform_zones_left)
+replace_transform_zones_right = solve(transform_zones_right)
+
+# replace imprint and track min/max x and y
+segments_imprint_left_replaced = t(apply(segments_imprint_left, 1, trans_func, mat = replace_transform_zones_left))
+segments_imprint_right_replaced = t(apply(segments_imprint_right, 1, trans_func, mat = replace_transform_zones_right))
+
+zones_normalize_minx_left = apply(segments_imprint_left_replaced, 2, min)
+zones_normalize_minx_right = apply(segments_imprint_right_replaced, 2, min)
+
+zones_normalize_scale_left = apply(segments_imprint_left_replaced, 2, max) - zones_normalize_minx_left
+zones_normalize_scale_right = apply(segments_imprint_right_replaced, 2, max) - zones_normalize_minx_right 
+
+transform_extra_zones_left = rbind(c(zones_normalize_scale_left[1], 0, zones_normalize_minx_left[1]),
+                                   c(0, zones_normalize_scale_left[2], zones_normalize_minx_left[2]),
+                                   c(0, 0, 1))
+transform_extra_zones_right = rbind(c(zones_normalize_scale_right[1], 0, zones_normalize_minx_right[1]),
+                                    c(0, zones_normalize_scale_right[2], zones_normalize_minx_right[2]),
+                                    c(0, 0, 1))
+
+transform_zones_left = transform_zones_left%*%transform_extra_zones_left
+transform_zones_right = transform_zones_right%*%transform_extra_zones_right
+
+segments_measurements_right_orig <- read_csv(paste0("segments_for_measurements_right", ".csv"))
+segments_measurements_left_orig <- read_csv(paste0("segments_for_measurements_left", ".csv"))
 
 segments_measurements_left[c("x", "y")] = t(apply(segments_measurements_left_orig, 1, trans_func, mat = transform_zones_left))
 segments_measurements_right[c("x", "y")] = t(apply(segments_measurements_right_orig, 1, trans_func, mat = transform_zones_right))
