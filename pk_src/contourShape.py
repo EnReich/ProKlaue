@@ -1,4 +1,5 @@
 """
+BUGGED MODULE, keeping it for possible copy paste.
 Module to find and process the contour shape of segments on the plane.
 Given a set of segments on the plane, calculate the outline of the contour (meaning intersections of edges will create new points and the result will be a set of segments)
 """

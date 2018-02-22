@@ -1,9 +1,12 @@
 """
+BUGGED COMMAND, clipping doesn't work properly.
 Given a plane (4 vertices, 1 facet) and a triangulated mesh to calculte the projected Area
 onto the plane (projection in the inverse direction of the face normal of the plane).
 The distance for the threshold is measured from the plane to the centroid of the triangle.
 Triangles in negative direction from the plane are not considered (I.r.t. the plane normal).
 Triangles with a larger distance than a given threshold will be discarded.
+
+.. warning:: bugged, clipping doesn't work properly
 
 **see also:** :ref:`axisParallelPlane`
 
