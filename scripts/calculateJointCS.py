@@ -20,9 +20,9 @@ from sklearn.pipeline import Pipeline
 from timeit import default_timer as timer
 
 # important settings
-threshold = 6.                                              # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
-radius =  6.5                                                    # radius to average the principal curvature (from the saddle), cow 0.9, horse 6.5, 5.5
-save_dir = "C:/Users/Kai/Documents/ProKlaue - Sabrina"        # save dir for information file (used for plots later)
+threshold = 0.3                                              # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
+radius =  0.9                                                    # radius to average the principal curvature (from the saddle), cow 0.9, horse 6.5, 5.5
+save_dir = "C:/Users/Kai/Documents/tmp"        # save dir for information file (used for plots later)
 
 # more settings
 order = 5                       # order of polynom used to interpolate joint surface
@@ -296,15 +296,16 @@ t = [t0, t1]
 direction_up = np.average(p1, axis=0)-np.average(p0, axis=0)
 direction_up /= np.linalg.norm(direction_up)
 
+
+if(left == "auto"):
+    if objs[0].find("_links")>0 or objs[0].find("_left")>0:
+        left = True
+    else:
+        left = False
+
 if len(objs)>2:
     direction_in = np.average(misc.getPointsAsList(objs[2], worldSpace=True), axis=0)-np.average(p0, axis=0)
     direction_in /= np.linalg.norm(direction_in)
-
-if(left == "auto"):
-    if objs[0].find("_links")<0 or objs[0].find("_left")<0:
-        left = False
-    else:
-        left = True
 
 # open save file
 if save_dir != "":
@@ -576,7 +577,7 @@ if "auto" in axis_used:
         else:
             auto[0] = max_curvature[0]
 
-        if (left and direction_in.dot(auto[0])>0) or ((not left) and  direction_in.dot(auto[0])<0):
+        if ((left) and direction_in.dot(auto[0])>0) or ((not left) and  direction_in.dot(auto[0])<0):
             auto[0] *= -1
 
         # X points in the direction of sight for left, opposite direction for right
@@ -586,7 +587,7 @@ if "auto" in axis_used:
         else:
             auto[1] = max_curvature[1]
 
-        if (left and sight_estimate.dot(auto[1]) < 0) or ((not left) and sight_estimate.dot(auto[1]) > 0):
+        if ((left) and sight_estimate.dot(auto[1]) < 0) or ((not left) and sight_estimate.dot(auto[1]) > 0):
             auto[1] *= -1
 
     else:

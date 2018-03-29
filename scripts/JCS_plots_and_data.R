@@ -1,9 +1,31 @@
+# This script reads in data produced by the maya angle script. 
+# The data is processed (axes names and orientations, time scale, averages) 
+# and written into other output formats.
+# Finally some plots are produced
+
 library(ggplot2)
 library(data.table)
 library(viridis)
 library(ggthemes)
 library(Cairo)
+library(Rcpp)
+library(inline)
+
+
+# set the working directory to the folder with the results from the angle script
 setwd("~/ProKlaue - Moni/ergebnisse")
+
+
+# for rolling min
+# set the path to the rollingMin Rcpp 
+sourceCpp("~/ProKlaue/scripts/rollingMin.cpp")
+
+
+# specify a folder for the plots (should exist)
+plots_dir = "plots"
+
+#specify a folder for the output tables (should exist)
+tables_dir = "csv" 
 
 # --------------- VARIABLES TO FIT -------------------------------------
 # variables to fit and calculate gradient on the fit
@@ -31,14 +53,20 @@ plot_vars_4 = c("R1_fitted_inv", "R2_fitted", "RF_fitted")
 plot_vars_4_raw = c("R1_inv", "R2", "RF")
 animal_breaks = c("alma", "berta")
 animal_labels = c("Alma", "Berta")
-ground_breaks = c("beton", "kura", "pedikura", "karera")
+ground_breaks = c("beton", "karera", "kura", "pedikura" )
 ground_labels = c("beton" = "Beton", "kura" = "Kura", "pedikura" = "Pedikura", "karera" = "Karera") #c("Beton", "Kura", "Pedikura", "Karera")
 ground_labeler = as_labeller(c("beton" = "Beton", "kura" = "Kura", "pedikura" = "Pedikura", "karera" = "Karera"))
+
+ground_labels_en = c("beton" = "concrete", "kura" = "Kura", "pedikura" = "Pedikura", "karera" = "Karera") #c("Beton", "Kura", "Pedikura", "Karera")
+ground_labeler_en = as_labeller(ground_labels_en)
 
 animal_breaks = factor(animal_breaks, levels = unique(animal_breaks))
 #animal_labels = factor(animal_labels, levels = unique(animal_labels))
 ground_breaks = factor(ground_breaks, levels = unique(ground_breaks))
 #ground_labels = factor(ground_labels, levels = unique(ground_labels))
+
+joint_side_breaks = c("links", "rechts")
+
 
 collapse_sequence = "              "
 labels4 = c("R1_fitted_inv"= paste(c("\u2190 Extension    ", "Z", "      Flexion \u2192"), collapse=collapse_sequence), 
@@ -51,9 +79,26 @@ labels5 = c("R1_inv"= "Z",
             "R2"= "X", 
             "RF"= "Y")
 
+labels6 = c("R1_inv_fitted" = "Z_fitted",
+            "R2_fitted" = "X_fitted",
+            "RF_fitted" = "Y_fitted")
 
 
-#------------ PLOT GROUPS --------------
+labels_joint_grps = c("DIP" = "DIPJ", "PIP" = "PIPJ")
+
+
+variabel_labels_en = c("time" = "time (%)", "rotation" = "rotation (°)", "ground" = "flooring", "side" = "side")
+collapse_sequence_en = "      "
+labels4_en = c("R1_fitted_inv"= paste(c("\u2190 extension    ","Z","      flexion \u2192"), collapse=collapse_sequence_en), 
+            "R2_fitted"=        paste(c("\u2190 adduction    ","X","    abduction \u2192"), collapse=collapse_sequence_en), 
+            "RF_fitted"=        paste(c("\u2190 int. rotation","Y","ext. rotation \u2192"), collapse=collapse_sequence_en))
+
+labels_joint_name_en = c("DIP links" = "DIPJ medial", "DIP rechts" = "DIPJ lateral", "PIP links" = "PIPJ medial", "PIP rechts" = "PIPJ lateral")
+labels_joint_side_en = c("links" = "medial", "rechts"="lateral")
+
+
+# --------------- PLOT GROUPS --------------
+# These are the groups to form for plotting (will be shown together in a plot for comparison)
 # ground grps to plot
 ground_grps = combn(ground_breaks, 2, simplify=FALSE)
 names(ground_grps) = paste(combn(ground_breaks, 2)[1,], combn(ground_breaks, 2)[2,], sep = "_vs_")
@@ -67,6 +112,12 @@ ground_grps = lapply(ground_grps, factor)
 #joint grps to plot
 joint_grps = list(DIPs = c("DIP links", "DIP rechts"), PIPs = c("PIP links", "PIP rechts"))
 
+#time_interval to plot
+time_plot_min = -0.02
+time_plot_max = 1.02
+
+modulo_points = 60
+
 
 # --------------- COLORS -----------------------------------------
 qualitative_color_palette_cols = c("#d95f02", "#7570b3", "#1b9e77", "#e7298a", "#ff7f00", "#b2df8a", "#1f78b4", "#728700")
@@ -77,9 +128,66 @@ names(qualitative_color_palette_ground_types) <- ground_breaks
 qualitative_color_palette_animal_types <- qualitative_color_palette_cols[1:length(animal_breaks)]
 names(qualitative_color_palette_animal_types) <- animal_breaks
 
+qualitative_color_palette_sides <- qualitative_color_palette_cols[1:length(joint_side_breaks)]
+names(qualitative_color_palette_sides) <- joint_side_breaks
+
 qualitative_color_palette <- c(qualitative_color_palette_ground_types, qualitative_color_palette_animal_types)
 
-# -------------- CORRECTION FACTORS ------------------------------
+qualitative_color_palette_animal_types_grey <- c("grey50", "grey20")
+names(qualitative_color_palette_animal_types_grey) <- animal_breaks
+
+qualitative_color_palette_ground_types_grey <- c("grey50", "grey35", "grey20", "grey5")
+names(qualitative_color_palette_ground_types_grey) <- ground_breaks
+
+qualitative_color_palette_sides_grey <- c("grey15", "grey5")
+names(qualitative_color_palette_sides_grey) <- joint_side_breaks
+
+qualitative_color_palette_grey <- c(qualitative_color_palette_ground_types_grey, 
+                                    qualitative_color_palette_animal_types_grey,
+                                    qualitative_color_palette_sides_grey)
+
+
+qualitative_linetype_palette_ground_types <- c("solid", "C3", "dotted", "5323")
+names(qualitative_linetype_palette_ground_types) <- ground_breaks
+
+qualitative_linetype_palette_sides <- c("longdash", "dotted")
+names(qualitative_linetype_palette_sides) <- joint_side_breaks
+
+qualitative_linetype_palette <- c(qualitative_linetype_palette_ground_types, qualitative_linetype_palette_sides)
+
+
+qualitative_shape_palette_ground_types <- c(16, 15, 23, 4)
+names(qualitative_shape_palette_ground_types) <- ground_breaks
+
+qualitative_shape_palette_sides <- c(16, 15)
+names(qualitative_shape_palette_sides) <- joint_side_breaks
+
+qualitative_shape_palette <- c(qualitative_shape_palette_ground_types, qualitative_shape_palette_sides)
+
+
+guide_leg_6er_floor = guide_legend(
+  direction = "horizontal",
+  title.position = "top",
+  keywidth = unit(15, units="mm")
+)
+
+guide_leg_6er_side = guide_legend(
+  direction = "horizontal",
+  title.position = "top",
+  keywidth = unit(20, units="mm")
+)
+
+standard_width = 8
+standard_height = 10
+standard_units = "in"
+standard_dpi = 300
+
+plots_grey_6er_width = 140
+plots_grey_6er_height = 220
+plots_grey_6er_units = "mm"
+plots_grey_6er_dpi = 600
+
+# --------------- CORRECTION FACTORS ------------------------------
 initial_contact_all = c("alma|beton"=95, 
                         "alma|kura"=138, 
                         "berta|beton"=72, 
@@ -92,7 +200,7 @@ last_contact_all = c("alma|beton"=715,
                      "alma|kura"=656, 
                      "berta|beton"=810, 
                      "berta|kura"=729, 
-                     "alma|pedikura"=737, 
+                     "alma|pedikura"=698, #previous 737 
                      "berta|pedikura"=582,
                      "alma|karera"=708,
                      "berta|karera"=733)
@@ -137,6 +245,7 @@ error = c("DIP links"=c("1"=2.63,
 
 # --------------- DATA AGGREGATION -------------------------------------
 data = data.table()
+data_per_frame_wide = data.table()
 RF_correction = data.table()
 for(d_first in list.dirs(recursive = FALSE))
 {
@@ -182,6 +291,8 @@ for(d_first in list.dirs(recursive = FALSE))
       }
       # x[,"distance":=sqrt(diffX^2+diffY^2+diffZ^2)]
       
+      x[,"corrected_frame":=(frame-initial_contact)]
+      
       x[,"time":=(frame-initial_contact)/(last_contact-initial_contact)]
       
       x[,"RF":=RF-unlist(RF_correction[animal_name==.GlobalEnv$animal_name&axis1==.GlobalEnv$axis1&axis2==.GlobalEnv$axis2, "value"])]
@@ -200,6 +311,13 @@ for(d_first in list.dirs(recursive = FALSE))
       y[, "axis1":=factor(axis1)]
       y[, "axis2":=factor(axis2)]
       data = rbind(data, y)
+      
+      
+      x[, "animal_name":=factor(animal_name)]
+      x[, "ground_type":=factor(ground_type)]
+      x[, "axis1":=factor(axis1)]
+      x[, "axis2":=factor(axis2)]
+      data_per_frame_wide = rbind(data_per_frame_wide, x)
     }
   }
 } 
@@ -223,6 +341,10 @@ data[(axis1 == "Kronbein_links" & axis2 == "Fesselbein_links") | (axis2 == "Kron
 data[(axis1 == "Klauenbein_rechts" & axis2 == "Kronbein_rechts") | (axis2 == "Klauenbein_rechts" & axis1 == "Kronbein_rechts") , joint_name:="DIP rechts"]
 data[(axis1 == "Kronbein_rechts" & axis2 == "Fesselbein_rechts") | (axis2 == "Kronbein_rechts" & axis1 == "Fesselbein_rechts") , joint_name:="PIP rechts"]
 
+data[,joint_group := tstrsplit(joint_name, " ", fixed = T)[1]]
+data[,joint_side := tstrsplit(joint_name, " ", fixed = T)[2]]
+
+
 copy <- data[variable == "R1"]
 copy[, value :=-value]
 copy[, variable :="R1_inv"]
@@ -232,6 +354,19 @@ copy <- data[variable == "R1_fitted"]
 copy[, value :=-value]
 copy[, variable :="R1_fitted_inv"]
 data= rbind(copy, data)
+
+
+data_per_frame_wide[(axis1 == "Klauenbein_links" & axis2 == "Kronbein_links") | (axis2 == "Klauenbein_links" & axis1 == "Kronbein_links") , joint_name:="DIP links"]
+data_per_frame_wide[(axis1 == "Kronbein_links" & axis2 == "Fesselbein_links") | (axis2 == "Kronbein_links" & axis1 == "Fesselbein_links") , joint_name:="PIP links"]
+data_per_frame_wide[(axis1 == "Klauenbein_rechts" & axis2 == "Kronbein_rechts") | (axis2 == "Klauenbein_rechts" & axis1 == "Kronbein_rechts") , joint_name:="DIP rechts"]
+data_per_frame_wide[(axis1 == "Kronbein_rechts" & axis2 == "Fesselbein_rechts") | (axis2 == "Kronbein_rechts" & axis1 == "Fesselbein_rechts") , joint_name:="PIP rechts"]
+
+data_per_frame_wide[,joint_group := tstrsplit(joint_name, " ", fixed = T)[1]]
+data_per_frame_wide[,joint_side := tstrsplit(joint_name, " ", fixed = T)[2]]
+
+data_per_frame_wide[, R1_inv := -R1]
+data_per_frame_wide[, R1_fitted_inv := -R1_fitted]
+
 
 ax_names_to_index = c("R1_fitted_inv"="1", "R2_fitted"="2", "RF_fitted"= "F")
 joint_names = c("PIP links","PIP rechts", "DIP links", "DIP rechts")
@@ -248,6 +383,7 @@ data_replaced <- data[(variable %in% plot_vars_4_raw), ]
 data_replaced[variable == plot_vars_4_raw[1], variable := plot_vars_4[1]]
 data_replaced[variable == plot_vars_4_raw[2], variable := plot_vars_4[2]]
 data_replaced[variable == plot_vars_4_raw[3], variable := plot_vars_4[3]]
+data_replaced[, pt_seq := seq(time), by = c("variable", "animal_name", "ground_type", "joint_name")]
 
 
 
@@ -353,13 +489,107 @@ fun_extrema <- function(data)
   return(extrema_out)
 }
 
-extrema_out <- fun_extrema(data=data)
-write.csv(extrema_out, "extrema.csv")
-write.csv2(extrema_out, "extrema_for_excel.csv")
 
-extrema_local_out = fun_extrema(data=data[ground_type=="beton"&joint_name=="DIP rechts"&time<=0.7&time>=0.5,])[,c("animal_name", "ground_type", "joint_name", "value_Z_min", "time_Z_min")]
-write.csv(extrema_local_out, "extrema_local.csv")
-write.csv2(extrema_local_out, "extrema_local_for_excel.csv")
+fun_local_extrema_one_axis <- function(times, values, winsize)
+{
+  order_times = order(times)
+  times = times[order_times]
+  values = values[order_times]
+  
+  mat_ret_cpp_min = slidingWindowMin(times, values, winsize)
+  mat_ret_cpp_inverted_min = slidingWindowMin(times, -values, winsize)
+  mat_ret_cpp_inverted_min[,1]=-mat_ret_cpp_inverted_min[,1] 
+  
+  is_extr_min = (mat_ret_cpp_min[,3] == seq(nrow(mat_ret_cpp_min)))
+  is_extr_max = (mat_ret_cpp_inverted_min[,3] == seq(nrow(mat_ret_cpp_inverted_min)))
+  
+  extr_min_idc = which(is_extr_min)
+  extr_max_idc = which(is_extr_max)
+  
+  
+  df_ret = rbind(data.table(type = "min", time=mat_ret_cpp_min[extr_min_idc, 2], value = mat_ret_cpp_min[extr_min_idc, 1]),
+                 data.table(type = "max", time=mat_ret_cpp_inverted_min[extr_max_idc, 2], value = mat_ret_cpp_inverted_min[extr_max_idc, 1]))
+  
+  return(df_ret)
+}
+
+fun_local_extrema <- function(data, winsize)
+{
+  ret = FALSE
+  for(animal in unique(data[,animal_name]))
+  {
+    for(ground in unique(data[animal_name == animal,ground_type]))
+    {
+      for(joint in unique(data[animal_name == animal & ground_type == ground, joint_name]))
+      {
+        for(axis in unique(data[animal_name == animal & ground_type == ground & joint_name == joint, variable]))
+        {
+          times_single_axis = data[animal_name == animal & 
+                                     ground_type == ground & 
+                                     joint_name == joint &
+                                     variable == axis, time]
+          values_single_axis = data[animal_name == animal & 
+                                      ground_type == ground & 
+                                      joint_name == joint &
+                                      variable == axis, value]
+          tbl_single_axis = fun_local_extrema_one_axis(times_single_axis, values_single_axis, winsize)
+          tbl_single_axis = cbind(animal = animal, ground = ground, joint = joint, axis=axis, tbl_single_axis)
+          
+          if(!is.data.table(ret))
+          {
+            ret = tbl_single_axis
+          } else {
+            ret = rbind(ret, tbl_single_axis)
+          }
+          
+        }
+      }
+    }
+  }
+  return(ret)
+}
+
+
+extrema_out <- fun_extrema(data=data)
+write.csv(extrema_out, paste(tables_dir, "/", "extrema.csv", sep=""))
+write.csv2(extrema_out, paste(tables_dir, "/", "extrema_for_excel.csv", sep=""))
+
+# extrema_local_out = fun_extrema(data=data[ground_type=="beton"&joint_name=="DIP rechts"&time<=0.7&time>=0.5,])[,c("animal_name", "ground_type", "joint_name", "value_Z_min", "time_Z_min")]
+# write.csv(extrema_local_out, paste(tables_dir, "/", "extrema_local.csv", sep=""))
+# write.csv2(extrema_local_out, paste(tables_dir, "/", "extrema_local_for_excel.csv", sep=""))
+
+
+extrema_local = fun_local_extrema(data = data[variable %in% c(names(labels5)) & time>=0 & time<=1, ], winsize = 0.2)
+extrema_local[, axis := c(labels5, labels6)[axis]]
+setorderv(extrema_local, c("animal", "ground", "joint", "axis", "type", "time"))
+write.csv(extrema_local, paste(tables_dir, "/", "extrema_local.csv", sep=""))
+
+
+fun_extrema_interpolations <- function(data)
+{
+  mins = copy(data[time<=1&time>=0, .SD[which.min(value)], by = list(variable, ground_type, joint_name)])
+  maxs = copy(data[time<=1&time>=0, .SD[which.max(value)], by = list(variable, ground_type, joint_name)])
+  extrema = rbind(cbind(mins, type = "min"),cbind(maxs, type = "max"))
+  extrema[variable%in%names(labels5), variable:=labels5[as.character(unlist(variable))]]
+  #extrema[variable%in%names(labels5),]$variable=labels5[as.character(unlist(extrema[variable%in%names(labels5),]$variable))]
+  extrema_wide = dcast(extrema, ground_type+ joint_name~variable+type, value.var = c("value", "time"))
+  extrema_out = extrema_wide[, c("ground_type", "joint_name", 
+                                 apply(expand.grid(c("value", "time"),
+                                                   apply(expand.grid(labels5, c("min", "max")), 1, paste, collapse="_")), 1, paste, collapse="_")), 
+                             with=FALSE]
+  for(ax in labels5)
+  {
+    diff_rom = extrema_out[, paste(c("value",ax,"max"), collapse="_"), with=FALSE] - extrema_out[, paste(c("value",ax,"min"), collapse="_"), with=FALSE]
+    extrema_out[,paste(c(ax, "_rom"), collapse=""):=diff_rom]
+  }
+  
+  return(extrema_out)
+}
+
+extrema_means_out <- fun_extrema_interpolations(data=interpolations_means)
+write.csv(extrema_means_out, paste(tables_dir, "/", "extrema_means.csv", sep=""))
+write.csv2(extrema_means_out, paste(tables_dir, "/", "extrema_means_for_excel.csv", sep=""))
+
 
 midstance_tbl = data.table()
 for(animal in levels(data$animal_name))
@@ -390,8 +620,62 @@ midstance_diffs[, time_midstance_diffs:= abs(midstance_time_1-midstance_time_2)]
 midstance_diffs[, time_diffs_frames_1 := time_midstance_diffs * unname((last_contact_all-initial_contact_all)[paste(midstance_diffs$animal_name_1, midstance_diffs$ground_type_1, sep="|")])]
 midstance_diffs[, time_diffs_frames_2 := time_midstance_diffs * unname((last_contact_all-initial_contact_all)[paste(midstance_diffs$animal_name_2, midstance_diffs$ground_type_2, sep="|")])]
 
-write.csv(midstance_diffs, "midstance_diffs.csv")
-write.table(midstance_diffs, "midstance_diffs_for_excel.csv", dec=",", sep=";", row.names = FALSE)
+write.csv(midstance_diffs, paste(tables_dir, "/", "midstance_diffs.csv", sep=""))
+write.table(midstance_diffs, paste(tables_dir, "/", "midstance_diffs_for_excel.csv", sep=""), dec=",", sep=";", row.names = FALSE)
+
+
+# --------------- OUTPUT TABLES ----------------------------
+output_coloumns = c("animal_name" = "animal_name", 
+                    "ground_type" = "ground_type", 
+                    "joint_name" = "joint_name", 
+                    "frame" = "frame", 
+                    "corrected_frame" = "corrected_frame",
+                    "time" = "time",
+                    "RAbAd" = "R2",
+                    "RProSup" = "RF",
+                    "RFlexEx"= "R1_inv",
+                    "RAbAd_fitted" = "R2_fitted",
+                    "RProSup_fitted" = "RF",
+                    "RFlexEx_fitted"= "R1_fitted_inv")
+
+output_coloumns_inverse = names(output_coloumns)
+names(output_coloumns_inverse) = output_coloumns
+
+data_per_frame_wide_file_output = data_per_frame_wide[, output_coloumns, with=FALSE]
+colnames(data_per_frame_wide_file_output) = names(output_coloumns)
+
+
+
+data_means_per_frame_file_output = melt(data_per_frame_wide_file_output, 
+                                        measure.vars=c("RAbAd",
+                                                       "RProSup",
+                                                       "RFlexEx",
+                                                       "RAbAd_fitted",
+                                                       "RProSup_fitted",
+                                                       "RFlexEx_fitted"))
+
+data_means_per_raw_frame_file_output = data_means_per_frame_file_output[, list(value=mean(value)), by = c("joint_name", "ground_type", "frame", "variable")]
+data_means_per_corrected_frame_file_output = data_means_per_frame_file_output[, list(value=mean(value)), by = c("joint_name", "ground_type", "corrected_frame", "variable")]
+
+data_means_per_raw_frame_file_output = dcast(data_means_per_raw_frame_file_output, joint_name + ground_type + frame ~ variable, value.var = "value")
+data_means_per_corrected_frame_file_output = dcast(data_means_per_corrected_frame_file_output, joint_name + ground_type + corrected_frame ~ variable, value.var = "value")
+
+data_means_interpolation_file_output = copy(interpolations_means)
+data_means_interpolation_file_output[,variable := output_coloumns_inverse[as.character(variable)]]
+data_means_interpolation_file_output = dcast(melt(data_means_interpolation_file_output, 
+                                                  id.vars = c("time", "ground_type", "joint_name", "variable")), 
+                                             time+ground_type+joint_name~variable+variable.1)
+
+
+write.csv(data_per_frame_wide_file_output, paste(tables_dir, "/", "data.csv", sep=""))
+# write.csv2(data_per_frame_wide_file_output, paste(tables_dir, "/", "data_for_excel.csv", sep=""))
+
+write.csv(data_means_per_corrected_frame_file_output, paste(tables_dir, "/", "data_means_per_frame.csv", sep = ""))
+# write.csv2(data_means_per_corrected_frame_file_output, paste(tables_dir, "/", "data_means_per_frame_for_excel.csv", sep = ""))
+
+write.csv(data_means_interpolation_file_output, paste(tables_dir, "/", "data_means_interpolation.csv", sep=""))
+# write.csv2(data_means_interpolation_file_output, paste(tables_dir, "/", "data_means_interpolation_for_excel.csv", sep=""))
+
 
 
 # --------------- PLOTS -------------------------------------
@@ -400,7 +684,9 @@ for(animal in levels(data$animal_name))
   for(joint_grp_name in names(joint_grps))
   {
     joint_grp = joint_grps[[joint_grp_name]]
-    g <- ggplot(data[(variable %in% plot_vars_4) & animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks, ],
+    g <- ggplot(data[(variable %in% plot_vars_4) & animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks &
+                       time >= time_plot_min&
+                       time <= time_plot_max, ],
            aes(x=time*100, y=value, color = ground_type, fill=ground_type, group = interaction(animal_name, ground_type, variable, joint_name)))+
       geom_vline(data=midstance_tbl[animal_name==animal & ground_type%in%ground_breaks,], aes(xintercept=time_midstance*100, color=ground_type), linetype=6, show.legend=FALSE)+
       geom_ribbon(aes(ymin = value_min_error, ymax = value_max_error), linetype = 2, colour=NA, alpha = 0.2)+
@@ -414,10 +700,219 @@ for(animal in levels(data$animal_name))
       scale_y_continuous(name = "Rotation (°)")+
       theme_bw()+
       theme(legend.justification = c(1,0))
-    ggsave(g, file=paste(c("plot_", animal,"_", joint_grp_name , ".pdf"), collapse=""), width=8, height=10, device=cairo_pdf)
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", joint_grp_name , ".pdf"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", joint_grp_name , ".png"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           dpi = standard_dpi)
   }
 }
 
+for(animal in levels(data$animal_name))
+{
+  for(joint_grp_name in names(joint_grps))
+  {
+    joint_grp = joint_grps[[joint_grp_name]]
+    
+
+    
+    g <- ggplot(data[(variable %in% plot_vars_4) & animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks&
+                       time >= time_plot_min&
+                       time <= time_plot_max, ],
+                aes(x=time*100, y=value, 
+                    color = ground_type, 
+                    linetype=ground_type, 
+                    shape=ground_type,
+                    #fill=ground_type, 
+                    group = interaction(animal_name, ground_type, variable, joint_name)))+
+      #geom_vline(data=midstance_tbl[animal_name==animal & ground_type%in%ground_breaks,], aes(xintercept=time_midstance*100, color=ground_type), linetype=6, show.legend=FALSE)+
+      #geom_ribbon(aes(ymin = value_min_error, ymax = value_max_error), linetype = 2, colour=NA, alpha = 0.2)+
+      #geom_line(aes(y=value_min_error), linetype=2, alpha =0.7)+
+      #geom_line(aes(y=value_max_error), linetype=2, alpha =0.7)+
+      geom_line(data=data_replaced[animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks&
+                                     time >= time_plot_min&
+                                     time <= time_plot_max, ])+
+      #geom_point(data=data_replaced[animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks & (pt_seq %% modulo_points == 0)&
+      #                               time >= time_plot_min&
+      #                                time <= time_plot_max, ],
+      #           size = 0.7)+
+      facet_grid(list("variable", c("joint_name")), scales = "free_y", labeller=labeller(variable = labels4_en, joint_name = labels_joint_name_en))+
+      scale_color_manual(name=variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_color_palette_grey)+
+      scale_fill_manual(name = variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_color_palette_grey)+
+      scale_linetype_manual(name=variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_linetype_palette)+
+      scale_shape_manual(name=variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_shape_palette)+
+      scale_x_continuous(name = variabel_labels_en["time"], limits = c(0,100), breaks=c(0,20,40,60,80,100))+
+      scale_y_continuous(name = variabel_labels_en["rotation"])+
+      theme_bw()+
+      theme(legend.position="bottom")+
+      guides(linetype = guide_leg_6er_floor , color = guide_leg_6er_floor , fill = guide_leg_6er_floor , shape = guide_leg_6er_floor )
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", joint_grp_name , "_grey_en_without_errors_without_midstances.pdf"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units, 
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", joint_grp_name , "_grey_en_without_errors_without_midstances.png"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units,
+           dpi = plots_grey_6er_dpi)
+    
+    
+    
+    g <- ggplot(data[(variable %in% plot_vars_4) & animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks&
+                       time >= time_plot_min&
+                       time <= time_plot_max, ],
+                aes(x=time*100, y=value, 
+                    color = ground_type, 
+                    linetype=ground_type, 
+                    shape=ground_type,
+                    #fill=ground_type, 
+                    group = interaction(animal_name, ground_type, variable, joint_name)))+
+      geom_vline(data=midstance_tbl[animal_name==animal & ground_type%in%ground_breaks,], 
+                 aes(xintercept=time_midstance*100, linetype = ground_type),
+                 color = "grey70",
+                 show.legend=FALSE)+
+      #geom_ribbon(aes(ymin = value_min_error, ymax = value_max_error), linetype = 2, colour=NA, alpha = 0.2)+
+      #geom_line(aes(y=value_min_error), linetype=2, alpha =0.7)+
+      #geom_line(aes(y=value_max_error), linetype=2, alpha =0.7)+
+      geom_line(data=data_replaced[animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks&
+                                     time >= time_plot_min&
+                                     time <= time_plot_max, ])+
+      #geom_point(data=data_replaced[animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks & (pt_seq %% modulo_points == 0)&
+      #                               time >= time_plot_min&
+      #                                time <= time_plot_max, ],
+      #           size = 0.7)+
+      facet_grid(list("variable", c("joint_name")), scales = "free_y", labeller=labeller(variable = labels4_en, joint_name = labels_joint_name_en))+
+      scale_color_manual(name=variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_color_palette_grey)+
+      scale_fill_manual(name = variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_color_palette_grey)+
+      scale_linetype_manual(name=variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_linetype_palette)+
+      scale_shape_manual(name=variabel_labels_en["ground"], breaks = ground_breaks, labels=ground_labels_en, values = qualitative_shape_palette)+
+      scale_x_continuous(name = variabel_labels_en["time"], limits = c(0,100), breaks=c(0,20,40,60,80,100))+
+      scale_y_continuous(name = variabel_labels_en["rotation"])+
+      theme_bw()+
+      theme(legend.position="bottom")+
+      guides(linetype = guide_leg_6er_floor , color = guide_leg_6er_floor , fill = guide_leg_6er_floor , shape = guide_leg_6er_floor )
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", joint_grp_name , "_grey_en_without_errors_with_midstances.pdf"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", joint_grp_name , "_grey_en_without_errors_with_midstances.png"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units,
+           dpi = plots_grey_6er_dpi)
+  }
+}
+
+
+for(animal in levels(data$animal_name))
+{
+  for(ground in levels(data$ground_type))
+  {
+    joint_grp = joint_grps[[joint_grp_name]]
+    g <- ggplot(data[(variable %in% plot_vars_4) & animal_name==animal & ground_type==ground&
+                       time >= time_plot_min&
+                       time <= time_plot_max, ],
+                aes(x=time*100, y=value, 
+                    color = joint_side, 
+                    linetype=joint_side, 
+                    shape=joint_side,
+                    fill=joint_side, 
+                    group = interaction(animal_name, ground_type, variable, joint_name)))+
+      #geom_vline(data=midstance_tbl[animal_name==animal & ground_type%in%ground_breaks,], aes(xintercept=time_midstance*100, color=ground_type), linetype=6, show.legend=FALSE)+
+      #geom_ribbon(aes(ymin = value_min_error, ymax = value_max_error), linetype = 2, colour=NA, alpha = 0.2)+
+      #geom_line(aes(y=value_min_error), linetype=2, alpha =0.7)+
+      #geom_line(aes(y=value_max_error), linetype=2, alpha =0.7)+
+      geom_line(data=data_replaced[animal_name==animal & ground_type==ground &
+                                     time >= time_plot_min&
+                                     time <= time_plot_max, ])+
+      #geom_point(data=data_replaced[animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks & (pt_seq %% modulo_points == 0)&
+      #                               time >= time_plot_min&
+      #                                time <= time_plot_max, ],
+      #           size = 0.7)+
+      facet_grid(list("variable", c("joint_group")), scales = "free_y", labeller=labeller(variable = labels4_en, joint_group = labels_joint_grps))+
+      scale_color_manual(name=variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_color_palette_grey)+
+      scale_fill_manual(name = variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_color_palette_grey)+
+      scale_linetype_manual(name=variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_linetype_palette)+
+      scale_shape_manual(name=variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_shape_palette)+
+      scale_x_continuous(name = variabel_labels_en["time"], limits = c(0,100), breaks=c(0,20,40,60,80,100))+
+      scale_y_continuous(name = variabel_labels_en["rotation"])+
+      theme_bw()+
+      theme(legend.position="bottom")+
+      guides(linetype = guide_leg_6er_side , color = guide_leg_6er_side , fill = guide_leg_6er_side , shape = guide_leg_6er_side)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", ground , "_grey_en_without_errors_without_midstances.pdf"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", ground , "_grey_en_without_errors_without_midstances.png"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units,
+           dpi = plots_grey_6er_dpi)
+    
+    
+    g <- ggplot(data[(variable %in% plot_vars_4) & animal_name==animal & ground_type==ground&
+                       time >= time_plot_min&
+                       time <= time_plot_max, ],
+                aes(x=time*100, y=value, 
+                    color = joint_side, 
+                    linetype=joint_side, 
+                    shape=joint_side,
+                    fill=joint_side, 
+                    group = interaction(animal_name, ground_type, variable, joint_name)))+
+      geom_vline(data=midstance_tbl[animal_name==animal & ground_type==ground,], 
+                 aes(xintercept=time_midstance*100, color=ground_type),
+                 linetype = 6,
+                 color = "grey70",
+                 show.legend=FALSE)+
+      #geom_ribbon(aes(ymin = value_min_error, ymax = value_max_error), linetype = 2, colour=NA, alpha = 0.2)+
+      #geom_line(aes(y=value_min_error), linetype=2, alpha =0.7)+
+      #geom_line(aes(y=value_max_error), linetype=2, alpha =0.7)+
+      geom_line(data=data_replaced[animal_name==animal & ground_type==ground &
+                                     time >= time_plot_min&
+                                     time <= time_plot_max, ])+
+      #geom_point(data=data_replaced[animal_name==animal & joint_name%in%joint_grp & ground_type%in%ground_breaks & (pt_seq %% modulo_points == 0)&
+      #                               time >= time_plot_min&
+      #                                time <= time_plot_max, ],
+      #           size = 0.7)+
+      facet_grid(list("variable", c("joint_group")), scales = "free_y", labeller=labeller(variable = labels4_en, joint_group = labels_joint_grps))+
+      scale_color_manual(name=variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_color_palette_grey)+
+      scale_fill_manual(name = variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_color_palette_grey)+
+      scale_linetype_manual(name=variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_linetype_palette)+
+      scale_shape_manual(name=variabel_labels_en["side"], breaks = joint_side_breaks, labels=labels_joint_side_en, values = qualitative_shape_palette)+
+      scale_x_continuous(name = variabel_labels_en["time"], limits = c(0,100), breaks=c(0,20,40,60,80,100))+
+      scale_y_continuous(name = variabel_labels_en["rotation"])+
+      theme_bw()+
+      theme(legend.position="bottom")+
+      guides(linetype = guide_leg_6er_side , color = guide_leg_6er_side , fill = guide_leg_6er_side , shape = guide_leg_6er_side)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", ground , "_grey_en_without_errors_with_midstance.pdf"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", animal,"_", ground , "_grey_en_without_errors_with_midstance.png"), collapse=""), 
+           width=plots_grey_6er_width, 
+           height=plots_grey_6er_height, 
+           units = plots_grey_6er_units,
+           dpi = plots_grey_6er_dpi)
+  }
+}
 
 for(ground in levels(data$ground_type))
 {
@@ -438,7 +933,17 @@ for(ground in levels(data$ground_type))
       scale_y_continuous(name = "Rotation (°)")+
       theme_bw()+
       theme(legend.justification = c(1,0))
-    ggsave(g, file=paste(c("plot_", ground,"_", joint_grp_name , ".pdf"), collapse=""), width=8, height=10, device=cairo_pdf)
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", ground,"_", joint_grp_name , ".pdf"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", ground,"_", joint_grp_name , ".png"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           dpi = standard_dpi)
   }
 }
 
@@ -452,10 +957,10 @@ for(ground_grp_idx in seq(ground_grps))
     joint_grp = joint_grps[[joint_grp_name]]
     g <- ggplot(interpolations_means[joint_name%in%joint_grp & ground_type%in%ground_grp, ], 
            aes(x=time*100, y=spl_int_mean, color = ground_type, fill=ground_type, group = interaction(ground_type, variable, joint_name)))+
-      geom_line()+
       geom_ribbon(aes(ymin = value_min_error, ymax = value_max_error), linetype = 2, colour=NA, alpha = 0.2)+
       geom_line(aes(y=value_min_error), linetype=2, alpha =0.7)+
       geom_line(aes(y=value_max_error), linetype=2, alpha =0.7)+
+      geom_line()+
       facet_grid(list("variable", c("joint_name")), scales = "free_y", labeller=labeller(variable = labels4_raw))+
       scale_color_manual(name="Bodentyp", breaks = ground_breaks, labels=ground_labels, values = qualitative_color_palette)+
       scale_fill_manual(name = "Bodentyp", breaks = ground_breaks, labels=ground_labels, values = qualitative_color_palette)+
@@ -463,7 +968,17 @@ for(ground_grp_idx in seq(ground_grps))
       scale_y_continuous(name = "Rotation (°)")+
       theme_bw()+
       theme(legend.justification=c(1,0))
-    ggsave(g, file=paste(c("plot_", "average","_",ground_grp_name,"_", joint_grp_name , ".pdf"), collapse=""), width=8, height=10, device=cairo_pdf)
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", "average","_",ground_grp_name,"_", joint_grp_name , ".pdf"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", "average","_",ground_grp_name,"_", joint_grp_name , ".png"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           dpi = standard_dpi)
   }
   
   
@@ -473,9 +988,9 @@ for(ground_grp_idx in seq(ground_grps))
     joint_grp = joint_grps[[joint_grp_name]]
     g <- ggplot(interpolations_means[joint_name%in%joint_grp & ground_type%in%ground_grp, ], 
                 aes(x=time*100, y=spl_int_mean, color = ground_type, fill=ground_type, group = interaction(ground_type, variable, joint_name)))+
-      geom_line()+
       geom_line(aes(y=value_min_error), linetype=2, alpha =0.7)+
       geom_line(aes(y=value_max_error), linetype=2, alpha =0.7)+
+      geom_line()+
       facet_grid(list("variable", c("joint_name")), scales = "free_y", labeller=labeller(variable = labels4_raw))+
       scale_color_manual(name="Bodentyp", breaks = ground_breaks, labels=ground_labels, values = qualitative_color_palette)+
       scale_fill_manual(name = "Bodentyp", breaks = ground_breaks, labels=ground_labels, values = qualitative_color_palette)+
@@ -483,7 +998,17 @@ for(ground_grp_idx in seq(ground_grps))
       scale_y_continuous(name = "Rotation (°)")+
       theme_bw()+
       theme(legend.justification=c(1,0))
-    ggsave(g, file=paste(c("plot_", "average","_",ground_grp_name,"_", joint_grp_name,"_without_ribbons" , ".pdf"), collapse=""), width=8, height=10, device=cairo_pdf)
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", "average","_",ground_grp_name,"_", joint_grp_name,"_without_ribbons" , ".pdf"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", "average","_",ground_grp_name,"_", joint_grp_name,"_without_ribbons" , ".png"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           dpi = standard_dpi)
   }
   
   
@@ -500,7 +1025,17 @@ for(ground_grp_idx in seq(ground_grps))
       scale_y_continuous(name = "Rotation (°)")+
       theme_bw()+
       theme(legend.justification=c(1,0))
-    ggsave(g, file=paste(c("plot_", "average","_",ground_grp_name,"_", joint_grp_name,"_without_error_indicators" , ".pdf"), collapse=""), width=8, height=10, device=cairo_pdf)
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", "average","_",ground_grp_name,"_", joint_grp_name,"_without_error_indicators" , ".pdf"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           device=cairo_pdf)
+    
+    ggsave(g, file=paste(c(plots_dir, "/", "plot_", "average","_",ground_grp_name,"_", joint_grp_name,"_without_error_indicators" , ".png"), collapse=""), 
+           width=standard_width, 
+           height=standard_height, 
+           units = standard_units,
+           dpi = standard_dpi)
   }
 }
 

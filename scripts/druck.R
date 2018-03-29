@@ -1,3 +1,9 @@
+# This is a script to fit an imprint calculated by the imprint python script
+# with zone segment described in segments_for_measurements files.
+# It can produce and read transformation files.
+# These can later be used with python to calculate zone statistics.
+
+
 library(readr)
 library(ggplot2)
 library(viridis)

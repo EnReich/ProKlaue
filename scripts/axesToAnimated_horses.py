@@ -3,7 +3,7 @@
 # first specify a base dir and the scene paths
 # then specify the bones names (for each scene, same order)
 # then specify the corresponding axes names (list of lists, for each bone one list which axes belongs to this bone,
-# oder is important here!)
+# order is important here!)
 
 import maya.cmds as cmds
 import os, glob
