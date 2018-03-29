@@ -14,12 +14,25 @@ from itertools import compress
 from pk_src import misc
 
 
+# specify the base dir
+base_dir = os.path.abspath(os.path.expanduser("~/Documents/ProKlaue - Sabrina"))
 
-base_dir = os.path.abspath("C:\\Users\\Kai\\Documents\\ProKlaue - Sabrina")
+# specify the folder with the scenes
 scenes_dir = os.path.abspath(os.path.join(base_dir, "testdaten", "animated cs"))
+
+# specify the folder for the results
 ergebnis_dir = os.path.abspath(os.path.join(base_dir, "ergebnisse"))
+
+# specify the range of frames
 frames = range(0, 820)
+
+# specify how many words are used to describe a flooring type
 ground_specifier_count = 2  # how many words are used to describe the ground type *_beton_* -> 1, *_Barhuf_weich_* -> 2
+
+# axis pairs which each belong to one JCS, order matters here!
+# Kronbein, then Fesselbein
+# Klauenbein/Hufbein, then  Kronbein
+# specify full name (_links, _rechts) and all pairs (2 for one side, 4 for two sides)
 axis_pairs = [
     ["Hufbein", "Kronbein"],
     ["Kronbein", "Fesselbein"]

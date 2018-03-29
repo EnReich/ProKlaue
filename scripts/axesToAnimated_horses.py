@@ -1,14 +1,18 @@
 # script to export axes from a ct scene, where the axes are positioned along the bones
 # to an animated scene, while keeping the relative position of the axis w.r.t. the bone
-# first specify a base dir and the scene paths
-# then specify the bones names (for each scene, same order)
-# then specify the corresponding axes names (list of lists, for each bone one list which axes belongs to this bone,
+# this script operates on multiple files but with the same configuration for the bones
+# first specify a base dir
+# then specify the bones names (see bones_animated, for each scene, same order)
+# then specify the corresponding axes names (see bones_ct,
+# list of lists, for each bone one list which axes belongs to this bone,
 # order is important here!)
 
 import maya.cmds as cmds
-import os, glob
+import os
+import glob
 
-base_dir = os.path.abspath("C:/Users/Kai/Documents/ProKlaue - Sabrina/testdaten")           # base dir
+# base dir (testdaten dir)
+base_dir = os.path.abspath("C:/Users/Kai/Documents/ProKlaue - Sabrina/testdaten")
 os.chdir(base_dir)
 
 for scene_animated in glob.glob("*.mb"):
@@ -19,17 +23,25 @@ for scene_animated in glob.glob("*.mb"):
     base_dir = os.path.abspath(base_dir)        # nothing to do here
     scene_animated = os.path.abspath("{}/{}".format(base_dir, scene_animated))
     scene_ct = os.path.abspath("{}/{}".format(base_dir, scene_ct))
-    scene_animated_new = os.path.abspath(os.path.join(base_dir, "animated cs", "{0}_cs.mb".format(".".join(os.path.split(scene_animated)[-1].split(".")[:-1]))))
-    bones_animated = [u'Hufbein_{0}_Gauss:Mesh'.format(horse_name) , u'Kronbein_{0}_Gauss:Mesh'.format(horse_name), u'Fesselbein_{0}_Gauss:Mesh'.format(horse_name)]     # bones in the animated scene
+    scene_animated_new = os.path.abspath(
+        os.path.join(base_dir, "animated cs",
+                     "{0}_cs.mb".format(".".join(os.path.split(scene_animated)[-1].split(".")[:-1]))))
 
+    # bones in the animated scene
+    bones_animated = [u'Hufbein_{0}_Gauss:Mesh'.format(horse_name),
+                      u'Kronbein_{0}_Gauss:Mesh'.format(horse_name),
+                      u'Fesselbein_{0}_Gauss:Mesh'.format(horse_name)]
 
+    # in the ct scene
+    bones_ct = [u'Hufbein_{0}_Gauss:Mesh'.format(horse_name),
+                u'Kronbein_{0}_Gauss:Mesh'.format(horse_name),
+                u'Fesselbein_{0}_Gauss:Mesh'.format(horse_name)]
 
-    bones_ct = [u'Hufbein_{0}_Gauss:Mesh'.format(horse_name), u'Kronbein_{0}_Gauss:Mesh'.format(horse_name), u'Fesselbein_{0}_Gauss:Mesh'.format(horse_name)]          # in the ct scene
-
+    # corresponding axes
     axes = [["saddle_Hufbein_{0}_Gauss_Kronbein_{0}_Gauss".format(horse_name)],
             ["saddle_Kronbein_{0}_Gauss_Hufbein_{0}_Gauss".format(horse_name),
-                "saddle_Kronbein_{0}_Gauss_Fesselbein_{0}_Gauss".format(horse_name)],
-            ["saddle_Fesselbein_{0}_Gauss_Kronbein_{0}_Gauss".format(horse_name)]]             # corresponding axes
+             "saddle_Kronbein_{0}_Gauss_Fesselbein_{0}_Gauss".format(horse_name)],
+            ["saddle_Fesselbein_{0}_Gauss_Kronbein_{0}_Gauss".format(horse_name)]]
 
     # more variables, nothing necessarily to specify here
     trans_dir = os.path.abspath("{}/trans/anim".format(base_dir))

@@ -1,3 +1,5 @@
+# These are the utility functions for the pressure Statistics script.
+
 import numpy as np
 import pyclipper
 import csv
@@ -5,7 +7,6 @@ import math
 import sklearn.decomposition
 import sklearn.cluster
 import copy
-
 
 
 def rotation_matrix(alpha, radian=True):

@@ -16,7 +16,7 @@ library(viridis)
 #library(coefplot)
 
 ALPHA = 0.05
-setwd("~/ProKlaue - Benny")
+setwd("~/ProKlaue - Benny neu")
 OVERALL_DATA_AVAIABLE = T
 ZONES_DATA_AVAIABLE = T
 MAX_PRESSURE_DATA_AVAIABLE = T
@@ -109,7 +109,7 @@ trial_labeller_ger = as_labeller(trial_labels_ger)
 
 
 
-variable_labels = c("boden" = "ground")
+variable_labels = c("boden" = "flooring")
 variable_labels_german = c("boden" = "Boden")
 
 other_labels_german = c("zones" = "Zonen", "frequency" = "Häufigkeit")
@@ -1613,7 +1613,7 @@ if(IN_VIVO_DATA_AVAIABLE)
                          position = position_dodge(width = 0.8))+
             scale_fill_manual(values = qualitative_color_palette_ground_types, name = variable_labels["boden"], labels=ground_labels)+
             scale_x_discrete(labels = ground_labels)+
-            facet_wrap(~versuch, labeller = trial_labeller)+
+            facet_wrap(~parameter, labeller = parameter_labeller_abrv)+
             theme(axis.title.x=element_blank(),
                   axis.title.y=element_blank()) 
         
@@ -1625,7 +1625,7 @@ if(IN_VIVO_DATA_AVAIABLE)
                          position = position_dodge(width = 0.8))+
             scale_fill_manual(values = qualitative_color_palette_ground_types, name = variable_labels_german["boden"], labels = ground_labels_german)+
             scale_x_discrete(labels = ground_labels_german)+
-            facet_wrap(~versuch, labeller = trial_labeller_ger)+
+            facet_wrap(~parameter, labeller = parameter_labeller_german_abrv)+
             theme(axis.title.x=element_blank(),
                   axis.title.y=element_blank()) 
           
@@ -1677,7 +1677,7 @@ if(IN_VIVO_DATA_AVAIABLE)
                          position = position_dodge(width = 0.8))+
             scale_fill_manual(values = qualitative_color_palette_ground_types, name = variable_labels["boden"], labels=ground_labels)+
             scale_x_discrete(labels =  klaue_labels)+
-            facet_wrap(~versuch, labeller = trial_labeller)+
+            facet_wrap(~parameter, labeller = parameter_labeller_abrv)+
             theme(axis.title.x=element_blank(),
                   axis.title.y=element_blank()) 
           
@@ -1689,7 +1689,7 @@ if(IN_VIVO_DATA_AVAIABLE)
                          position = position_dodge(width = 0.8))+
             scale_fill_manual(values = qualitative_color_palette_ground_types, name = variable_labels_german["boden"], labels=ground_labels_german)+
             scale_x_discrete(labels = klaue_labels_german)+
-            facet_wrap(~versuch, labeller = trial_labeller_ger)+
+            facet_wrap(~parameter, labeller = parameter_labeller_german_abrv)+
             theme(axis.title.x=element_blank(),
                   axis.title.y=element_blank()) 
           

@@ -20,8 +20,9 @@ from sklearn.pipeline import Pipeline
 from timeit import default_timer as timer
 
 # important settings
-threshold = 0.3                                              # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
-radius =  0.9                                                    # radius to average the principal curvature (from the saddle), cow 0.9, horse 6.5, 5.5
+threshold = 0.3                                # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
+radius =  0.9                                  # radius to average the principal curvature (from the saddle), cow 0.9,
+                                               # horse 6.5, 5.5
 save_dir = "C:/Users/Kai/Documents/tmp"        # save dir for information file (used for plots later)
 
 # more settings
@@ -33,6 +34,9 @@ interpolation_order = 3         # order of bivariate spline used to interpolate 
 left = "auto"                   # whether the first selected bone is the left bone (might be able to detect it
                                 # automatically by name)
 axis_used = ["auto"]            # one can specify if to use the minimal or maximal curvature or some automatic setting
+
+
+# material settings
 set_materials = True            # whether to set materials for regions used to calculate joint surface and curvature
 shading_grp_surface = "shadingGrpJointSurface"  # name of the shading grp for the region to calculate the joint surface
 shading_grp_curvature = "shadingGrpCurvatures"  # for the average of surface curvature
@@ -42,12 +46,10 @@ shading_grp_axis2 = "shadingGrpAxis2"       # for bodyfixed axis2
 shading_grp_axisRef = "shadingGrpAxisRef"   # for reference axis
 shading_grp_saddle = "shadingGrpSaddle"     # for saddle point
 
+# reset shading for the bones with the bones shading grp
 reset_shading_for_0 = False
 reset_shading_for_1 = False
 
-
-# radius_outer = 1.2*radius
-# interpolation_stepsize = 0.05
 
 start = timer()
 
@@ -526,8 +528,9 @@ for objIndex in [0, 1]:
                 shading_grp_curvature = cmds.sets(renderable=True, noSurfaceShader=True, empty=True,
                                                 name=shading_grp_curvature)
 
-        faces_inner_idx  = cmds.polyListComponentConversion(["{}.vtx[{}]".format(objs[objIndex], idx[objIndex][i]) for i in scope_inner_idx], fromVertex=1,
-                                                      toFace=1, internal=1)
+        faces_inner_idx  = cmds.polyListComponentConversion(
+            ["{}.vtx[{}]".format(objs[objIndex], idx[objIndex][i]) for i in scope_inner_idx],
+            fromVertex=1, toFace=1, internal=1)
         cmds.sets(faces_inner_idx, fe=shading_grp_curvature)
 
     # calculate the shape operator at these points

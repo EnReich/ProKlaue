@@ -1,24 +1,44 @@
+# This script positions an arrow (or an arbitrary object for that matter) at an axis in the form of
+
+
+
 import maya.cmds as cmds
 import numpy as np
+import os
 from pk_src import misc
 
+# where is the arrow object located
+path_to_arrow_object = os.path.abspath(os.path.expanduser("~/Documents/arrow.mb"))
+
+# how far at the axis should the arrow be placed (0 at the origin, 1 at the begin of the cone)
 factor_transpose = 1.55 #1.2
 #scale = [3,2,3]
 #rotate = [0,90,180]
 
 scale = [1.3,0.35,1.3]
-rotate = [0,0,0]
+rotate = [0,0,0] # for the flexion axis / z the last number is -180 or 180 (degrees) if one wants to
+                 # display a rotation in the opposite mathematical sense as used in the plots later
 deg = True  #rotations in degrees
+
+# set the material for the arrow here
+shading_grp_for_arrow = "shadingGrpAxisRef" # shadingGrpAxisRef or shadingGrpAxis1 or shadingGrpAxis2
+
+
+
+
 
 objs = cmds.ls(sl=1)
 #arrow = objs[1]
 axis = objs[0]
 
-new_nodes = cmds.file("C:/Users/Kai/Documents/arrow.mb", i=True, rnn=True, mnc=True)
+new_nodes = cmds.file(path_to_arrow_object, i=True, rnn=True, mnc=True)
 tf_nodes = [n for n in new_nodes if cmds.objectType(n) == "transform"]
 # imported_axis = tf_nodes[-1].split("|")[-1]
 arrow = tf_nodes[0].split("|")[-1]
-cmds.sets(arrow, fe= "shadingGrpAxisRef")
+
+
+# set the material for the arrow
+cmds.sets(arrow, fe= shading_grp_for_arrow)
 
 #cmds.makeIdentity(arrow, a=True)
 

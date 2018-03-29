@@ -11,6 +11,8 @@ import math
 import os, glob
 from pk_src import misc
 
+
+#base dir (ergebnisse dir)
 base_dir = "C:\\Users\\Kai\\Documents\\ProKlaue - Moni\\ergebnisse"
 frames = range(0, 820)
 
