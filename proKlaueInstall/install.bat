@@ -18,7 +18,7 @@
 
 @SET "MAYAPY_DIR="
 @for %%d in (a b c d e f g h i j k l m n o p q r s t u v w x y z) do @(
-	@for %%y in (2017 2018 2019 2020 2021 2022 2023 2024 2025) do @(
+	@for %%y in (2014 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 2027 2028 2029) do @(
 		@if exist "%%d:\Program Files\Autodesk\Maya%%y\bin\mayapy.exe" (
 			SET MAYAPY_DIR=%%d:\Program Files\Autodesk\Maya2019\bin
 	)) 

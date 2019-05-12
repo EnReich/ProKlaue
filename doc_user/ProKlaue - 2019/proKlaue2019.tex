@@ -1,0 +1,155 @@
+\documentclass[a4paper, openany, oneside]{memoir}
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage[inline]{enumitem}
+\usepackage[obeyspaces, hyphens]{url}
+\usepackage{hyperref}
+\graphicspath{{./img/}}
+\pretitle{\begin{center}\Huge\bfseries}
+\title{User Guide für das ProKlaue Maya Plugin - ab Maya 2019}
+\posttitle{\par\vskip1em{\normalfont\normalsize Installation unter Windows\par\vfill}\end{center}}
+\author{Kai Hainke}
+\predate{\vfill\begin{center}\large}
+\chapterstyle{thatcher}
+
+\DeclareUrlCommand\directory{\urlstyle{tt}}
+\DeclareUrlCommand\file{\urlstyle{tt}}
+\DeclareUrlCommand\fileending{\urlstyle{tt}}
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  tabsize=3
+}
+
+
+
+\begin{document}
+
+
+
+\maketitle
+
+
+%\pagebreak
+%\dirpath{Documents\BliBla\bludsdus\dssdsd}\linebreak\linebreak
+%\url{Documents\BliBla\bludsdus\dssdsd}
+%\pagebreak
+
+
+  
+
+\chapter{Installieren des Plugins}
+Zur Installation des Plugins benötigt man den vollständigen Projektordner (dies beinhaltet die Dateien aus dem \href{https://github.com/EnReich/ProKlaue}{Git} und die Packages numpy, scipy und sklearn jeweils in ihrem Unterordner in \directory{proKlaueInstall\site-packages}, sowie ggf. die Executables in \directory{bin}. Aus lizenz-rechtlichen Gründen müssen diese Dateien aus anderen Quellen besorgt werden, für die Packages bspw. \href{https://drive.google.com/drive/folders/0BwsYd1k8t0lEdHVqUWlueFpqRkE}{hier}. Dann verfährt man wie folgt:
+\begin{enumerate}[start=0]
+\item Wenn nicht bereits dort zu finden, verschiebt man die Packages, so dass numpy, scipy und sklearn in ihren jeweiligen Unterordnern unter \\\directory{proKlaueInstall\site-packages} liegen
+\item \label{save_base_dir} Man speichert alle Projektdateien in Form des \directory{ProKlaue} Ordners an einer beliebigen Stelle, bspw. unter \directory{C:\projects\ProKlaue}  
+\item Dann führt man \file{proKlaueInstall\install.bat} aus. Für eine Standard-Maya-Installation im Standard-Pfad muss man hier nichts weiter tun. Andernfalls wird man gebeten den Pfad zum Maya-Python-Interpreter zu spezifizieren, standardmäßig zu finden unter \file{C:\Program Files\Autodesk\Maya2019\bin\mayapy.exe}.
+\item Nun fügt man den Pfad zum ProKlaue Ordner aus Schritt \ref{save_base_dir}, der \\\texttt{MAYA\_MODULE\_PATH} Umgebungsvariable hinzu (bzw. erstellt diese, falls sie noch nicht bereits existiert). Dies geschieht unter Systemsteuerung, System, Erweiterte Systemeinstellungen, Erweitert, Umgebungsvariablen (Systemvariablen für eine Installation für alle Nutzer, Benutzervariablen für eine lokale Installation).
+\item Nach einem erneuten Start von Maya wird nun das ProKlaue Plugin im Plugin-Manager-Window angezeigt. Dies muss nun geladen werden und kann dann verwendet werden: 
+\begin{enumerate}
+\item In Maya unter Windows \(\rightarrow\) Settings/Preferences \(\rightarrow\) Plugin Manager \(\rightarrow\) Refresh. 
+\item Nach dem Eintrag \file{proKlaue.py} suchen und \texttt{Loaded} und \texttt{Auto load} auswählen. 
+\item Zuletzt Windows \(\rightarrow\) Settings/Preferences \(\rightarrow\) Preferences \(\rightarrow\) Settings \(\rightarrow\) Selection \(\rightarrow\) \texttt{Track selection order} aktivieren.
+\end{enumerate}
+\end{enumerate}
+ 
+
+
+\chapter{Zu den Python Postprocessing Scripts}
+Für das Ausführen der Python Scripts zum Postprocessing (Druck Statistiken) wird zusätzlich ein Python Interpreter \(\geq 2.7.11\) (nicht Python 3) benötigt. Mit folgenden packages:
+\begin{itemize}
+\item numpy
+\item scipy
+\item scikit-learn (sklearn) (momentan nur benutzt bei den Achsen und Druck Scripts)
+\item pyclipper
+\end{itemize}
+Dafür sind nach der Installation von Python sowohl das Python-Basis-Verzeichnis (\directory{C:\Python27}) als auch das Scripts-Verzeichnis (\directory{C:\Python27\Scripts}) zur PATH Variable hinzuzufügen (unter Systemsteuerung, System, Erweiterte Systemeinstellungen, Erweitert, Umgebungsvariablen, Systemvariable, falls für alle Benutzer oder Benutzervariable, falls nur für den derzeitigen Nutzer). Die packages sind am einfachsten über pip zu Installieren, mittels folgender Befehle in einer Eingabeaufforderung:
+\begin{itemize}
+\item \lstinline|pip install intel-numpy|
+\item \lstinline|pip install intel-scipy|
+\item \lstinline|pip install intel-scikit-learn|
+\item \lstinline|pip install pyclipper|
+\end{itemize}
+ 
+
+\chapter{Informationen zum Projekt}
+\section{Struktur}
+Einen groben Überblick gibt die folgende Liste:
+\begin{itemize}
+\item \directory{bin} - Executables für die VHACD Berechnung
+\item \directory{doc} - Sphynx Dokumentation
+\item \directory{doc\_user} - Guides, Latex+pdf-Dateien
+\item \directory{postprocessing} - Scripts für die Nachbearbeitung von Daten aus Maya (R/Python):
+\begin{itemize}
+\item \file{pressureStatistics.py} - Python Skript für die Zusammenführung von Fußungsfläche und Druckdaten (mit \\ \file{pressureStatisticsUtilFunctions.py} für Funktionsdefinitionen)
+\item \file{druck.R} - R Skript für die Zusammenführung von Fußungsfläche und Druckdaten
+\item \file{Zones_plots_and_data.R} - R Skript für die statistische Auswertung der Druckdaten (auf den vorher festgelegten Fußungszonen)
+\item \file{JCS_plots_and_data.R} - R Skript für die Auswertung der Joint-Coordinate-Systems-Daten
+\item \file{plotHeatmaps.R} - R Skript zum Plotten von Heatmaps mit Hilfe vorher erstellter Daten aus dem Maya-Command cmds.altitudeMap
+\end{itemize}
+\item \directory{processing} - Scripts für das Bearbeiten und Auslesen von Daten in Maya (R/Python):
+\begin{itemize}
+\item \file{angles.py} - Script zum Tracken der Winkel in einer animierten Szene mit JCS (nach Groot und Suntay)
+\item \file{calculateJointCS.py} - Python Skript für die Berechnung von Joint Coordinate Systems
+\item \file{axesToAnimated.py} - Python Skript für die Überführung von berechneten JCS von einer Szene in eine andere (bspw. von neutral zu animiert)
+\end{itemize}
+\item \directory{proKlaueInstall} - Ordner mit Installationsdateien
+\item \directory{proKlaueModule} - Ordner mit den Dateien des Maya-Modules
+\begin{itemize}
+\item \directory{scripts\pk_src} - Ordner mit Maya Commands des Plugins, insbesondere
+\begin{itemize}
+\item \file{overlapStatistics.py} zum Erstellen von Statistiken zur Überdeckung von zwei oder mehreren Objekten (relativ robuste Berechnung von Schnittvolumen), siehe auch \file{intersection.py} und \file{vhacd.py}
+\item \file{altitudeMap.py} zum Erstellen von Höhenmaps
+\item \file{frontVertices.py} zum Abspeichern aller Vorderseiten-Segmente/Punkte von einer gegebenen Plane aus 
+\item \file{normalize.py} zum Ausrichten von Objekten anhand der Eigenvektoren ihrer Kovarianz-Matrix
+\item \file{misc.py} mit verschiedenen, nützlichen, all-purpose Funktionen
+\end{itemize}
+\item \directory{plug-ins} - Ordner mit den Plugins für das ProKlaueModul, hier lediglich das ProKlaue-Plugin, mit \file{proKlaue.py} für das Registrieren des Plugins in Maya 
+\end{itemize}
+\end{itemize}
+\pagebreak
+
+\section{Nützliche Dev-Tools}
+Für die Entwicklung der Scripts/Plugins bieten sich einige Tools an, lediglich eine Empfehlung, aber vlt. hilft es ja:
+\begin{itemize}
+\item RStudio für R
+\item PyCharm für Python
+\item MayaCharm (PyCharm Plugin zur Interaktion mit Maya)
+\item Sublime für das Anzeigen großer Textdateien
+\item Sphynx für Dokumentation
+\item git zur Versionierung
+\end{itemize}
+
+
+\chapter{Weitere Informationen zur Installation von python Packages für den Maya Python Interpreter}
+Dieses Kapitel soll weiterführende Informationen festhalten zur Installation von packages für den Maya-Python-Interpreter. Für eine einfache Installation sind diese Informationen (zur Zeit) nicht relevant, sie könnten jedoch in Zukunft relevant werden, für neuere Maya Versionen.
+
+Grundsätzlich gibt es drei Varianten, die benötigten python libs zu installieren. Die erste Möglichkeit ist einen möglichst exakt gleichen Python-Interpreter (Version, Compiler-Version, Bit-Architektur, etc.) zu bauen und die Packages dafür zu installieren und dann zu kopieren. Die zweite Variante ist die Installation mittels pip aus der Maya-Installation (\directory{C:\Program Files\Autodesk\Maya2019\Python\Scripts}). Diese Möglichkeit führt unter Windows jedoch für Pakete, die auf compilierte Algebra Bibliotheken zurückgreifen, zu Fehlern, da standardmäßig numpy ohne Linkage zur Intel Math Kernel Library installiert wird. Deshalb benötigt man Installation Wheels wie von z. Bsp. \href{https://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy}{hier}. Das Problem hierbei ist, dass der Maya-Python-Interpreter NICHT mit den Standard Microsoft Visual Studio Versionen gebaut wurde. Es bleibt demnach lediglich das selbst bauen von Python und numpy, scipy und scikit-learn. Das Bauen von Python lässt sich erleichtern durch ein cmake Buildsystem wie \href{https://github.com/python-cmake-buildsystem/python-cmake-buildsystem}{hier}. Dies gestaltet sich jedoch ebenfalls sehr schwierig, weshalb die momentan verwendeten Packages aus \href{https://drive.google.com/drive/folders/0BwsYd1k8t0lEfjJqV21yTnd2elVhNXEyTXhHclhxbDhvWVF5WWZUeVFISWViaFh1TzhrNTQ}{dieser Quelle} stammen und nach \directory{C:\Program Files\Autodesk\Maya2019\Python\Lib\site-packages} verschoben werden. Die zur Zeit benötigten packages sind:
+\begin{itemize}
+\item numpy
+\item scipy
+\item scikit-learn (sklearn) (momentan nur benutzt bei den Achsen und Druck Scripts)
+\end{itemize}
+Für mehr Informationen ist die Dokumentation zu konsultieren. Zu finden unter \file{ProKlaue\doc\_build\html\index.html}.
+
+
+\end{document}
