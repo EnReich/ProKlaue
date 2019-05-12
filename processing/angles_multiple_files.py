@@ -11,10 +11,10 @@ import numpy as np
 import math
 import os, glob, re, errno
 from itertools import compress
-from proKlaueModule.scripts.pk_src import misc
+from pk_src import misc
 
 # specify the base dir
-base_dir = os.path.abspath(os.path.expanduser("~/Documents/ProKlaue - Sabrina"))
+base_dir = os.path.abspath(os.path.expanduser("~/../Documents/ProKlaue - Sabrina"))
 
 # specify the folder with the scenes
 scenes_dir = os.path.abspath(os.path.join(base_dir, "testdaten", "animated cs"))

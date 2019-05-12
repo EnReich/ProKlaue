@@ -3,7 +3,7 @@
 # second the counterpart bone (the proximal bone) and third an object which indicates the direction towards
 # the center of the body (left/right counterpart, could be also a cylinder or a box though)
 
-from proKlaueModule.scripts.pk_src import misc
+from pk_src import misc
 import maya.cmds as cmds
 import numpy as np
 import math
@@ -20,10 +20,10 @@ from timeit import default_timer as timer
 import os
 
 # important settings
-threshold = 0.3                                # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
-radius =  0.9                                  # radius to average the principal curvature (from the saddle), cow 0.9,
-                                               # horse 6.5, 5.5
-save_dir = os.path.expanduser("~/Documents/tmp")  # save dir for information file (used for plots later)
+threshold = 0.3                                 # threshold for defining of the joint surface, cow 0.3, horse 6.5, 4.5
+radius = 0.9                                    # radius to average the principal curvature (from the saddle), cow 0.9,
+                                                # horse 6.5, 5.5
+save_dir = os.path.expanduser("~/../Documents/tmp")  # save dir for information file (used for plots later)
 
 # more settings
 order = 5                       # order of polynom used to interpolate joint surface
@@ -52,6 +52,7 @@ reset_shading_for_1 = False
 
 
 start = timer()
+
 
 # calculate the principal curvature for a given bivariate polynomial spline,
 # surface is x(u,v)=x, y(u,v)=v, z(u,v)=P(u,v),
@@ -163,75 +164,6 @@ def shape_operator_spline2(spline, points):
     return shape_operator
 
 # see: http://stackoverflow.com/questions/11317579/surface-curvature-matlab-equivalent-in-python
-def surfature(X,Y,Z):
-# where X, Y, Z matrices have a shape (lr+1,lb+1)
-
-    #First Derivatives
-    Xv,Xu=np.gradient(X)
-    Yv,Yu=np.gradient(Y)
-    Zv,Zu=np.gradient(Z)
-
-    #Second Derivatives
-    Xuv,Xuu=np.gradient(Xu)
-    Yuv,Yuu=np.gradient(Yu)
-    Zuv,Zuu=np.gradient(Zu)
-
-    Xvv,Xuv=np.gradient(Xv)
-    Yvv,Yuv=np.gradient(Yv)
-    Zvv,Zuv=np.gradient(Zv)
-
-    #Reshape to 1D vectors
-    nrow=(lr+1)*(lb+1) #total number of rows after reshaping
-    Xu=Xu.reshape(nrow,1)
-    Yu=Yu.reshape(nrow,1)
-    Zu=Zu.reshape(nrow,1)
-    Xv=Xv.reshape(nrow,1)
-    Yv=Yv.reshape(nrow,1)
-    Zv=Zv.reshape(nrow,1)
-    Xuu=Xuu.reshape(nrow,1)
-    Yuu=Yuu.reshape(nrow,1)
-    Zuu=Zuu.reshape(nrow,1)
-    Xuv=Xuv.reshape(nrow,1)
-    Yuv=Yuv.reshape(nrow,1)
-    Zuv=Zuv.reshape(nrow,1)
-    Xvv=Xvv.reshape(nrow,1)
-    Yvv=Yvv.reshape(nrow,1)
-    Zvv=Zvv.reshape(nrow,1)
-
-    Xu=np.c_[Xu, Yu, Zu]
-    Xv=np.c_[Xv, Yv, Zv]
-    Xuu=np.c_[Xuu, Yuu, Zuu]
-    Xuv=np.c_[Xuv, Yuv, Zuv]
-    Xvv=np.c_[Xvv, Yvv, Zvv]
-
-    #% First fundamental Coeffecients of the surface (E,F,G)
-    E=np.einsum('ij,ij->i', Xu, Xu)
-    F=np.einsum('ij,ij->i', Xu, Xv)
-    G=np.einsum('ij,ij->i', Xv, Xv)
-
-    m=np.cross(Xu,Xv,axisa=1, axisb=1)
-    p=sqrt(np.einsum('ij,ij->i', m, m))
-    n=m/np.c_[p,p,p]
-
-    #% Second fundamental Coeffecients of the surface (L,M,N)
-    L= np.einsum('ij,ij->i', Xuu, n)
-    M= np.einsum('ij,ij->i', Xuv, n)
-    N= np.einsum('ij,ij->i', Xvv, n)
-
-    #% Gaussian Curvature
-    K=(L*N-M**2)/(E*G-L**2)
-    K=K.reshape(lr+1,lb+1)
-
-    #% Mean Curvature
-    H = (E*N + G*L - 2*F*M)/(2*(E*G - F**2))
-    H = H.reshape(lr+1,lb+1)
-
-    #% Principle Curvatures
-    Pmax = H + sqrt(H**2 - K)
-    Pmin = H - sqrt(H**2 - K)
-
-    return Pmax,Pmin
-
 
 def makeAxis(origin, direction,
              cylinder_name="Cylinder",
@@ -284,8 +216,8 @@ def makeAxis(origin, direction,
 
     return cylinder, cone
 
-print "Time: {}".format(timer()-start)
-print "Finding close point pairs"
+print("Time: {}".format(timer()-start))
+print("Finding close point pairs")
 
 # get point to the 2 bones who are selected, build kd trees
 objs = cmds.ls(sl=1) # first bone is the lower bone or the bone which has the axis for flexion
@@ -311,7 +243,11 @@ if len(objs)>2:
 
 # open save file
 if save_dir != "":
-    path = "{}/cs-{}-{}.csv".format(save_dir, objs[0].split(":")[0], objs[1].split(":")[0])
+    save_dir = os.path.abspath(save_dir)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    path = os.path.abspath(os.path.join(save_dir, "cs-{}-{}.csv".format(objs[0].split(":")[0], objs[1].split(":")[0])))
     save_file = open(path, 'w')
     save_file.write('variable,value\n')
     save_file.write('"objs[0]","{}"\n'.format(objs[0]))
@@ -378,9 +314,9 @@ if(set_materials):
             shading_grp_saddle = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shading_grp_saddle)
 
 
-print "Time: {}".format(timer()-start)
+print("Time: {}".format(timer()-start))
 
-print "Transform coordinates"
+print("Transform coordinates")
 
 # pca on the data points to transform the coordinates
 
@@ -413,8 +349,8 @@ max_curvature = np.empty([2,3])
 saddle = np.empty([2,3])
 
 for objIndex in [0, 1]:
-    print "Time: {}".format(timer()-start)
-    print "Fit polynomial"
+    print("Time: {}".format(timer()-start))
+    print("Fit polynomial")
 
     if regression_method.lower() in TS_SPECIFIERS:
         model = Pipeline([('poly', PolynomialFeatures(degree=order)),
@@ -435,15 +371,15 @@ for objIndex in [0, 1]:
     else:
         C = model.named_steps['regr'].coef_
 
-    print "Coefficients: "
-    print C
+    print("Coefficients: ")
+    print(C)
     #print "Sum of Residuals:"
     #print model.named_steps['regr'].residues_
     #print model.named_steps['regr'].residues_/len(p_pca[objIndex])
 
 
-    print "Time: {}".format(timer()-start)
-    print "Find a critical point"
+    print("Time: {}".format(timer()-start))
+    print("Find a critical point")
 
     # axis = 0 is x and axis = 1 is y (powers of y rise within a row, powers of x rise within a coloumn
     C_as_matrix = np.array([[C[i+j*(j+1)/2] if j<=order else 0 for j in range(i, order+i+1)] for i in range(order+1)]).transpose()
@@ -466,7 +402,7 @@ for objIndex in [0, 1]:
         return [[np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_dx_matrix), np.polynomial.polynomial.polyval2d(x[0], x[1], C_dx_dy_matrix)],
                 [np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_dx_matrix), np.polynomial.polynomial.polyval2d(x[0], x[1], C_dy_dy_matrix)]]
 
-    print ""
+    print()
 
     stop = False
     iter = 0
@@ -476,23 +412,23 @@ for objIndex in [0, 1]:
         # find roots of the gradient
         sol = scipy.optimize.root(fun=grad, x0=guesses[iter], jac=hess)
         if sol.success:
-            print "SUCCESS"
+            print("SUCCESS")
             print sol.message
-            print "Check if saddle"
+            print("Check if saddle")
             if (np.linalg.det(hess(sol.x)) < 0):
-                print "FOUND SADDLE"
+                print("FOUND SADDLE")
                 stop = True
             else:
-                print "NOT A SADDLE"
+                print("NOT A SADDLE")
         else:
-            print "FAIL"
-            print sol.message
+            print("FAIL")
+            print(sol.message)
         iter += 1
 
     saddle_pca = [sol.x[0], sol.x[1], np.polynomial.polynomial.polyval2d(sol.x[0], sol.x[1], C_as_matrix)]
     saddle[objIndex] = pca[objIndex].inverse_transform(saddle_pca)
 
-    print "Time: {}".format(timer()-start)
+    print("Time: {}".format(timer()-start))
 
     # calculate curvature in a scope around saddle
 
@@ -509,7 +445,7 @@ for objIndex in [0, 1]:
                                             kx=interpolation_order,
                                             ky=interpolation_order)
 
-    print "Time: {}".format(timer()-start)
+    print("Time: {}".format(timer()-start))
 
 
     # find points in inner scope
@@ -563,7 +499,7 @@ for objIndex in [0, 1]:
     min_curvature[objIndex] = pca[objIndex].inverse_transform(saddle_pca+min_curvature_pca)-saddle[objIndex]
     min_curvature[objIndex] *= 1/np.linalg.norm(min_curvature[objIndex])
 
-    print "Time: {}".format(timer()-start)
+    print("Time: {}".format(timer()-start))
 
 floating_min = np.cross(min_curvature[0], min_curvature[1])
 floating_min *= 1./np.linalg.norm(floating_min)

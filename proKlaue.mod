@@ -2,3 +2,6 @@
 PROKLAUE_LOCATION:=
 PATH+:=../bin
 scripts: ./scripts
+plug-ins: ./plug-ins
+icons: ./icons
+presets: ./presets

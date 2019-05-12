@@ -8,7 +8,7 @@
 import maya.cmds as cmds
 import os
 
-base_dir = os.path.expanduser("~/Documents/ProKlaue - Moni/testdaten")           # base dir (testdaten dir)
+base_dir = os.path.expanduser("~/../Documents/ProKlaue - Moni/testdaten")           # base dir (testdaten dir)
 scene_animated = "Berta_Pedikura_8erkeys_neu_SG.mb"     # scene paths relative to base dir
 scene_ct = "Berta_ct.mb"
 base_dir = os.path.abspath(base_dir)        # nothing to do here

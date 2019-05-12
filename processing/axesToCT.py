@@ -10,7 +10,7 @@
 import maya.cmds as cmds
 import os
 
-base_dir = os.path.expanduser("~/Documents/ProKlaue/testdaten/achsen")           # base dir
+base_dir = os.path.expanduser("~/../Documents/ProKlaue/testdaten/achsen")           # base dir
 scene_animated = "Alma_Kura_axes.mb"     # scene paths relative to base dir
 scene_ct = "Alma_clean_Ursprung_rescaliert.mb"
 base_dir = os.path.abspath(base_dir)        # nothing to do here

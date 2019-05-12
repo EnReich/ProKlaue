@@ -5,10 +5,10 @@
 import maya.cmds as cmds
 import numpy as np
 import os
-from proKlaueModule.scripts.pk_src import misc
+from pk_src import misc
 
 # where is the arrow object located
-path_to_arrow_object = os.path.abspath(os.path.expanduser("~/Documents/ProKlaue/res/arrow.mb"))
+path_to_arrow_object = os.path.abspath(os.path.expanduser("~/../Documents/ProKlaue/res/arrow.mb"))
 
 # how far at the axis should the arrow be placed (0 at the origin, 1 at the begin of the cone)
 factor_transpose = 1.55 #1.2

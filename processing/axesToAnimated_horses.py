@@ -12,7 +12,7 @@ import os
 import glob
 
 # base dir (testdaten dir)
-base_dir = os.path.abspath(os.path.expanduser("~/Documents/ProKlaue - Sabrina/testdaten"))
+base_dir = os.path.abspath(os.path.expanduser("~/../Documents/ProKlaue - Sabrina/testdaten"))
 os.chdir(base_dir)
 
 for scene_animated in glob.glob("*.mb"):

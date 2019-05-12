@@ -1,4 +1,4 @@
-import sys, getopt
+import sys, getopt, os
 import pressureStatisticsUtilFunctions
 
 def main(argv):
@@ -6,11 +6,11 @@ def main(argv):
     try:
       opts, args = getopt.getopt(argv,"hs:t:b:g:d:",["step=","threshold=","bone=","ground=","baseDirectory="])
     except getopt.GetoptError:
-      print 'pressureStatistics.py -s <stepNo> -t <threshold> -b <bone> -g <ground> -d <base_dir>'
+      print('pressureStatistics.py -s <stepNo> -t <threshold> -b <bone> -g <ground> -d <base_dir>')
       sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'pressureStatistics.py -s <stepNo> -t <threshold> -b <bone> -g <ground> -d <base_dir>'
+            print('pressureStatistics.py -s <stepNo> -t <threshold> -b <bone> -g <ground> -d <base_dir>')
             sys.exit()
         elif opt in ("-s", "--step"):
             step = int(arg)
@@ -29,24 +29,24 @@ def main(argv):
             base_dir_set=True
 
     if not step_set:
-        print 'Step not set'
+        print('Step not set')
         step = 0         # 0 - do only imprint, 1 - do only transformation, 2 - do only statistics, 3 - do all
 
 
     if not th_set:
-        print 'Threshold not set'
+        print('Threshold not set')
         th = 0.5
 
     if not bone_set:
-        print 'Bone not set'
+        print('Bone not set')
         bone = "Klaue 1 (K1T)"
 
     if not ground_set:
-        print 'Ground type not set'
+        print('Ground type not set')
         ground = "gummi"
 
     if not base_dir_set:
-        print 'Base Dir not set'
+        print('Base Dir not set')
         base_dir = os.path.expanduser("~/Documents/ProKlaue/testdaten/druck")
 
     path_to_tek_csv = "{2}/{0}/{0}_{1}.csv".format(bone, ground.capitalize(), base_dir)
