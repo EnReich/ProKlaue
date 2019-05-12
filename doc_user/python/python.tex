@@ -1,0 +1,93 @@
+\documentclass[a4paper, openany, oneside]{memoir}
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+\usepackage{csquotes}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage[inline]{enumitem}
+\usepackage[obeyspaces, hyphens]{url}
+\usepackage{hyperref}
+
+\graphicspath{{./img/}}
+\MakeOuterQuote{"}
+
+
+\pretitle{\begin{center}\Huge\bfseries}
+\title{User Guide für das Installieren von Python}
+\posttitle{\par\vskip1em{\normalfont\normalsize mit Numpy, Scipy und Scikit-learn, unter Windows\par\vfill}\end{center}}
+\author{Kai Hainke}
+\predate{\vfill\begin{center}\large}
+\chapterstyle{thatcher}
+
+\DeclareUrlCommand{\dir_path}{\def\UrlLeft{\textrm{»}}\def\UrlRight{\textrm{«}}}
+
+\DeclareUrlCommand{\File_path}{\def\UrlLeft{\textrm{}}\def\UrlRight{\textrm{}}}
+
+\DeclareUrlCommand{\file_ending}{\def\UrlLeft{\textrm{}}\def\UrlRight{\textrm{}}}
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  tabsize=3
+}
+
+
+
+\begin{document}
+
+
+
+\maketitle
+
+
+%\pagebreak
+%\dirpath{Documents\BliBla\bludsdus\dssdsd}\linebreak\linebreak
+%\url{Documents\BliBla\bludsdus\dssdsd}
+%\pagebreak
+
+\chapter{Installation von Python}
+Zur Installation von Python läd man sich den entsprechenden Installer von der \href{https://www.python.org/}{Python-Website} herunter. Wir benötigen \href{https://www.python.org/downloads/release/python-2713/}{Python 2.7}. Dann folgt man den Anweisungen bis man zu dem Punkt kommt, an dem man Features auswählen soll, dort sollte man "Add Python.exe to PATH" auswählen zum Installieren, da es notwendig für die nächsten Schritte wird, Python in der PATH Umgebungsvariable zu haben. Bei den neueren Installern wird pip automatisch mit installiert, so dass hier nichts weiter zu tun ist.   
+
+\chapter{Installieren der Packages}
+Zum Installieren der Packages verwenden wir Windows Builds von \href{http://www.lfd.uci.edu/~gohlke/pythonlibs/}{http://www.lfd.uci.edu/~gohlke/pythonlibs/}. Dort das entsprechende Package für \href{http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy}{numpy}, \href{http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy}{scipy} und \href{http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn}{scikit-learn} herunterladen. Das entsprechende bedeutet hierbei das mit cp27-cp27 (Python 2.7) im Namen und mit dem entsprechenden Plattform - Suffix (win32 für 32bit, win\textunderscore amd64 für 64bit, hier ist aber die Python Version entscheidend, also bei einem 32bit Python auf einem 64bit Windows, das 32bit Package herunterladen).
+
+Diese Packages installieren wir nun über pip: 
+
+\begin{minipage}[c, language=batch]{\textwidth}
+\begin{lstlisting}
+cd C:\Users\Kai\Downloads
+python -m pip install numpy-1.13.0+mkl-cp27-cp27m-win_amd64.whl
+python -m pip install scipy-0.19.1-cp27-cp27m-win_amd64.whl
+python -m pip install scikit_learn-0.18.1-cp27-cp27m-win_amd64.whl
+\end{lstlisting}
+\end{minipage}
+
+Hierbei muss man zwingen Numpy als erstes installieren.
+
+Zuletzt installieren wir pyclipper über:
+
+\begin{minipage}[c, language=batch]{\textwidth}
+\begin{lstlisting}
+python -m pip install pyclipper
+\end{lstlisting}
+\end{minipage}
+
+
+\end{document}

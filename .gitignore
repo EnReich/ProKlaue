@@ -1,4 +1,47 @@
+## install
+proKlaueInstall/site-packages
+
+## bin
+bin
+
+## Python:
 *.pyc
-.Rproj.user
+
+## Sphynx:
+./doc/_build
+
+## R:
+*.Rproj.user
 *.RHistory
 *.RData
+
+## tex:
+*.bbl
+*.bcf
+*.blg
+*.ps
+*.eps
+*eps-converted-to*
+*.bib
+*.bib.bak
+*.bib.sav
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+*.dvi
+*.fdb_latexmk
+*.out
+*.synctex.gz
+*.run.xml
+
+
+

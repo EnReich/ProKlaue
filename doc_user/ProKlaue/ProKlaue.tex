@@ -1,0 +1,121 @@
+\documentclass[a4paper, openany, oneside]{memoir}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage[inline]{enumitem}
+\usepackage[obeyspaces, hyphens]{url}
+\usepackage{hyperref}
+
+\graphicspath{{./img/}}
+
+
+\pretitle{\begin{center}\Huge\bfseries}
+\title{User Guide für das ProKlaue Plugin}
+\posttitle{\par\vskip1em{\normalfont\normalsize Installation unter Windows\par\vfill}\end{center}}
+\author{Kai Hainke}
+\predate{\vfill\begin{center}\large}
+\chapterstyle{thatcher}
+
+\DeclareUrlCommand{\dir_path}{\def\UrlLeft{\textrm{»}}\def\UrlRight{\textrm{«}}}
+
+\DeclareUrlCommand{\File_path}{\def\UrlLeft{\textrm{}}\def\UrlRight{\textrm{}}}
+
+\DeclareUrlCommand{\file_ending}{\def\UrlLeft{\textrm{}}\def\UrlRight{\textrm{}}}
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  tabsize=3
+}
+
+
+
+\begin{document}
+
+
+
+\maketitle
+
+
+%\pagebreak
+%\dirpath{Documents\BliBla\bludsdus\dssdsd}\linebreak\linebreak
+%\url{Documents\BliBla\bludsdus\dssdsd}
+%\pagebreak
+
+\chapter{Installation von python Packages für den Maya Python Interpreter}
+Grundsätzlich gibt es zwei Varianten, die benötigten python libs zu installieren. Die erste Möglichkeit ist ein möglichst exakt gleichen Python-Interpreter (Version, Compiler-Version, Bit-Architektur, etc.) und die Packages dafür zu installieren und dann zu kopieren. Die zweite, hier empfohlene, Variante für Windows ist die Packages \href{https://drive.google.com/drive/folders/0BwsYd1k8t0lEfjJqV21yTnd2elVhNXEyTXhHclhxbDhvWVF5WWZUeVFISWViaFh1TzhrNTQ}{hier} herunterzuladen, zu entpacken und in den \dir_path{C:\Program Files\Autodesk\Maya2014\Python\lib\site-packages} Ordner zu verschieben. Die zur Zeit benötigten packages sind:
+\begin{itemize}
+\item numpy
+\item scipy
+\item scikit-learn (sklearn) (momentan nur benutzt bei den Achsen und Druck Scripts)
+\end{itemize}
+ 
+  
+
+\chapter{Installieren des Plugins}
+Zur Installation des Plugins lädt man sich die aktuelle Version des Plugins aus dem \href{https://github.com/EnReich/ProKlaue}{Git} herunter (Clone or download \(\rightarrow\) Download ZIP). Entpacken und Verschieben in den Ordner \dir_path{Autodesk\maya<version>\bin\plug-ins}, so dass \File_path{proKlaue.py} direkt in diesem Verzeichnis liegt. 
+
+In Maya unter Windows \(\rightarrow\) Settings/Preferences \(\rightarrow\) Plugin Manager \(\rightarrow\) Refresh. Nach dem Eintrag \File_path{proKlaue.py} suchen und \texttt{Loaded} und \texttt{Auto load} auswählen. Zuletzt Windows \(\rightarrow\) Settings/Preferences \(\rightarrow\) Preferences \(\rightarrow\) Setting \(\rightarrow\) Selection \(\rightarrow\) \texttt{Track selection order} aktivieren. 
+
+Für mehr Informationen ist die Dokumentation zu konsultieren. Zu finden unter \File_path{ProKlaue/doc/_build/html/index.html}.
+
+
+\chapter{Informationen zum Projekt}
+\section{Struktur}
+Einen groben Überblick gibt die folgende Liste:
+\begin{itemize}
+\item \dir_path{scripts} - Ordner mit Skripten (R/Python):
+\begin{itemize}
+\item \File_path{angles.py} - Script zum Tracken der Winkel in einer animierten Szene mit JCS (nach Groot und Suntay)
+\item \File_path{druck.R} - R Skript für die Zusammenführung von Fußungsfläche und Druckdaten
+\item \File_path{pressureStatistics.py} - Python Skript für die Zusammenführung von Fußungsfläche und Druckdaten (mit \File_path{~UtilFunctions.py} für Funktionsdefinitionen)
+\item \File_path{calculateJointCS.py} - Python Skript für die Berechnung von Joint Coordinate Systems
+\item \File_path{axesToAnimated.py} - Python Skript für die Überführung von berechneten JCS von einer Szene in eine andere (bspw. von neutral zu animiert)
+\item \File_path{plotHeatmaps.R.py} - R Skript zum Plotten von Heatmaps mit Hilfe vorher erstellter Daten aus dem Maya-Command cmds.altitudeMap
+\end{itemize}
+\item \dir_path{pk_src} - Ordner mit Maya Commands des Plugins, insbesondere
+\begin{itemize}
+\item \File_path{overlapStatistics.py} zum Erstellen von Statistiken zur Überdeckung von zwei oder mehreren Objekten (relativ robuste Berechnung von Schnittvolumen), siehe auch \File_path{intersection.py} und \File_path{vhacd.py}
+\item \File_path{altitudeMap.py} zum Erstellen von Höhenmaps
+\item \File_path{frontVertices.py} zum Abspeichern aller Vorderseiten-Segmente/Punkte von einer gegebenen Plane aus 
+\item \File_path{normalize.py} zum Ausrichten von Objekten anhand der Eigenvektoren ihrer Kovarianz-Matrix
+\item \File_path{misc.py} mit verschiedenen, nützlichen, all-purpose Funktionen
+\end{itemize}
+\item \dir_path{bin} - Executables für die VHACD Berechnung
+\item \dir_path{doc} - Sphynx Dokumentation
+\item \dir_path{doc_user} - Guides, Latex+pdf-Dateien
+\item \dir_path{testdaten} - Testdateien und mitunter auch Plots
+\end{itemize}
+\pagebreak
+\section{Nützliche Dev-Tools}
+Für die Entwicklung der Scripts/Plugins bieten sich einige Tools an, lediglich eine Empfehlung, aber vlt. hilft es ja:
+\begin{itemize}
+\item RStudio für R
+\item PyCharm für Python
+\item MayaCharm (PyCharm Plugin zur Interaktion mit Maya)
+\item Sublime für das Anzeigen großer Textdateien
+\item Sphynx für Dokumentation
+\item git zur Versionierung
+\end{itemize}
+
+
+\end{document}

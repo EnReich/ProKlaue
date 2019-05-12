@@ -1,6 +1,9 @@
 Known Issues/TODO:
-   - No Shelf tab/buttons in Maya 2016, no compatibility
+   - No Downwards compatibility for Maya 2017 and lower
    - Rework UI (show currently selected object(s), progress, info-messages, remove deprecated elements, etc.)
+
+Update 0.3.5:
+    - compatibility for Maya 2019
 
 Update 0.3.4:
     - added scripts to calculate Joint Axes on principal curvature directions
